@@ -1,0 +1,38 @@
+// 所有模块的通用配置
+allprojects {
+    group GROUP
+    version VERSION
+    apply plugin: 'idea'
+}
+
+// 子模块的统一配置
+subprojects {
+    group GROUP
+    version VERSION
+
+    buildscript {
+        repositories {
+            mavenLocal()
+            maven { url REPOSITORY }
+        }
+        dependencies {
+            classpath("org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion")
+            classpath("org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}")
+        }
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'maven'
+
+// java编译的时候缺省状态下会因为中文字符而失败
+    [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+
+// JVM 版本号要求
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        mavenLocal()
+        maven { url REPOSITORY }
+    }
+}
