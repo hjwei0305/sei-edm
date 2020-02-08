@@ -1,13 +1,12 @@
 package com.changhong.sei.edm;
 
+import com.changhong.com.sei.core.test.BaseUnitTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class SeiEdmApplicationTests {
+public class SeiEdmApplicationTests extends BaseUnitTest {
 
     @Test
     public void contextLoads() {

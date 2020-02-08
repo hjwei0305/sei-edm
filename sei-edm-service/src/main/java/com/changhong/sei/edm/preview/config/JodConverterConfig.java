@@ -1,6 +1,5 @@
 package com.changhong.sei.edm.preview.config;
 
-import com.sun.star.document.UpdateDocMode;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -115,7 +114,8 @@ public class JodConverterConfig {
         Map<String, Object> loadProperties = new HashMap<>(10);
         loadProperties.put("Hidden", true);
         loadProperties.put("ReadOnly", true);
-        loadProperties.put("UpdateDocMode", UpdateDocMode.QUIET_UPDATE);
+        // com.sun.star.document.UpdateDocMode.QUIET_UPDATE
+        loadProperties.put("UpdateDocMode", (short) 1);
         loadProperties.put("CharacterSet", StandardCharsets.UTF_8.name());
 
         return LocalConverter.builder()
