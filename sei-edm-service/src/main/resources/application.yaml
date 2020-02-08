@@ -1,0 +1,78 @@
+# 应用全局配置
+application:
+  name: EDM文档管理服务
+  version: 6.0.1
+
+# spring 环境配置
+spring:
+  servlet:
+    multipart:
+      # 上传文件大小限制
+      max-file-size: 100MB
+      max-request-size: 200MB
+  # 模版配置
+  thymeleaf:
+    prefix: classpath:/templates/
+    check-template-location: true
+    suffix: .html
+    encoding: UTF-8
+    mode: HTML5
+    cache: false
+    servlet:
+      content-type: text/html
+  # 数据库配置
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://10.4.208.134:3306/sei_edm?characterEncoding=utf8&useSSL=false
+    username: sei
+    password: 123456
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5Dialect
+        format_sql: true
+    show-sql: true
+  cache:
+    redis:
+      time-to-live: 20s
+  redis:
+    host: 10.4.208.132
+    port: 6379
+    password: ZmkDbgaua3Rso33T
+    database: 0
+
+# jodconverter 配置
+jodconverter:
+  local:
+    # libreoffice 安装目录
+    #    office-home: ${office.home}
+    office-home: /Applications/OpenOffice.app/Contents
+    #    office-home: /Applications/LibreOffice.app/Contents
+    port-numbers: 8100
+    #    port-numbers: 8100,8101,8102
+    max-tasks-per-process: 100
+    # 开启jodconverter
+    enabled: true
+  store:
+    # 转换后存放文档的路径
+    path: /Users/chaoma/work_space/0_temp/
+#    path: ${store.path}
+
+
+
+logging:
+  level:
+    org:
+      apache:
+        kafka:
+          clients:
+            NetworkClient: error
+sei:
+  http:
+    filter:
+      enable: false
+server:
+  servlet:
+    context-path: /edm

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="base/base :: base_head"/>
+    <title>EDM附件管理</title>
+    <link rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" th:href="@{/css/bootstrap/bootstrap.min.css}">
+    <style type="text/css">
+        .centerEle {
+            height: 60px;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+<div class="centerEle">
+    <div class="form-group col-md-3  mb-2">
+        <form id="fileForm" action="/file/upload" th:action="@{/file/upload}" enctype="multipart/form-data"
+              method="post">
+            <input type="text" name="viewfile" id="viewfile" placeholder="未选择文件" disabled autocomplete="off"
+                   class="form-control">
+            <input type="file" name="file" style="display: none" onchange="reShow();" id="upload"/>
+        </form>
+    </div>
+    <label class="btn btn-primary  mb-2" for="upload" style="cursor:pointer;">浏览</label>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <label class="btn btn-success  mb-2" style="cursor:pointer;" onclick="submit()">上传</label>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <label class="mb-2" style="color: red;" id="msg"></label>
+</div>
+<div class="centerEle">
+    <label class="btn btn-link  mb-2" style="cursor:pointer;" onclick="download();">下载</label>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <label class="btn btn-info  mb-2" style="cursor:pointer;" onclick="preview();">预览</label>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <label class="btn btn-warning  mb-2" style="cursor:pointer;" onclick="ocr();">识别</label>
+</div>
+<div style="height: 720px">
+    <iframe src="" height="100%" width="100%" frameborder="0"></iframe>
+</div>
+</body>
+<script type="text/javascript" th:inline="javascript">
+    var docId = "";
+
+    function reShow() {
+        document.getElementById('viewfile').value = document.getElementById('upload').value;
+    }
+
+    function submit() {
+        $("#msg").html(" ");
+        var viewfile = $("#viewfile").val();
+        if (viewfile === "") {
+            $("#msg").html("文件名不能为空");
+            return;
+        }
+        $("#fileForm").ajaxSubmit({
+            success: function (data) {
+                if (data.success) {
+                    docId = data.data;
+                    $("#msg").html("文件上传成功!");
+                } else {
+                    docId = "";
+                    $("#msg").html(data.message);
+                }
+            }
+        });
+    }
+
+    function download() {
+        if (docId == "") {
+            $("#msg").html("请先上传文件.");
+            return;
+        }
+        window.open(_ctxPath + '/file/download?docIds=' + docId);
+    }
+
+    function preview() {
+        if (docId == "") {
+            $("#msg").html("请先上传文件.");
+            return;
+        }
+        document.getElementsByTagName('iframe')[0].src = _ctxPath + "/preview/" + docId;
+    }
+
+    function ocr() {
+        if (docId == "") {
+            $("#msg").html("请先上传文件.");
+            return;
+        }
+        alert("开发中");
+        //document.getElementsByTagName('iframe')[0].src = _ctxPath + "/preview/" + docId;
+    }
+</script>
+<script src="/js/jquery.min.js" th:src="@{/js/jquery-3.0.0.min.js}"></script>
+<script src="/js/jquery.form.js" th:src="@{/js/jquery.form.min.js}"></script>
+</html>

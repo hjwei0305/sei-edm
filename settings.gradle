@@ -1,1 +1,4 @@
 rootProject.name = 'sei-edm'
+
+include 'sei-edm-service'
+include 'sei-edm-api'
