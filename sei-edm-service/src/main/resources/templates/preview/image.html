@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="base/base :: base_head"/>
+    <title>图片预览图</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="/css/viewer.min.css" th:href="@{/css/viewer.min.css}">
+</head>
+<body>
+<img id="aImg" style="display:none;" alt="" src="" th:src="@{/preview/readFile(docId=${docId},markText=${markText})}"/>
+<script src="/js/viewer.min.js" th:src="@{/js/viewer.min.js}"></script>
+<script>
+    var viewer = new Viewer(document.getElementById('aImg'), {
+        navbar: false,
+        button: false,
+        backdrop: false,
+        movable: false,
+        toolbar: {
+            zoomIn: true,
+            zoomOut: true,
+            reset: true,
+            prev: false,
+            next: false,
+            play: true,
+            rotateLeft: true,
+            rotateRight: true,
+            flipHorizontal: true,
+            flipVertical: true
+        }
+    });
+    viewer.show();
+    document.getElementById('aImg').style = "display:none;";
+</script>
+</body>
+
+</html>

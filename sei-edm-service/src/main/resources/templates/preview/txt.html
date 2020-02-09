@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="base/base :: base_head"/>
+    <title>文本文件预览</title>
+</head>
+
+<body>
+<script type="text/javascript" th:inline="javascript">
+    /*<![CDATA[*/
+    var docId = [[${docId}]];
+    var waterMark = [[${waterMark}]];
+    /*]]>*/
+
+    window.location.href = _ctxPath + "/preview/readFile?docId=" + docId;
+</script>
+</body>
+
+</html>
