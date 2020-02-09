@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="utf-8">
+    <th:block th:include="base/base :: base_head"/>
     <title>多媒体文件预览</title>
-    <link rel="stylesheet" href="plyr/plyr.css">
+    <link rel="stylesheet" href="plyr/plyr.css" th:href="@{/plyr/plyr.css}">
 </head>
 <style>
     body{background-color: #262626}
@@ -12,10 +13,10 @@
 <body>
 <div class="m">
     <video controls>
-        <source src="${mediaUrl}">
+        <source src="" th:src="@{/preview/readFile(docId=${docId})}">
     </video>
 </div>
-<script src="plyr/plyr.js"></script>
+<script src="plyr/plyr.js" th:src="@{/plyr/plyr.js}"></script>
 <script>
     plyr.setup();
 </script>

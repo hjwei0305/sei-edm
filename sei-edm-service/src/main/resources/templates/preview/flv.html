@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="utf-8">
+    <th:block th:include="base/base :: base_head"/>
     <title>多媒体文件预览</title>
 </head>
 <style>
@@ -12,13 +13,17 @@
 <div class="m">
     <video width="1024" id="videoElement"></video>
 </div>
-<script src="js/flv.min.js"></script>
-<script>
+<script src="js/flv.min.js" th:src="@{/js/flv.min.js}"></script>
+<script type="text/javascript" th:inline="javascript">
+    /*<![CDATA[*/
+    var docId = [[${docId}]];
+    /*]]>*/
+
     if (flvjs.isSupported()) {
         var videoElement = document.getElementById('videoElement');
         var flvPlayer = flvjs.createPlayer({
             type: 'flv',
-            url: '${mediaUrl}'
+            url: _ctxPath + "/preview/readFile?docId=" + docId
         });
         flvPlayer.attachMediaElement(videoElement);
         flvPlayer.load();
