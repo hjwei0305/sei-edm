@@ -1,7 +1,7 @@
 package com.changhong.sei.edm.dto;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 实现功能：文档(包含信息和数据)
@@ -10,33 +10,13 @@ public class DocumentResponse extends DocumentDto implements Serializable {
     private static final long serialVersionUID = -7003748738807976561L;
 
     /**
-     * 文件描述
-     */
-    private String description;
-    /**
      * 来源应用系统
      */
     private String system;
     /**
-     * 租户代码
-     */
-    private String tenantCode;
-    /**
      * 上传时间
      */
-    private Date uploadedTime;
-    /**
-     * 上传用户Id
-     */
-    private String uploadUserId;
-    /**
-     * 上传用户账号
-     */
-    private String uploadUserAccount;
-    /**
-     * 上传用户姓名
-     */
-    private String uploadUserName;
+    private LocalDateTime uploadedTime;
 
     public String getSystem() {
         return system;
@@ -46,52 +26,12 @@ public class DocumentResponse extends DocumentDto implements Serializable {
         this.system = system;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Date getUploadedTime() {
+    public LocalDateTime getUploadedTime() {
         return uploadedTime;
     }
 
-    public void setUploadedTime(Date uploadedTime) {
+    public void setUploadedTime(LocalDateTime uploadedTime) {
         this.uploadedTime = uploadedTime;
-    }
-
-    public String getTenantCode() {
-        return tenantCode;
-    }
-
-    public void setTenantCode(String tenantCode) {
-        this.tenantCode = tenantCode;
-    }
-
-    public String getUploadUserId() {
-        return uploadUserId;
-    }
-
-    public void setUploadUserId(String uploadUserId) {
-        this.uploadUserId = uploadUserId;
-    }
-
-    public String getUploadUserAccount() {
-        return uploadUserAccount;
-    }
-
-    public void setUploadUserAccount(String uploadUserAccount) {
-        this.uploadUserAccount = uploadUserAccount;
-    }
-
-    public String getUploadUserName() {
-        return uploadUserName;
-    }
-
-    public void setUploadUserName(String uploadUserName) {
-        this.uploadUserName = uploadUserName;
     }
 
     /**

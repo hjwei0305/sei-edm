@@ -81,24 +81,26 @@ public class LocalFileServiceImpl implements FileService {
     /**
      * 上传一个文档(如果是图像生成缩略图)
      *
+     * @param sys  来源系统
      * @param file 文档
      * @return 文档信息
      */
     @Override
     @Deprecated
-    public ResultData<String> uploadDocument(File file) {
-        return uploadDocument(FileUtils.getFileName(file.getName()), file, Boolean.TRUE);
+    public ResultData<String> uploadDocument(String sys, File file) {
+        return uploadDocument(FileUtils.getFileName(file.getName()), sys, file, Boolean.TRUE);
     }
 
     /**
      * 上传一个文档(如果是图像生成缩略图)
      *
-     * @param data     文档数据
      * @param fileName 文件名
+     * @param sys      来源系统
+     * @param data     文档数据
      * @return 文档信息
      */
     @Override
-    public ResultData<String> uploadDocument(String fileName, byte[] data) {
+    public ResultData<String> uploadDocument(String fileName, String sys, byte[] data) {
         if (Objects.isNull(data)) {
             return ResultData.fail("文件流为空.");
         }
@@ -116,13 +118,13 @@ public class LocalFileServiceImpl implements FileService {
             return ResultData.fail("文件上传读取异常.");
         }
 
-        return uploadDocument(fileName, file, Boolean.TRUE);
+        return uploadDocument(fileName, sys, file, Boolean.TRUE);
     }
 
     /**
      * 获取一个文档(包含信息和数据)
      *
-     * @param docId       文档Id
+     * @param docId 文档Id
      * @return 文档
      */
     @Override
@@ -221,15 +223,17 @@ public class LocalFileServiceImpl implements FileService {
      * @param generateThumbnail 生成缩略图
      * @return 文档信息
      */
-    private ResultData<String> uploadDocument(String originName, File file, boolean generateThumbnail) {
+    private ResultData<String> uploadDocument(String originName, String sys, File file, boolean generateThumbnail) {
         if (Objects.isNull(file)) {
             return ResultData.fail("文件不存在.");
         }
 
         Document document = new Document(originName);
         document.setDocId(FileUtils.getFileName(file.getName()));
-        initCurrentInfo(document);
         document.setSize(file.length());
+        document.setSystem(sys);
+        document.setUploadedTime(LocalDateTime.now());
+        document.setDocumentType(getDocumentType(document.getFileName()));
 
         //获取文档类型
         DocumentType documentType = document.getDocumentType();
@@ -268,23 +272,5 @@ public class LocalFileServiceImpl implements FileService {
         documentService.save(document);
 
         return ResultData.success(document.getDocId());
-    }
-
-
-    /**
-     * 初始化当前环境
-     *
-     * @param document 文档信息
-     */
-    private void initCurrentInfo(Document document) {
-        document.setSize(0L);
-        document.setSystem(ContextUtil.getAppCode());
-        String tenant = ContextUtil.getTenantCode();
-        document.setTenantCode(StringUtils.isNotBlank(tenant) ? tenant : "none");
-        document.setUploadedTime(LocalDateTime.now());
-        document.setUploadUserId(ContextUtil.getUserId());
-        document.setUploadUserAccount(ContextUtil.getUserAccount());
-        document.setUploadUserName(ContextUtil.getUserName());
-        document.setDocumentType(getDocumentType(document.getFileName()));
     }
 }

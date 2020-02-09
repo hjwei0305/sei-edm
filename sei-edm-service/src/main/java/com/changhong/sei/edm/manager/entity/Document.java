@@ -46,11 +46,6 @@ public class Document extends BaseEntity {
     @Column(name = "document_type", length = 30)
     private DocumentType documentType;
     /**
-     * 文件描述
-     */
-    @Column(name = "description")
-    private String description;
-    /**
      * 来源应用系统
      */
     @Column(name = "system", length = 50)
@@ -60,26 +55,6 @@ public class Document extends BaseEntity {
      */
     @Column(name = "uploaded_time")
     private LocalDateTime uploadedTime;
-    /**
-     * 租户代码
-     */
-    @Column(name = "tenant_code", length = 50)
-    private String tenantCode;
-    /**
-     * 上传用户Id
-     */
-    @Column(name = "upload_user_id", length = 36)
-    private String uploadUserId;
-    /**
-     * 上传用户账号
-     */
-    @Column(name = "upload_user_account", length = 100)
-    private String uploadUserAccount;
-    /**
-     * 上传用户姓名
-     */
-    @Column(name = "upload_user_name", length = 100)
-    private String uploadUserName;
 
     public Document() {
     }
@@ -120,14 +95,6 @@ public class Document extends BaseEntity {
         this.documentType = documentType;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public String getSystem() {
         return system;
     }
@@ -142,37 +109,5 @@ public class Document extends BaseEntity {
 
     public void setUploadedTime(LocalDateTime uploadedTime) {
         this.uploadedTime = uploadedTime;
-    }
-
-    public String getTenantCode() {
-        return tenantCode;
-    }
-
-    public void setTenantCode(String tenantCode) {
-        this.tenantCode = tenantCode;
-    }
-
-    public String getUploadUserId() {
-        return uploadUserId;
-    }
-
-    public void setUploadUserId(String uploadUserId) {
-        this.uploadUserId = uploadUserId;
-    }
-
-    public String getUploadUserAccount() {
-        return uploadUserAccount;
-    }
-
-    public void setUploadUserAccount(String uploadUserAccount) {
-        this.uploadUserAccount = uploadUserAccount;
-    }
-
-    public String getUploadUserName() {
-        return uploadUserName;
-    }
-
-    public void setUploadUserName(String uploadUserName) {
-        this.uploadUserName = uploadUserName;
     }
 }

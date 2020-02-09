@@ -1,5 +1,6 @@
 package com.changhong.sei.edm.file.controller;
 
+import com.changhong.sei.core.context.ContextUtil;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.dto.DocumentResponse;
@@ -35,11 +36,18 @@ public class FileController {
 //    private HttpServletResponse response;
 
     @ApiOperation("文件上传")
-    @ApiImplicitParam(name = "file", value = "文件", required = true)
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "sys", value = "来源系统"),
+            @ApiImplicitParam(name = "file", value = "文件", required = true)
+    })
     @PostMapping(value = "/upload")
     @ResponseBody
-    public ResultData<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
-        ResultData<String> resultData = fileService.uploadDocument(file.getOriginalFilename(), file.getBytes());
+    public ResultData<String> upload(@RequestParam("file") MultipartFile file,
+                                     @RequestParam(value = "sys", required = false) String sys) throws IOException {
+        if (StringUtils.isBlank(sys)) {
+            sys = ContextUtil.getAppCode();
+        }
+        ResultData<String> resultData = fileService.uploadDocument(file.getOriginalFilename(), sys, file.getBytes());
         return resultData;
     }
 

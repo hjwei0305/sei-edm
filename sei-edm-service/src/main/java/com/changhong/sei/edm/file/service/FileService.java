@@ -18,19 +18,21 @@ public interface FileService {
     /**
      * 上传一个文档(如果是图像生成缩略图)
      *
+     * @param sys  来源系统
      * @param file 文档
      * @return 文档信息
      */
-    ResultData<String> uploadDocument(File file);
+    ResultData<String> uploadDocument(String sys, File file);
 
     /**
      * 上传一个文档(如果是图像生成缩略图)
      *
-     * @param data     文档数据
      * @param fileName 文件名
+     * @param sys      来源系统
+     * @param data     文档数据
      * @return 文档信息
      */
-    ResultData<String> uploadDocument(String fileName, byte[] data);
+    ResultData<String> uploadDocument(String fileName, String sys, byte[] data);
 
     /**
      * 获取一个文档信息(不含文件内容数据)
