@@ -61,17 +61,22 @@ public class PreviewController {
                 view = "preview/html.html";
                 break;
             case Image:
-
+                view = "preview/image.html";
+                break;
+            case Text:
+                view = "preview/txt.html";
                 break;
             case Media:
-
+                // http://f2ex.cn/plyr-html5-media-player/
+                view = "preview/media.html";
+                if (StringUtils.endsWithIgnoreCase(document.getFileName(), "flv")) {
+                    view = "preview/flv.html";
+                }
                 break;
             case Compressed:
 
                 break;
             case Other:
-
-                break;
             default:
                 // 不支持
                 view = "preview/nosupport.html";
