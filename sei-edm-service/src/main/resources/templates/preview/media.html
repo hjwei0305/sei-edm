@@ -12,8 +12,8 @@
 </style>
 <body>
 <div class="m">
-    <video controls>
-        <source src="" th:src="@{/preview/readFile(docId=${docId})}">
+    <video controls src="" th:src="@{/preview/readFile(docId=${docId})}">
+        Your browser is too old which doesn't support HTML5 video.
     </video>
 </div>
 <script src="plyr/plyr.js" th:src="@{/plyr/plyr.js}"></script>

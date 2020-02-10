@@ -21,7 +21,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Objects;
 
-
 @Controller
 @RequestMapping(value = "/file")
 @Api(value = "文件上传下载", tags = "文件上传下载")
@@ -29,11 +28,6 @@ public class FileController {
 
     @Autowired
     private FileService fileService;
-//    @Autowired
-//    private HttpServletRequest request;
-//
-//    @Autowired
-//    private HttpServletResponse response;
 
     @ApiOperation("文件上传")
     @ApiImplicitParams({
@@ -111,7 +105,7 @@ public class FileController {
     }
 
     private ResponseEntity<byte[]> multipleDownload(HttpServletRequest request, HttpServletResponse response) {
-
+        // todo 批量下载
 
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }

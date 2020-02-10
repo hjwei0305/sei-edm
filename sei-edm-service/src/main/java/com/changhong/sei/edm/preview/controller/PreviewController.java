@@ -75,7 +75,7 @@ public class PreviewController {
                 break;
             case Compressed:
 
-                break;
+//                break;
             case Other:
             default:
                 // 不支持
