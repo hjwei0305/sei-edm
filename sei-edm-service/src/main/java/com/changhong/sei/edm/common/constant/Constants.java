@@ -33,7 +33,7 @@ public final class Constants {
         // 多媒体文件
         DOC_TYPE_MAP.put(DocumentType.Media, "mp3|wav|mp4|flv|avi");
         // 文本文件
-        DOC_TYPE_MAP.put(DocumentType.Text, "txt|html|htm|asp|jsp|xml|json|properties|md|gitignore,java|py|c|cpp|sql|sh|bat|m|bas|prg|cmd");
+        DOC_TYPE_MAP.put(DocumentType.Text, "txt|html|htm|asp|jsp|xml|json|properties|md|gitignore|java|py|c|cpp|sql|sh|bat|m|bas|prg|cmd");
     }
 
     private Constants() {

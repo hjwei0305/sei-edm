@@ -93,8 +93,10 @@ public class BusinessDocumentService extends BaseEntityService<BusinessDocument>
         List<Document> result = new ArrayList<>();
         businessInfos.forEach((i) -> {
             if (StringUtils.isNotBlank(i.getDocId())) {
-                Optional<Document> optional = documentDao.findById(i.getDocId());
-                optional.ifPresent(result::add);
+                Document document = documentDao.findByProperty(Document.FIELD_DOC_ID, i.getDocId());
+                if (Objects.nonNull(document)) {
+                    result.add(document);
+                }
             }
         });
         return result;
