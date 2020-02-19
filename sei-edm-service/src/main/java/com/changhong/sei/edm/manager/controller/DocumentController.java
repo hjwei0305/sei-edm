@@ -5,7 +5,6 @@ import com.changhong.sei.edm.api.DocumentApi;
 import com.changhong.sei.edm.dto.BindRequest;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.manager.entity.Document;
-import com.changhong.sei.edm.manager.service.BusinessDocumentService;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import org.apache.commons.collections.CollectionUtils;
 import org.modelmapper.ModelMapper;
@@ -31,8 +30,6 @@ public class DocumentController implements DocumentApi {
     private ModelMapper modelMapper;
     @Autowired
     private DocumentService service;
-    @Autowired
-    private BusinessDocumentService businessDocumentService;
 
     /**
      * 获取一个文档(包含信息和数据)
@@ -76,7 +73,7 @@ public class DocumentController implements DocumentApi {
     public ResultData<String> bindBusinessDocuments(BindRequest request) {
         String entityId = request.getEntityId();
         Collection<String> documentIds = request.getDocumentIds();
-        return businessDocumentService.bindBusinessDocuments(entityId, documentIds);
+        return service.bindBusinessDocuments(entityId, documentIds);
     }
 
     /**
@@ -86,7 +83,7 @@ public class DocumentController implements DocumentApi {
      */
     @Override
     public ResultData<String> deleteBusinessInfos(@NotBlank String entityId) {
-        return businessDocumentService.unbindBusinessDocuments(entityId);
+        return service.unbindBusinessDocuments(entityId);
     }
 
     /**
@@ -97,7 +94,7 @@ public class DocumentController implements DocumentApi {
      */
     @Override
     public ResultData<List<DocumentResponse>> getEntityDocumentInfos(@NotBlank String entityId) {
-        List<Document> documents = businessDocumentService.getDocumentsByEntityId(entityId);
+        List<Document> documents = service.getDocumentsByEntityId(entityId);
         if (CollectionUtils.isNotEmpty(documents)) {
             List<DocumentResponse> result = new ArrayList<>();
             DocumentResponse response;

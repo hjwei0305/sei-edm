@@ -12,9 +12,8 @@ dependencies {
 
     compile(
             "org.jodconverter:jodconverter-core:$jodconverter_version",
-            "org.jodconverter:jodconverter-local:$jodconverter_version",
+            "org.jodconverter:jodconverter-local:$jodconverter_version"
 //            "org.jodconverter:jodconverter-spring-boot-starter:$jodconverter_version"
-//            "org.jodconverter:jodconverter-online:$jodconverter_version"
     )
 
     compile("org.springframework.boot:spring-boot-starter-thymeleaf:$springBootVersion")

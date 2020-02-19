@@ -2,28 +2,18 @@ spring:
   application:
     name: sei-edm
   cloud:
-    bus:
-      trace:
-        enabled: true
-      enabled: false
     config:
-#      uri: http://10.4.208.86:8100/config-center
+      uri: http://10.4.208.86:8100/config-center
       profile: DEV
       name: ${spring.application.name}
     zookeeper:
       # zk 地址
       connect-string: 10.4.208.132:2181
       # 关闭zk可用不用依赖zk
-      enabled: false
+      enabled: true
 
 sei:
   mock: # 本地调试的当前用户配置
     user:
-      s-id: 123456
-      user-id: 1234
-      account: admin
-      user-name: 管理员
       tenant-code: 10044
-      email: test.sei.com
-      ip: 127.0.0.1
-      locale: zh_CN
+      account: admin

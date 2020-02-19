@@ -36,13 +36,25 @@ public class FileController {
     })
     @PostMapping(value = "/upload")
     @ResponseBody
-    public ResultData<String> upload(@RequestParam("file") MultipartFile file,
+    public ResultData<String> upload(@RequestParam("file") MultipartFile[] files,
                                      @RequestParam(value = "sys", required = false) String sys) throws IOException {
         if (StringUtils.isBlank(sys)) {
             sys = ContextUtil.getAppCode();
         }
-        ResultData<String> resultData = fileService.uploadDocument(file.getOriginalFilename(), sys, file.getBytes());
-        return resultData;
+        boolean first = true;
+        StringBuilder docIds = new StringBuilder();
+        ResultData<String> resultData;
+        for (MultipartFile file : files) {
+            resultData = fileService.uploadDocument(file.getOriginalFilename(), sys, file.getBytes());
+            if (resultData.successful()) {
+                docIds.append(resultData.getData());
+                if (!first) {
+                    docIds.append(",");
+                }
+                first = false;
+            }
+        }
+        return ResultData.success(docIds.toString());
     }
 
     @ApiOperation("文件下载 docIds和entityId二选一")

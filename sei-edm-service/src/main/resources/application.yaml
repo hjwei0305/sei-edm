@@ -50,8 +50,7 @@ jodconverter:
     #    office-home: ${office.home}
     office-home: /Applications/OpenOffice.app/Contents
     #    office-home: /Applications/LibreOffice.app/Contents
-    port-numbers: 8100
-    #    port-numbers: 8100,8101,8102
+    port-numbers: 8100,8101,8102
     max-tasks-per-process: 100
     # 开启jodconverter
     enabled: true
