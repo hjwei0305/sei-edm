@@ -31,7 +31,7 @@ dependencies {
 bootJar  {
     enabled = true
     archiveName = 'sei-edm.jar'
-    mainClassName = 'com.changhong.sei.edm.SeiEdmApplication'
+    mainClassName = 'com.changhong.sei.edm.EdmApplication'
     manifest {
         attributes("Manifest-Version": "6.0")
         attributes("Created-By": "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})".toString())
