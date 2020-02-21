@@ -46,7 +46,7 @@ public class Document extends BaseEntity {
     @Column(name = "document_type", length = 30)
     private DocumentType documentType;
     /**
-     * 来源应用系统
+     * 来源应用系统(应用服务名)
      */
     @Column(name = "system", length = 50)
     private String system;

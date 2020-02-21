@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.constraints.NotBlank;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -69,20 +68,19 @@ public interface DocumentApi {
 //    ResultData<DocumentResponse> getDocument(@RequestParam("docId") @NotBlank String docId, @RequestParam("isThumbnail") boolean isThumbnail);
 //
 //    /**
-//     * 获取一个文档(包含信息和数据)
+//     * 获取一个文档(只包含文档信息,不含文档数据)
 //     *
 //     * @param docId 文档Id
 //     * @return 文档
 //     */
 //    @GetMapping("getDocument")
-//    @ApiOperation(value = "获取一个文档(包含信息和数据)", notes = "获取一个文档(包含信息和数据)")
+//    @ApiOperation(value = "获取一个文档(只包含文档信息,不含文档数据)", notes = "获取一个文档(只包含文档信息,不含文档数据)")
 //    ResultData<DocumentResponse> getDocument(@RequestParam("docId") @NotBlank String docId);
 
     /**
      * 提交业务实体的文档信息
      *
-     * @param entityId    业务实体Id
-     * @param documentIds 文档Id清单
+     * @param request 绑定业务实体文档信息请求
      */
     @PostMapping("bindBusinessDocuments")
     @ApiOperation(value = "提交业务实体的文档信息", notes = "提交业务实体的文档信息")
@@ -96,6 +94,16 @@ public interface DocumentApi {
     @PostMapping("deleteBusinessInfos")
     @ApiOperation(value = "删除业务实体的文档信息", notes = "删除业务实体的文档信息")
     ResultData<String> deleteBusinessInfos(@RequestParam("entityId") @NotBlank String entityId);
+
+    /**
+     * 获取一个文档(只包含文档信息,不含文档数据)
+     *
+     * @param docId 文档Id
+     * @return 文档
+     */
+    @GetMapping("getEntityDocumentInfo")
+    @ApiOperation(value = "获取一个文档(只包含文档信息,不含文档数据)", notes = "获取一个文档(只包含文档信息,不含文档数据)")
+    ResultData<DocumentResponse> getEntityDocumentInfo(@RequestParam("docId") @NotBlank String docId);
 
     /**
      * 获取业务实体的文档信息清单

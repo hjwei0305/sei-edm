@@ -87,6 +87,23 @@ public class DocumentController implements DocumentApi {
     }
 
     /**
+     * 获取一个文档(只包含文档信息,不含文档数据)
+     *
+     * @param docId 文档Id
+     * @return 文档
+     */
+    @Override
+    public ResultData<DocumentResponse> getEntityDocumentInfo(@NotBlank String docId) {
+        Document document = service.findByProperty(Document.FIELD_DOC_ID, docId);
+        if (Objects.nonNull(document)) {
+            DocumentResponse response = new DocumentResponse();
+            modelMapper.map(document, response);
+            return ResultData.success(response);
+        }
+        return ResultData.fail("没有找到对应的文档信息清单");
+    }
+
+    /**
      * 获取业务实体的文档信息清单
      *
      * @param entityId 业务实体Id
