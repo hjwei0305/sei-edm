@@ -66,4 +66,13 @@ public interface FileService {
      * @return 文档
      */
     DocumentResponse getDocument(String docId, boolean isThumbnail);
+
+    /**
+     * 删除文档
+     *
+     * @param docIds 文档
+     * @return 删除结果
+     */
+    ResultData<String> removeByDocIds(Set<String> docIds);
+    ResultData<String> removeInvalidDocuments();
 }

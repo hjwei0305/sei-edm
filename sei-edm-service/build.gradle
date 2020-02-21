@@ -4,6 +4,9 @@ apply plugin: 'io.spring.dependency-management'
 dependencies {
     compile project(':sei-edm-api')
 
+    // mongodb
+    compile("org.springframework.boot:spring-boot-starter-data-mongodb")
+
     compile(
             "org.hibernate:hibernate-java8:5.3.7.Final",
             "mysql:mysql-connector-java:$mysqlVersion",

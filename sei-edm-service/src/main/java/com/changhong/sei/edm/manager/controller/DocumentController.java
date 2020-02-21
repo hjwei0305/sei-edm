@@ -124,13 +124,4 @@ public class DocumentController implements DocumentApi {
         }
         return ResultData.fail("没有找到对应的文档信息清单");
     }
-
-    /**
-     * 清理所有文档(删除无业务信息的文档)
-     */
-    @Override
-    public ResultData<String> cleanAllDocuments() {
-        // TODO
-        return ResultData.fail("清理失败.");
-    }
 }

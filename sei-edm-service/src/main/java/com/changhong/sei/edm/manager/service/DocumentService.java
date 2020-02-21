@@ -2,11 +2,15 @@ package com.changhong.sei.edm.manager.service;
 
 import com.changhong.sei.core.dao.BaseEntityDao;
 import com.changhong.sei.core.dto.ResultData;
+import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.service.BaseEntityService;
 import com.changhong.sei.edm.manager.dao.BusinessDocumentDao;
 import com.changhong.sei.edm.manager.dao.DocumentDao;
+import com.changhong.sei.edm.manager.dao.ThumbnailDao;
 import com.changhong.sei.edm.manager.entity.BusinessDocument;
 import com.changhong.sei.edm.manager.entity.Document;
+import com.changhong.sei.edm.manager.entity.Thumbnail;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +32,8 @@ public class DocumentService extends BaseEntityService<Document> {
 
     @Autowired
     private DocumentDao dao;
+    @Autowired
+    private ThumbnailDao thumbnailDao;
     @Autowired
     private BusinessDocumentDao businessDocumentDao;
 
@@ -126,6 +132,34 @@ public class DocumentService extends BaseEntityService<Document> {
             });
         }
         return ResultData.success(docIds);
+    }
+
+    /**
+     * 删除文档信息
+     *
+     * @param docIds 文档id集合
+     * @return 返回操作结果ø
+     */
+    public ResultData<String> deleteByDocIds(Set<String> docIds) {
+        if (CollectionUtils.isEmpty(docIds)) {
+            return ResultData.fail("文档id集合为空.");
+        }
+
+        SearchFilter filter;
+        // 删除缩略图数据
+        filter = new SearchFilter(Thumbnail.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN);
+        List<Thumbnail> thumbnails = thumbnailDao.findByFilter(filter);
+        if (CollectionUtils.isNotEmpty(thumbnails)) {
+            thumbnailDao.deleteInBatch(thumbnails);
+        }
+
+        // 删除文档信息
+        filter = new SearchFilter(Document.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN);
+        List<Document> documents = dao.findByFilter(filter);
+        if (CollectionUtils.isNotEmpty(documents)) {
+            dao.deleteInBatch(documents);
+        }
+        return ResultData.success("OK");
     }
 
 }

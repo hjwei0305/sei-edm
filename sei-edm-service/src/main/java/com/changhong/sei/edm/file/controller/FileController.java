@@ -5,7 +5,10 @@ import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.file.service.FileService;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,7 +22,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Controller
 @RequestMapping(value = "/file")
@@ -55,6 +60,26 @@ public class FileController {
             }
         }
         return ResultData.success(docIds.toString());
+    }
+
+    @ApiOperation("按附件id清理")
+    @ApiImplicitParam(name = "docIds", value = "附件id", required = true)
+    @PostMapping(value = "/remove")
+    @ResponseBody
+    public ResultData<String> remove(@RequestParam(value = "docIds") String docIds) {
+        String[] docIdArr = StringUtils.split(docIds, ",");
+        Set<String> docIdSet = new HashSet<>();
+        for (String docId : docIdArr) {
+            docIdSet.add(docId.trim());
+        }
+        return fileService.removeByDocIds(docIdSet);
+    }
+
+    @ApiOperation("清理所有无效文档(删除无业务信息的文档)")
+    @PostMapping(value = "/removeInvalid")
+    @ResponseBody
+    public ResultData<String> removeInvalid() {
+        return fileService.removeInvalidDocuments();
     }
 
     @ApiOperation("文件下载 docIds和entityId二选一")

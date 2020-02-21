@@ -1,6 +1,5 @@
 package com.changhong.sei.edm.file.service.local;
 
-import com.changhong.sei.core.context.ContextUtil;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.common.constant.Constants;
@@ -214,6 +213,51 @@ public class LocalFileServiceImpl implements FileService {
         }
 
         return response;
+    }
+
+    /**
+     * 删除文档
+     *
+     * @param docIds 文档
+     * @return 删除结果
+     */
+    @Override
+    public ResultData<String> removeByDocIds(Set<String> docIds) {
+        if (CollectionUtils.isNotEmpty(docIds)) {
+            // 删除文档信息
+            documentService.deleteByDocIds(docIds);
+            
+            for (String docId : docIds) {
+                // 获取文件目录
+                StringBuffer fileStr = this.getFileDir();
+                try {
+                    File file = FileUtils.getFile(fileStr + docId);
+                    if (file.exists()) {
+                        file.delete();
+                    }
+                } catch (Exception e) {
+                    LogUtil.error("[" + docId + "]文件删除异常.", e);
+                }
+            }
+        }
+        return ResultData.success("删除成功.");
+    }
+
+    /**
+     * 清理所有文档(删除无业务信息的文档)
+     */
+    @Override
+    public ResultData<String> removeInvalidDocuments() {
+        ResultData<Set<String>> resultData = documentService.getInvalidDocIds();
+        if (resultData.successful()) {
+            Set<String> docIdSet = resultData.getData();
+            if (CollectionUtils.isNotEmpty(docIdSet)) {
+                // 删除文档
+                removeByDocIds(docIdSet);
+            }
+            return ResultData.success("成功清理: " + docIdSet.size() + "个");
+        }
+        return ResultData.fail(resultData.getMessage());
     }
 
     /**

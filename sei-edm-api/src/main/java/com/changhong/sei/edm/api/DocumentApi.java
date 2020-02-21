@@ -114,11 +114,4 @@ public interface DocumentApi {
     @GetMapping("getEntityDocumentInfos")
     @ApiOperation(value = "获取业务实体的文档信息清单", notes = "获取业务实体的文档信息清单")
     ResultData<List<DocumentResponse>> getEntityDocumentInfos(@RequestParam("entityId") @NotBlank String entityId);
-
-    /**
-     * 清理所有文档(删除无业务信息的文档)
-     */
-    @PostMapping("cleanAllDocuments")
-    @ApiOperation(value = "清理所有文档(删除无业务信息的文档)", notes = "清理所有文档(删除无业务信息的文档)")
-    ResultData<String> cleanAllDocuments();
 }
