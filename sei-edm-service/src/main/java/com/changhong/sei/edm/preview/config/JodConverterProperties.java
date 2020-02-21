@@ -14,7 +14,9 @@ import java.util.Map;
 @ConfigurationProperties("jodconverter.local")
 public class JodConverterProperties {
 
-    /** Enable JODConverter, which means that office instances will be launched. */
+    /**
+     * Enable JODConverter, which means that office instances will be launched.
+     */
     private boolean enabled;
 
     /**
@@ -66,7 +68,9 @@ public class JodConverterProperties {
      */
     private long taskExecutionTimeout = 120000L;
 
-    /** Maximum number of tasks an office process can execute before restarting. */
+    /**
+     * Maximum number of tasks an office process can execute before restarting.
+     */
     private int maxTasksPerProcess = 200;
 
     /**
@@ -81,10 +85,14 @@ public class JodConverterProperties {
      */
     private String processManagerClass;
 
-    /** Path to the registry which contains the document formats that will be supported by default. */
+    /**
+     * Path to the registry which contains the document formats that will be supported by default.
+     */
     private String documentFormatRegistry;
 
-    /** Custom properties required to load(open) and store(save) documents. */
+    /**
+     * Custom properties required to load(open) and store(save) documents.
+     */
     private Map<String, DocumentFormatProperties> formatOptions;
 
     public boolean isEnabled() {

@@ -2,7 +2,6 @@ package com.changhong.sei.edm.manager.dao;
 
 import com.changhong.sei.core.dao.BaseEntityDao;
 import com.changhong.sei.edm.manager.entity.BusinessDocument;
-import com.changhong.sei.edm.manager.entity.Document;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

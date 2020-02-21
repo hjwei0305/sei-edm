@@ -43,6 +43,10 @@ spring:
     password: ZmkDbgaua3Rso33T
     database: 0
 
+  data:
+    mongodb:
+      uri: mongodb://edm_dev:lAjrgwbT0xqWNT8LVmmOAs1f@10.4.208.132:27017/edm
+
 # jodconverter 配置
 jodconverter:
   local:

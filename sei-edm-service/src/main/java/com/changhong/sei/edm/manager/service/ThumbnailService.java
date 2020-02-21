@@ -2,9 +2,7 @@ package com.changhong.sei.edm.manager.service;
 
 import com.changhong.sei.core.dao.BaseEntityDao;
 import com.changhong.sei.core.service.BaseEntityService;
-import com.changhong.sei.edm.manager.dao.DocumentDao;
 import com.changhong.sei.edm.manager.dao.ThumbnailDao;
-import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.entity.Thumbnail;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

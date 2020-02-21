@@ -3,7 +3,6 @@ package com.changhong.sei.edm.file.service;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.edm.dto.DocumentResponse;
 
-import java.io.File;
 import java.util.List;
 import java.util.Set;
 
@@ -14,15 +13,6 @@ import java.util.Set;
  * @version 1.0.00  2020-02-03 00:32
  */
 public interface FileService {
-
-    /**
-     * 上传一个文档(如果是图像生成缩略图)
-     *
-     * @param sys  来源系统
-     * @param file 文档
-     * @return 文档信息
-     */
-    ResultData<String> uploadDocument(String sys, File file);
 
     /**
      * 上传一个文档(如果是图像生成缩略图)
@@ -74,5 +64,6 @@ public interface FileService {
      * @return 删除结果
      */
     ResultData<String> removeByDocIds(Set<String> docIds);
+
     ResultData<String> removeInvalidDocuments();
 }

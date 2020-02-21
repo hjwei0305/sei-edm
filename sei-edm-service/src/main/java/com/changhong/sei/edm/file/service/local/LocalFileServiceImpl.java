@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,7 +31,6 @@ import java.util.*;
  * @author 马超(Vision.Mac)
  * @version 1.0.00  2020-02-03 14:07
  */
-@Service
 public class LocalFileServiceImpl implements FileService {
     public static final String DOT = ".";
 
@@ -75,19 +73,6 @@ public class LocalFileServiceImpl implements FileService {
             }
         }
         return DocumentType.Other;
-    }
-
-    /**
-     * 上传一个文档(如果是图像生成缩略图)
-     *
-     * @param sys  来源系统
-     * @param file 文档
-     * @return 文档信息
-     */
-    @Override
-    @Deprecated
-    public ResultData<String> uploadDocument(String sys, File file) {
-        return uploadDocument(FileUtils.getFileName(file.getName()), sys, file, Boolean.TRUE);
     }
 
     /**
@@ -226,7 +211,7 @@ public class LocalFileServiceImpl implements FileService {
         if (CollectionUtils.isNotEmpty(docIds)) {
             // 删除文档信息
             documentService.deleteByDocIds(docIds);
-            
+
             for (String docId : docIds) {
                 // 获取文件目录
                 StringBuffer fileStr = this.getFileDir();
