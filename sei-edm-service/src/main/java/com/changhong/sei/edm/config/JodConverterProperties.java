@@ -1,4 +1,4 @@
-package com.changhong.sei.edm.preview.config;
+package com.changhong.sei.edm.config;
 
 import org.jodconverter.document.DocumentFormatProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -11,7 +11,6 @@ import java.util.Map;
  * @author 马超(Vision.Mac)
  * @version 1.0.00  2020-02-07 20:40
  */
-@ConfigurationProperties("jodconverter.local")
 public class JodConverterProperties {
 
     /**

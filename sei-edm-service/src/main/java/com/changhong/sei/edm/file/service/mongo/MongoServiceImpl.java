@@ -26,7 +26,6 @@ import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
-import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -41,7 +40,6 @@ import java.util.*;
  * @author 马超(Vision.Mac)
  * @version 1.0.00  2020-02-03 14:08
  */
-@Service
 public class MongoServiceImpl implements FileService {
 
     @Autowired

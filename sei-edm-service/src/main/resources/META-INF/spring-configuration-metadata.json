@@ -1,0 +1,66 @@
+{
+  "hints": [],
+  "groups": [
+    {
+      "name": "sei.edm",
+      "type": "com.changhong.sei.edm.config.EdmConfigProperties",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties"
+    },
+    {
+      "name": "sei.edm.model",
+      "type": "com.changhong.sei.edm.config.EdmConfigProperties$StoreModel",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties",
+      "sourceMethod": "getModel()"
+    },
+    {
+      "name": "sei.edm.jod-converter",
+      "type": "com.changhong.sei.edm.config.JodConverterProperties",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties",
+      "sourceMethod": "getJodConverter()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "sei.edm.store-path",
+      "type": "java.lang.String",
+      "description": "本地文件系统目录地址",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties"
+    },
+
+    {
+      "name": "sei.edm.model",
+      "type": "com.changhong.sei.edm.config.EdmConfigProperties$StoreModel",
+      "description": "存储类型: local-本地文件系统;mongo-MongoDB存储",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties$StoreModel",
+      "defaultValue": "local"
+    },
+
+    {
+      "name": "sei.edm.jod-converter.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否开启jod converter转换",
+      "sourceType": "com.changhong.sei.edm.config.JodConverterProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "sei.edm.jod-converter.office-home",
+      "type": "java.lang.String",
+      "description": "open office 安装目录",
+      "sourceType": "com.changhong.sei.edm.config.JodConverterProperties"
+    },
+    {
+      "name": "sei.edm.jod-converter.port-numbers",
+      "type": "java.lang.String",
+      "description": "open office 服务端口",
+      "sourceType": "com.changhong.sei.edm.config.JodConverterProperties",
+      "defaultValue": "8100,8101,8102"
+    },
+    {
+      "name": "sei.edm.jod-converter.max-tasks-per-process",
+      "type": "java.lang.Integer",
+      "description": "进程的最大任务数",
+      "sourceType": "com.changhong.sei.edm.config.JodConverterProperties",
+      "defaultValue": 200
+    }
+  ]
+}

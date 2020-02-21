@@ -1,5 +1,8 @@
-package com.changhong.sei.edm.preview.config;
+package com.changhong.sei.edm.config;
 
+import com.changhong.sei.edm.file.service.FileService;
+import com.changhong.sei.edm.file.service.local.LocalFileServiceImpl;
+import com.changhong.sei.edm.file.service.mongo.MongoServiceImpl;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -15,6 +18,7 @@ import org.jodconverter.process.ProcessManager;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
@@ -34,15 +38,32 @@ import java.util.stream.Stream;
  */
 @Configuration
 @ConditionalOnClass(LocalConverter.class)
-@ConditionalOnProperty(prefix = "jodconverter.local", name = "enabled", havingValue = "true")
-@EnableConfigurationProperties(JodConverterProperties.class)
-public class JodConverterConfig {
+@ConditionalOnProperty(prefix = "sei.edm.jod-converter", name = "enabled", havingValue = "true")
+@EnableConfigurationProperties(EdmConfigProperties.class)
+public class JodConverterConfig implements ResourceLoaderAware {
 
+    private final EdmConfigProperties.StoreModel storeModel;
     private final JodConverterProperties properties;
+    private ResourceLoader resourceLoader;
 
-    public JodConverterConfig(final JodConverterProperties properties) {
-        this.properties = properties;
+    public JodConverterConfig(final EdmConfigProperties edmConfigProperties) {
+        this.storeModel = edmConfigProperties.getModel();
+        this.properties = edmConfigProperties.getJodConverter();
     }
+
+    @Override
+    public void setResourceLoader(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
+
+    @Bean
+    public FileService fileService() {
+        if (EdmConfigProperties.StoreModel.local == storeModel) {
+            return new LocalFileServiceImpl();
+        } else {
+            return new MongoServiceImpl();
+        }
+     }
 
     // Creates the OfficeManager bean.
     private OfficeManager createOfficeManager(final ProcessManager processManager) {
@@ -82,7 +103,7 @@ public class JodConverterConfig {
     }
 
     @Bean
-    public DocumentFormatRegistry documentFormatRegistry(final ResourceLoader resourceLoader) throws Exception {
+    public DocumentFormatRegistry documentFormatRegistry() throws Exception {
         DocumentFormatRegistry registry;
         if (StringUtils.isBlank(properties.getDocumentFormatRegistry())) {
             try (InputStream in = resourceLoader.getResource("classpath:document-formats.json").getInputStream()) {

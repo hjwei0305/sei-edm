@@ -42,28 +42,9 @@ spring:
     port: 6379
     password: ZmkDbgaua3Rso33T
     database: 0
-
   data:
     mongodb:
       uri: mongodb://edm_dev:lAjrgwbT0xqWNT8LVmmOAs1f@10.4.208.132:27017/edm
-
-# jodconverter 配置
-jodconverter:
-  local:
-    # libreoffice 安装目录
-    #    office-home: ${office.home}
-    office-home: /Applications/OpenOffice.app/Contents
-    #    office-home: /Applications/LibreOffice.app/Contents
-    port-numbers: 8100,8101,8102
-    max-tasks-per-process: 100
-    # 开启jodconverter
-    enabled: true
-  store:
-    # 转换后存放文档的路径
-    path: /Users/chaoma/work_space/0_temp/
-#    path: ${store.path}
-
-
 
 logging:
   level:
@@ -76,6 +57,17 @@ sei:
   http:
     filter:
       enable: false
+  # 核心配置
+  edm:
+    model: mongo
+    store-path: /Users/chaoma/work_space/0_temp/
+    jod-converter:
+      enabled: true
+      office-home: /Applications/OpenOffice.app/Contents
+#      office-home: /Applications/LibreOffice.app/Contents
+      port-numbers: 8100,8101,8102
+      max-tasks-per-process: 100
+
 server:
   servlet:
     context-path: /edm

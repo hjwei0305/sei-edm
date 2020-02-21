@@ -34,7 +34,7 @@ import java.util.*;
 public class LocalFileServiceImpl implements FileService {
     public static final String DOT = ".";
 
-    @Value("${jodconverter.store.path}")
+    @Value("${sei.edm.store-path}")
     private String storePath;
     @Autowired
     private DocumentService documentService;
