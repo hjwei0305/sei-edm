@@ -5,7 +5,7 @@ import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.preview.service.PreviewService;
-import com.chonghong.sei.util.FileUtils;
+import com.changhong.sei.util.FileUtils;
 import org.jodconverter.DocumentConverter;
 import org.jodconverter.document.DefaultDocumentFormatRegistry;
 import org.jodconverter.office.OfficeException;

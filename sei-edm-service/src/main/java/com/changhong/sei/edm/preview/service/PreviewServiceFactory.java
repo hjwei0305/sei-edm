@@ -5,7 +5,7 @@ import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.preview.service.impl.*;
-import com.chonghong.sei.exception.ServiceException;
+import com.changhong.sei.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;

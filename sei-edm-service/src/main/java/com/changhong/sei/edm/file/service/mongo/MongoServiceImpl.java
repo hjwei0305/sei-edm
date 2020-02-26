@@ -11,7 +11,7 @@ import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.entity.Thumbnail;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.edm.manager.service.ThumbnailService;
-import com.chonghong.sei.util.FileUtils;
+import com.changhong.sei.util.FileUtils;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.gridfs.GridFSBucket;
