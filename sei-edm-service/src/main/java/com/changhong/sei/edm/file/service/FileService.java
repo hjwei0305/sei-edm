@@ -49,13 +49,14 @@ public interface FileService {
     DocumentResponse getDocument(String docId);
 
     /**
-     * 获取一个文档(包含信息和数据)
+     * 获取缩略图
      *
-     * @param docId       文档Id
-     * @param isThumbnail 是获取缩略图
-     * @return 文档
+     * @param docId  文档Id
+     * @param width  宽
+     * @param height 高
+     * @return 返回缩略图
      */
-    DocumentResponse getDocument(String docId, boolean isThumbnail);
+    DocumentResponse getThumbnail(String docId, int width, int height);
 
     /**
      * 删除文档

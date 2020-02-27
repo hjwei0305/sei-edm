@@ -82,6 +82,29 @@ public class FileController {
         return fileService.removeInvalidDocuments();
     }
 
+    @ApiOperation("获取缩略图")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "docId", value = "附件id", paramType = "query", required = true),
+            @ApiImplicitParam(name = "width", value = "缩略图宽(默认:150)", paramType = "query"),
+            @ApiImplicitParam(name = "height", value = "缩略图高(默认:100)", paramType = "query")
+    })
+    @GetMapping(value = "/thumbnail")
+    public ResponseEntity<byte[]> thumbnail(@RequestParam(value = "docId") String docId,
+                                            @RequestParam(value = "width", required = false, defaultValue = "150") int width,
+                                            @RequestParam(value = "height", required = false, defaultValue = "100") int height,
+                                            HttpServletRequest request,
+                                            HttpServletResponse response) {
+
+        if (StringUtils.isBlank(docId)) {
+            LogUtil.warn("缩略图参数错误.");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } else {
+            // 单文件下载
+            return singleDownload(docId, Boolean.TRUE, width, height, request, response);
+        }
+
+    }
+
     @ApiOperation("文件下载 docIds和entityId二选一")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "docIds", value = "附件id", paramType = "query"),
@@ -91,7 +114,6 @@ public class FileController {
     @GetMapping(value = "/download")
     public ResponseEntity<byte[]> download(@RequestParam(value = "docIds", required = false) String docIds,
                                            @RequestParam(value = "entityId", required = false) String entityId,
-                                           @RequestParam(value = "isThumbnail", defaultValue = "false") boolean isThumbnail,
                                            HttpServletRequest request,
                                            HttpServletResponse response) {
         if (StringUtils.isBlank(entityId)) {
@@ -102,7 +124,7 @@ public class FileController {
                 String[] docIdArr = StringUtils.split(docIds, ",");
                 if (docIdArr.length == 1) {
                     // 单文件下载
-                    return singleDownload(docIdArr[0].trim(), isThumbnail, request, response);
+                    return singleDownload(docIdArr[0].trim(), Boolean.FALSE, 0, 0, request, response);
                 } else {
 
                     // 多文件下载
@@ -121,9 +143,14 @@ public class FileController {
      * @param docId       docId
      * @param isThumbnail 缩略图
      */
-    private ResponseEntity<byte[]> singleDownload(String docId, boolean isThumbnail,
+    private ResponseEntity<byte[]> singleDownload(String docId, boolean isThumbnail, int width, int height,
                                                   HttpServletRequest request, HttpServletResponse response) {
-        DocumentResponse document = fileService.getDocument(docId, isThumbnail);
+        DocumentResponse document;
+        if (isThumbnail) {
+            document = fileService.getThumbnail(docId, width, height);
+        } else {
+            document = fileService.getDocument(docId);
+        }
         if (Objects.isNull(document)) {
             LogUtil.error("file is not found");
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

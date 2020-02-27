@@ -166,33 +166,45 @@ public class MongoServiceImpl implements FileService {
      */
     @Override
     public DocumentResponse getDocument(String docId) {
-        return getDocument(docId, false);
-    }
-
-    /**
-     * 获取一个文档(包含信息和数据)
-     *
-     * @param docId       文档Id
-     * @param isThumbnail 是获取缩略图
-     * @return 文档
-     */
-    @Override
-    public DocumentResponse getDocument(String docId, boolean isThumbnail) {
         DocumentResponse response = new DocumentResponse();
 
         Document document = documentService.findByProperty(Document.FIELD_DOC_ID, docId);
         if (Objects.nonNull(document)) {
             modelMapper.map(document, response);
 
-            if (isThumbnail) {
-                Thumbnail thumbnail = thumbnailService.findByProperty(Thumbnail.FIELD_DOC_ID, docId);
-                if (Objects.nonNull(thumbnail)) {
-                    response.setData(thumbnail.getImage());
-                } else {
-                    LogUtil.error("[{}]缩略图不存在.", docId);
-                    return null;
-                }
-            } else {
+            //获取原图
+            GridFSFile fsdbFile = edmGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
+            if (Objects.isNull(fsdbFile)) {
+                LogUtil.error("[{}]缩略图不存在.", docId);
+                return null;
+            }
+            GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bucket.downloadToStream(fsdbFile.getId(), baos);
+
+            response.setData(baos.toByteArray());
+        }
+
+        return response;
+    }
+
+    /**
+     * 获取缩略图
+     *
+     * @param docId  文档Id
+     * @param width  宽
+     * @param height 高
+     * @return 返回缩略图
+     */
+    @Override
+    public DocumentResponse getThumbnail(String docId, int width, int height) {
+        Document document = documentService.findByProperty(Document.FIELD_DOC_ID, docId);
+        if (Objects.nonNull(document)) {
+            //如果是图像文档，生成缩略图
+            if (DocumentType.Image.equals(document.getDocumentType())) {
+                DocumentResponse response = new DocumentResponse();
+                modelMapper.map(document, response);
+
                 //获取原图
                 GridFSFile fsdbFile = edmGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
                 if (Objects.isNull(fsdbFile)) {
@@ -203,11 +215,29 @@ public class MongoServiceImpl implements FileService {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 bucket.downloadToStream(fsdbFile.getId(), baos);
 
-                response.setData(baos.toByteArray());
+                InputStream imageStream = null;
+                try {
+                    imageStream = new ByteArrayInputStream(baos.toByteArray());
+                    String ext = FileUtils.getExtension(document.getFileName());
+                    byte[] thumbData = ImageUtils.scale2(imageStream, ext, 100, 150, true);
+
+                    response.setData(thumbData);
+                    return response;
+                } catch (Exception e) {
+                    return null;
+                } finally {
+                    if (Objects.nonNull(imageStream)) {
+                        try {
+                            imageStream.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
         }
 
-        return response;
+        return null;
     }
 
     /**
@@ -264,39 +294,39 @@ public class MongoServiceImpl implements FileService {
             return ResultData.fail("文档不能为空.");
         }
 
-        //获取文档类型
-        DocumentType documentType = document.getDocumentType();
-        Thumbnail thumbnail;
-        //如果是图像文档，生成缩略图
-        if (DocumentType.Image.equals(documentType) && generateThumbnail) {
-            //复制数据流
-            InputStream imageStream = null;
-            try {
-                imageStream = new ByteArrayInputStream(data);
-
-                String ext = FileUtils.getExtension(document.getFileName());
-                byte[] thumbData = ImageUtils.scale2(imageStream, ext, 100, 150, true);
-                if (Objects.nonNull(thumbData)) {
-//                FileUtils.writeByteArrayToFile(new File(storePath + "123."+ext), thumbData);
-                    thumbnail = new Thumbnail();
-                    thumbnail.setDocId(document.getDocId());
-                    thumbnail.setFileName(document.getFileName());
-                    thumbnail.setImage(thumbData);
-
-                    thumbnailService.save(thumbnail);
-                }
-            } catch (Exception e) {
-                LogUtil.error("生成缩略图异常.", e);
-            } finally {
-                if (Objects.nonNull(imageStream)) {
-                    try {
-                        imageStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
+//        //获取文档类型
+//        DocumentType documentType = document.getDocumentType();
+//        Thumbnail thumbnail;
+//        //如果是图像文档，生成缩略图
+//        if (DocumentType.Image.equals(documentType) && generateThumbnail) {
+//            //复制数据流
+//            InputStream imageStream = null;
+//            try {
+//                imageStream = new ByteArrayInputStream(data);
+//
+//                String ext = FileUtils.getExtension(document.getFileName());
+//                byte[] thumbData = ImageUtils.scale2(imageStream, ext, 100, 150, true);
+//                if (Objects.nonNull(thumbData)) {
+////                FileUtils.writeByteArrayToFile(new File(storePath + "123."+ext), thumbData);
+//                    thumbnail = new Thumbnail();
+//                    thumbnail.setDocId(document.getDocId());
+//                    thumbnail.setFileName(document.getFileName());
+//                    thumbnail.setImage(thumbData);
+//
+//                    thumbnailService.save(thumbnail);
+//                }
+//            } catch (Exception e) {
+//                LogUtil.error("生成缩略图异常.", e);
+//            } finally {
+//                if (Objects.nonNull(imageStream)) {
+//                    try {
+//                        imageStream.close();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        }
 
         documentService.save(document);
 
