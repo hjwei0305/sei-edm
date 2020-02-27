@@ -219,7 +219,7 @@ public class MongoServiceImpl implements FileService {
                 try {
                     imageStream = new ByteArrayInputStream(baos.toByteArray());
                     String ext = FileUtils.getExtension(document.getFileName());
-                    byte[] thumbData = ImageUtils.scale2(imageStream, ext, 100, 150, true);
+                    byte[] thumbData = ImageUtils.scale2(imageStream, ext, height, width, true);
 
                     response.setData(thumbData);
                     return response;

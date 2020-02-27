@@ -133,6 +133,12 @@ public class ImageUtils {
         if (Objects.isNull(stream)) {
             return null;
         }
+        if (width <= 0) {
+            width = 100;
+        }
+        if (height <= 0) {
+            height = 100;
+        }
         if (Objects.isNull(extension) || extension.length() == 0) {
             extension = IMAGE_TYPE_PNG;
         }
