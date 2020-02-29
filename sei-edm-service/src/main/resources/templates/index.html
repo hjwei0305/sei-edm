@@ -95,7 +95,7 @@
                     获取业务实体的文档信息清单：/getEntityDocumentInfos POST/GET 参数 <strong>entityId</strong> ${baseUrl}
                     getEntityDocumentInfos?entityId=XXX</br>
                     下载：/download GET 参数 <strong>docId</strong> ${baseUrl}download?docId=XXX</br>
-                    预览：/preview GET  ${baseUrl}preview/{docId}</br>
+                    预览：/preview GET  ${baseUrl}preview?docId={docId}</br>
 
                 </p>
                 <div style="padding: 10px">
@@ -275,7 +275,7 @@
                     console.log(JSON.stringify(data));
                     var html = '';
 
-                    html = "<a target='_blank' href='${baseUrl}preview/" + data[0]['id'] + "'>预览" + data[0]['fileName'] + "</a></br>";
+                    html = "<a target='_blank' href='${baseUrl}preview?docId=" + data[0]['id'] + "'>预览" + data[0]['fileName'] + "</a></br>";
                     html += "<a target='_blank' href='${baseUrl}download?docId=" + data[0]['id'] + "'>下载" + data[0]['fileName'] + "</a>";
                     $('#fileData').html(html);
 

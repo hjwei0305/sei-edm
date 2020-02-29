@@ -67,7 +67,7 @@
                     获取业务实体的文档信息清单：/getEntityDocumentInfos POST/GET 参数 <strong>entityId</strong> ${baseUrl}
                     getEntityDocumentInfos?entityId=XXX</br>
                     下载：/download GET 参数 <strong>docId</strong> ${baseUrl}download?docId=XXX</br>
-                    预览：/pageOffice/preview GET  ${baseUrl}pageOffice/preview/{docId}</br>
+                    预览：/pageOffice/preview GET  ${baseUrl}pageOffice/preview?docId={docId}</br>
 
                 </p>
                 <div style="padding: 10px">
@@ -212,7 +212,7 @@
                     var html = '';
 
                     html =  "<a href=\"javascript:POBrowser.openWindowModeless('${baseUrl}pageOffice/preview/"+ data[0]['id']+"','width=1200px;height=900px;');\">预览" + data[0]['fileName'] + "</a></br>";
-                    //html = "<a href='${baseUrl}pageOffice/preview/" + data[0]['id'] + "'>预览" + data[0]['fileName'] + "</a></br>";
+                    //html = "<a href='${baseUrl}pageOffice/preview?docId=" + data[0]['id'] + "'>预览" + data[0]['fileName'] + "</a></br>";
                     html += "<a target='_blank' href='${baseUrl}download?docId=" + data[0]['id'] + "'>下载" + data[0]['fileName'] + "</a>";
                     $('#fileData').html(html);
 

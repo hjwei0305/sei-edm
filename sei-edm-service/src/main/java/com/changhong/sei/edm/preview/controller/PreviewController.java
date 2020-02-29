@@ -26,7 +26,6 @@ import java.net.URLConnection;
 import java.util.Objects;
 
 @Controller
-@RequestMapping(value = "/preview")
 @Api(value = "文件在线预览", tags = "文件在线预览")
 public class PreviewController {
     @Autowired
@@ -37,13 +36,13 @@ public class PreviewController {
 //    @Autowired
 //    private HttpServletResponse response;
 
-    @GetMapping(value = "/{docId}")
+    @GetMapping(value = "/preview")
     @ApiOperation("在线预览")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "docId", value = "附件id", required = true, paramType = "query"),
             @ApiImplicitParam(name = "markText", value = "水印内容", paramType = "query", example = "SEI6.0")
     })
-    public String preview(@PathVariable("docId") String docId,
+    public String preview(@RequestParam("docId") String docId,
                           @RequestParam(name = "markText", defaultValue = "SEI6.0", required = false) String markText,
                           Model model) {
         model.addAttribute("docId", docId);
@@ -90,7 +89,7 @@ public class PreviewController {
      *
      * @param docId docId
      */
-    @GetMapping(value = "/readFile")
+    @GetMapping(value = "/preview/readFile")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "docId", value = "附件id", required = true, paramType = "query"),
             @ApiImplicitParam(name = "markText", value = "水印内容", paramType = "query", example = "SEI6.0")
