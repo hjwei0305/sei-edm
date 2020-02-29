@@ -119,7 +119,8 @@ public class FileController {
     @ApiOperation("文件下载 docIds和entityId二选一")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "docIds", value = "附件id", paramType = "query"),
-            @ApiImplicitParam(name = "entityId", value = "业务实体id", paramType = "query")
+            @ApiImplicitParam(name = "entityId", value = "业务实体id", paramType = "query"),
+            @ApiImplicitParam(name = "fileName", value = "下载文件名", paramType = "query")
     })
     @GetMapping(value = "/download")
     public ResponseEntity<byte[]> download(@RequestParam(value = "docIds", required = false) String docIds,
@@ -182,7 +183,10 @@ public class FileController {
 
     private ResponseEntity<byte[]> multipleDownload(List<Document> documents, HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (CollectionUtils.isNotEmpty(documents)) {
-            String zipFileName = IdGenerator.uuid2() + ".zip";
+            String zipFileName = request.getParameter("fileName");
+            if (StringUtils.isBlank(zipFileName)) {
+                zipFileName = IdGenerator.uuid2() + ".zip";
+            }
             // 设置下载文件名
             setDownloadFileName(zipFileName, request, response);
 
