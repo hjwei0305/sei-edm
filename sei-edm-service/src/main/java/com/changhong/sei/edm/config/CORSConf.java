@@ -20,10 +20,8 @@ public class CORSConf {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-//                if (LogUtil.isInfoEnabled()) {
-//                    LogUtil.info("初始化 CORSConfiguration 配置");
-//                }
                 registry.addMapping("/**")
+                        .allowCredentials(true)
                         .allowedHeaders("*")
                         .allowedMethods("*")
                         .allowedOrigins("*");
