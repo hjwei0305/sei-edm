@@ -201,6 +201,7 @@ public class FileController {
         // 设置强制下载不打开
         //response.setContentType("application/force-download");
         response.setContentType("application/octet-stream");
+        response.setHeader("Access-Control-Expose-Headers","Content-Disposition");
         // 设置文件名
         try {
             /*
@@ -234,12 +235,13 @@ public class FileController {
 
             for (Document doc : documents) {
                 try {
-                    document = fileService.getDocument(doc.getId());
+                    document = fileService.getDocument(doc.getDocId());
                     zipEntry = new ZipEntry(doc.getFileName());
                     // 开始编写新的ZIP文件条目并将流定位到条目数据的开头
                     zip.putNextEntry(zipEntry);
                     byte[] data = document.getData();
                     zip.write(data, 0, data.length);
+
                     // 关闭当前的ZIP条目并定位写入下一个条目的流
                     zip.closeEntry();
                 } catch (Exception e) {
@@ -248,6 +250,7 @@ public class FileController {
             }
             // 完成编写ZIP输出流的内容而不关闭底层流
             zip.finish();
+            outputStream.flush();
         } catch (Exception e) {
             LogUtil.error("打包文件异常", e);
         }
