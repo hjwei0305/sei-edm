@@ -205,7 +205,7 @@ public class FileController {
         // 设置强制下载不打开
         //response.setContentType("application/force-download");
         response.setContentType("application/octet-stream");
-//        response.setHeader("Access-Control-Expose-Headers","Content-Disposition");
+        response.setHeader("Access-Control-Expose-Headers","Content-Disposition");
         // 设置文件名
         try {
             /*
