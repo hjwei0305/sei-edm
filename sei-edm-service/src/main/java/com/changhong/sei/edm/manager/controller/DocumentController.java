@@ -6,10 +6,11 @@ import com.changhong.sei.edm.dto.BindRequest;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.service.DocumentService;
+import io.swagger.annotations.Api;
 import org.apache.commons.collections.CollectionUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
@@ -23,7 +24,8 @@ import java.util.Objects;
  * @author 马超(Vision.Mac)
  * @version 1.0.00  2020-02-05 16:15
  */
-@Controller
+@RestController
+@Api(value = "DocumentApi", tags = "业务文档服务")
 public class DocumentController implements DocumentApi {
 
     @Autowired
