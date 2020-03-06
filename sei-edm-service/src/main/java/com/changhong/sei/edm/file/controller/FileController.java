@@ -5,10 +5,13 @@ import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.dto.DocumentResponse;
+import com.changhong.sei.edm.dto.OcrType;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.service.DocumentService;
+import com.changhong.sei.edm.ocr.service.CharacterReaderService;
+import com.changhong.sei.util.EnumUtils;
 import com.changhong.sei.util.IdGenerator;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -44,26 +47,41 @@ public class FileController {
     @Autowired
     private FileService fileService;
     @Autowired
+    private CharacterReaderService characterReaderService;
+    @Autowired
     private DocumentService documentService;
 
     @ApiOperation("文件上传")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "sys", value = "来源系统"),
-            @ApiImplicitParam(name = "ocr", dataTypeClass = Boolean.class, value = "是否识别"),
+            @ApiImplicitParam(name = "ocr", dataTypeClass = OcrType.class, value = "ocr识别类型: None, Barcode, InvoiceQr "),
             @ApiImplicitParam(name = "file", value = "文件", required = true)
     })
     @PostMapping(value = "/upload")
     @ResponseBody
     public ResultData<UploadResponse> upload(//@RequestParam("file") MultipartFile[] files,
                                              @RequestParam("file") MultipartFile file,
-                                             @RequestParam(value = "ocr", defaultValue = "false", required = false) Boolean ocr,
+                                             @RequestParam(value = "ocr", required = false) String ocr,
                                              @RequestParam(value = "sys", required = false) String sys) throws IOException {
         if (StringUtils.isBlank(sys)) {
             sys = ContextUtil.getAppCode();
         }
-        UploadResponse uploadResponse = null;
+        UploadResponse uploadResponse;
 //        for (MultipartFile file : files) {
+        // 文件上传
         ResultData<UploadResponse> resultData = fileService.uploadDocument(file.getOriginalFilename(), sys, file.getBytes());
+        if (resultData.successful() && StringUtils.isNotBlank(ocr)) {
+            uploadResponse = resultData.getData();
+            OcrType ocrType = EnumUtils.getEnum(OcrType.class, ocr);
+            if (Objects.nonNull(ocrType) && OcrType.None != ocrType) {
+                // 字符识别
+                ResultData<String> readerResult = characterReaderService.read(ocrType, file.getBytes());
+                if (readerResult.successful()) {
+                    // 设置识别的结果
+                    uploadResponse.setOcrData(readerResult.getData());
+                }
+            }
+        }
         return resultData;
 //            uploadResponse = resultData.getData();
 //        }
