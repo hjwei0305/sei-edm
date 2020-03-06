@@ -2,6 +2,7 @@ package com.changhong.sei.edm.file.service;
 
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.edm.dto.DocumentResponse;
+import com.changhong.sei.edm.dto.UploadResponse;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +23,7 @@ public interface FileService {
      * @param data     文档数据
      * @return 文档信息
      */
-    ResultData<String> uploadDocument(String fileName, String sys, byte[] data);
+    ResultData<UploadResponse> uploadDocument(String fileName, String sys, byte[] data);
 
     /**
      * 获取一个文档信息(不含文件内容数据)

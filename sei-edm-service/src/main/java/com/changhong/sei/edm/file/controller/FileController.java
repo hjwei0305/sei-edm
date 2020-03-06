@@ -5,6 +5,7 @@ import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.dto.DocumentResponse;
+import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.service.DocumentService;
@@ -48,29 +49,25 @@ public class FileController {
     @ApiOperation("文件上传")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "sys", value = "来源系统"),
+            @ApiImplicitParam(name = "ocr", dataTypeClass = Boolean.class, value = "是否识别"),
             @ApiImplicitParam(name = "file", value = "文件", required = true)
     })
     @PostMapping(value = "/upload")
     @ResponseBody
-    public ResultData<String> upload(@RequestParam("file") MultipartFile[] files,
-                                     @RequestParam(value = "sys", required = false) String sys) throws IOException {
+    public ResultData<UploadResponse> upload(//@RequestParam("file") MultipartFile[] files,
+                                             @RequestParam("file") MultipartFile file,
+                                             @RequestParam(value = "ocr", defaultValue = "false", required = false) Boolean ocr,
+                                             @RequestParam(value = "sys", required = false) String sys) throws IOException {
         if (StringUtils.isBlank(sys)) {
             sys = ContextUtil.getAppCode();
         }
-        boolean first = true;
-        StringBuilder docIds = new StringBuilder();
-        ResultData<String> resultData;
-        for (MultipartFile file : files) {
-            resultData = fileService.uploadDocument(file.getOriginalFilename(), sys, file.getBytes());
-            if (resultData.successful()) {
-                docIds.append(resultData.getData());
-                if (!first) {
-                    docIds.append(",");
-                }
-                first = false;
-            }
-        }
-        return ResultData.success(docIds.toString());
+        UploadResponse uploadResponse = null;
+//        for (MultipartFile file : files) {
+        ResultData<UploadResponse> resultData = fileService.uploadDocument(file.getOriginalFilename(), sys, file.getBytes());
+        return resultData;
+//            uploadResponse = resultData.getData();
+//        }
+//        return ResultData.success(uploadResponse);
     }
 
     @ApiOperation("按附件id清理")
@@ -205,7 +202,7 @@ public class FileController {
         // 设置强制下载不打开
         //response.setContentType("application/force-download");
         response.setContentType("application/octet-stream");
-        response.setHeader("Access-Control-Expose-Headers","Content-Disposition");
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         // 设置文件名
         try {
             /*

@@ -6,9 +6,9 @@ import com.changhong.sei.edm.common.constant.Constants;
 import com.changhong.sei.edm.common.util.ImageUtils;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.DocumentType;
+import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
-import com.changhong.sei.edm.manager.entity.Thumbnail;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.edm.manager.service.ThumbnailService;
 import com.changhong.sei.util.FileUtils;
@@ -83,7 +83,7 @@ public class MongoServiceImpl implements FileService {
      * @return 文档信息
      */
     @Override
-    public ResultData<String> uploadDocument(String fileName, String sys, byte[] data) {
+    public ResultData<UploadResponse> uploadDocument(String fileName, String sys, byte[] data) {
         if (Objects.isNull(data)) {
             return ResultData.fail("文件流为空.");
         }
@@ -110,7 +110,7 @@ public class MongoServiceImpl implements FileService {
             return ResultData.fail("文件上传读取异常.");
         }
 
-        return uploadDocument(document, data, Boolean.TRUE);
+        return uploadDocument(document, data);
     }
 
     /**
@@ -286,10 +286,9 @@ public class MongoServiceImpl implements FileService {
      * 上传一个文档
      *
      * @param document          文档
-     * @param generateThumbnail 生成缩略图
      * @return 文档信息
      */
-    private ResultData<String> uploadDocument(Document document, byte[] data, boolean generateThumbnail) {
+    private ResultData<UploadResponse> uploadDocument(Document document, byte[] data) {
         if (Objects.isNull(document)) {
             return ResultData.fail("文档不能为空.");
         }
@@ -330,6 +329,11 @@ public class MongoServiceImpl implements FileService {
 
         documentService.save(document);
 
-        return ResultData.success(document.getDocId());
+        UploadResponse response = new UploadResponse();
+        response.setDocId(document.getDocId());
+        response.setFileName(document.getFileName());
+        response.setDocumentType(document.getDocumentType());
+
+        return ResultData.success(response);
     }
 }

@@ -2,6 +2,18 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 dependencies {
+    //windows AMD/Intel
+    compile fileTree(dir: 'bin', include: '*.dll')
+    //Linux AMD/Intel
+    compile fileTree(dir: 'bin', include: '*.so')
+    //Mac OS X PowerPC/Intel
+    compile fileTree(dir: 'bin', include: '*.dylib')
+    //pageOffice
+    compile fileTree(dir: 'lib', include: '*.jar')
+    compile fileTree(dir: 'lib', include: '*.lic')
+    // font
+    compile fileTree(dir: 'font', include: '*.ttc')
+
     compile project(':sei-edm-api')
 
     // mongodb
@@ -23,6 +35,20 @@ dependencies {
 
     compileOnly  "org.projectlombok:lombok:1.18.4"
     annotationProcessor  "org.projectlombok:lombok:1.18.4"
+
+    compile(
+            "com.itextpdf:itext-asian:5.2.0",
+            "com.itextpdf:itextpdf:5.5.13"
+    )
+
+    compile (
+            "com.google.zxing:core:$zxing_version",
+            "com.google.zxing:javase:$zxing_version",
+            'org.apache.pdfbox:pdfbox:2.0.17',
+            'org.apache.pdfbox:fontbox:2.0.17',
+            'net.sourceforge.tess4j:tess4j:4.4.0',
+            "net.java.dev.jna:jna:5.4.0"
+    )
 
     testCompile(
             "com.changhong.sei:sei-test-starter:$sei_version"
