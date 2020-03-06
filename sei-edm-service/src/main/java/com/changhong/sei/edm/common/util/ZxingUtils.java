@@ -16,6 +16,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Vector;
 
@@ -32,14 +33,14 @@ public class ZxingUtils {
 
     static {
 //        //优化精度
-        HINTS.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
-        HINTS.put(DecodeHintType.CHARACTER_SET, "UTF-8");
-        Vector<BarcodeFormat> decodeFormats = new Vector<>();
-        decodeFormats.add(BarcodeFormat.CODE_128);
-        decodeFormats.add(BarcodeFormat.CODE_39);
-        decodeFormats.add(BarcodeFormat.CODE_93);
-        HINTS.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
-//        HINTS.put(DecodeHintType.POSSIBLE_FORMATS, EnumSet.allOf(BarcodeFormat.class));
+//        HINTS.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
+//        HINTS.put(DecodeHintType.CHARACTER_SET, "UTF-8");
+//        Vector<BarcodeFormat> decodeFormats = new Vector<>();
+//        decodeFormats.add(BarcodeFormat.CODE_128);
+//        decodeFormats.add(BarcodeFormat.CODE_39);
+//        decodeFormats.add(BarcodeFormat.CODE_93);
+//        HINTS.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
+        HINTS.put(DecodeHintType.POSSIBLE_FORMATS, EnumSet.allOf(BarcodeFormat.class));
     }
 
     public static String processImage(BufferedImage image, Map<DecodeHintType, Object> hints, String[] matchPrefix) {

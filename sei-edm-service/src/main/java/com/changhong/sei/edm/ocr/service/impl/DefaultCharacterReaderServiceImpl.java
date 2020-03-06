@@ -137,6 +137,39 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             result = StringUtils.EMPTY;
         }
 
+        if (OcrType.InvoiceQr == ocrType) {
+            String[] arr;
+            if (StringUtils.isNotBlank(result)) {
+                arr = result.split("[,]");
+                if (arr.length >= 7) {
+                    StringBuilder s = new StringBuilder();
+                    // 发票代码
+                    s.append("{\"code\":\"").append(arr[2]).append("\",");
+                    // 发票号码
+                    s.append("\"number\":\"").append(arr[3]).append("\",");
+                    // 发票种类 01-增值税专用发票 04-增值税普通发票 10-增值税电子普通发票
+                    if ("01".equals(arr[1])) {
+                        s.append("\"category\":\"增值税专用发票\",");
+                    } else if ("04".equals(arr[1])) {
+                        s.append("\"category\":\"增值税普通发票\",");
+                    } else if ("10".equals(arr[1])) {
+                        s.append("\"category\":\"增值税电子普通发票\",");
+                    }
+                    // 开票金额(不含税) arr[4]
+                    s.append("\"amount\":").append(arr[4]).append(",");
+                    // 开票日期 arr[5]
+                    s.append("\"date\":\"").append(arr[5]).append("\",");
+                    // 校验码
+                    s.append("\"checkCode\":\"").append(arr[6]).append("\",");
+                    if (arr.length > 7) {
+                        //随机码
+                        s.append("\"random\":\"").append(arr[7]).append("\"}");
+                    }
+                    result = s.toString();
+                }
+            }
+        }
+
         return ResultData.success(result);
     }
 

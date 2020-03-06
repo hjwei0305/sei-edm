@@ -54,7 +54,7 @@ public class FileController {
     @ApiOperation("文件上传或识别")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "sys", value = "来源系统"),
-            @ApiImplicitParam(name = "ocr", dataTypeClass = OcrType.class, value = "ocr识别类型: None, Barcode, InvoiceQr "),
+            @ApiImplicitParam(name = "ocr", dataTypeClass = OcrType.class, value = "ocr识别类型: None, Barcode, InvoiceQr, Qr "),
             @ApiImplicitParam(name = "file", value = "文件", required = true)
     })
     @PostMapping(value = "/upload")

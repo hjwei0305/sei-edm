@@ -29,7 +29,7 @@
     </div>
     <label class="btn btn-primary  mb-2" for="upload" style="cursor:pointer;">浏览</label>
     &nbsp;&nbsp;&nbsp;&nbsp;
-    <label class="btn btn-success  mb-2" style="cursor:pointer;" onclick="submit()">上传</label>
+    <label class="btn btn-success  mb-2" style="cursor:pointer;" onclick="upload()">上传</label>
     &nbsp;&nbsp;&nbsp;&nbsp;
     <label class="mb-2" style="color: red;" id="msg"></label>
 </div>
@@ -38,7 +38,9 @@
     &nbsp;&nbsp;&nbsp;&nbsp;
     <label class="btn btn-info  mb-2" style="cursor:pointer;" onclick="preview();">预览</label>
     &nbsp;&nbsp;&nbsp;&nbsp;
-    <label class="btn btn-warning  mb-2" style="cursor:pointer;" onclick="ocr();">识别</label>
+    <label class="btn btn-warning  mb-2" style="cursor:pointer;" onclick="ocr('Barcode');">识别Barcode</label>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <label class="btn btn-warning  mb-2" style="cursor:pointer;" onclick="ocr('InvoiceQr');">识别Qr</label>
 </div>
 <div style="height: 720px">
     <iframe src="" height="100%" width="100%"
@@ -56,7 +58,7 @@
         document.getElementById('viewfile').value = document.getElementById('upload').value;
     }
 
-    function submit() {
+    function upload() {
         $("#msg").html(" ");
         var viewfile = $("#viewfile").val();
         if (viewfile === "") {
@@ -66,7 +68,7 @@
         $("#fileForm").ajaxSubmit({
             success: function (data) {
                 if (data.success) {
-                    docId = data.data;
+                    docId = data.data.docId;
                     $("#msg").html("文件上传成功!");
                 } else {
                     docId = "";
@@ -92,13 +94,24 @@
         document.getElementsByTagName('iframe')[0].src = _ctxPath + "/preview?docId=" + docId;
     }
 
-    function ocr() {
-        if (docId == "") {
-            $("#msg").html("请先上传文件.");
+    function ocr(type) {
+        var viewfile = $("#viewfile").val();
+        if (viewfile === "") {
+            $("#msg").html("文件名不能为空");
             return;
         }
-        alert("开发中");
-        //document.getElementsByTagName('iframe')[0].src = _ctxPath + "/preview?docId=" + docId;
+        $("#fileForm").ajaxSubmit({
+            url: _ctxPath + "/file/upload?ocr=" + type,
+            success: function (data) {
+                if (data.success) {
+                    docId = data.data.docId;
+                    alert(data.data.ocrData);
+                } else {
+                    docId = "";
+                    alert(data.message);
+                }
+            }
+        });
     }
 </script>
 <script src="/js/jquery.min.js" th:src="@{/js/jquery-3.0.0.min.js}"></script>

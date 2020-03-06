@@ -8,6 +8,8 @@ public enum OcrType {
     None,
     //条码
     Barcode,
+    //二维码
+    Qr,
     //电子发票二维码
     InvoiceQr
 
