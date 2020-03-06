@@ -19,12 +19,12 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
     /**
      * 识别条码匹配前缀
      */
-    @Value("${sei.edm.ocr.match.prefix}")
+    @Value("${sei.edm.ocr.match.prefix:sei}")
     private String matchStr;
     /**
      * tess data 安装目录
      */
-    @Value("${sei.edm.ocr.tessdata}")
+    @Value("${sei.edm.ocr.tessdata:none}")
     private String tessDataPath;
 
     /**
