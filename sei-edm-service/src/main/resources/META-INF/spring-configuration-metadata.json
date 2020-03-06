@@ -17,6 +17,12 @@
       "type": "com.changhong.sei.edm.config.JodConverterProperties",
       "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties",
       "sourceMethod": "getJodConverter()"
+    },
+    {
+      "name": "sei.edm.ocr",
+      "type": "com.changhong.sei.edm.config.EdmConfigProperties$OcrProperties",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties",
+      "sourceMethod": "getOcr()"
     }
   ],
   "properties": [
@@ -33,6 +39,20 @@
       "description": "存储类型: local-本地文件系统;mongo-MongoDB存储",
       "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties$StoreModel",
       "defaultValue": "local"
+    },
+
+    {
+      "name": "sei.edm.ocr.match-prefix",
+      "type": "java.lang.String",
+      "description": "识别条码匹配前缀",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties$OcrProperties",
+      "defaultValue": "sei"
+    },
+    {
+      "name": "sei.edm.ocr.tessdata-path",
+      "type": "java.lang.String",
+      "description": "tess data 安装目录",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties$OcrProperties"
     },
 
     {

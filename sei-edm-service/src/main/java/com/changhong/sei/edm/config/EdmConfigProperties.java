@@ -15,6 +15,8 @@ public class EdmConfigProperties {
     private StoreModel model = StoreModel.local;
     private String storePath;
 
+    private OcrProperties ocr = new OcrProperties();
+
     @NestedConfigurationProperty
     private JodConverterProperties jodConverter = new JodConverterProperties();
 
@@ -34,6 +36,14 @@ public class EdmConfigProperties {
         this.storePath = storePath;
     }
 
+    public OcrProperties getOcr() {
+        return ocr;
+    }
+
+    public void setOcr(OcrProperties ocr) {
+        this.ocr = ocr;
+    }
+
     public JodConverterProperties getJodConverter() {
         return jodConverter;
     }
@@ -51,5 +61,29 @@ public class EdmConfigProperties {
          * MongoDB存储管理
          */
         mongo
+    }
+
+    /**
+     * ocr识别相关配置
+     */
+    private static class OcrProperties {
+        private String matchPrefix;
+        private String tessdataPath;
+
+        public String getMatchPrefix() {
+            return matchPrefix;
+        }
+
+        public void setMatchPrefix(String matchPrefix) {
+            this.matchPrefix = matchPrefix;
+        }
+
+        public String getTessdataPath() {
+            return tessdataPath;
+        }
+
+        public void setTessdataPath(String tessdataPath) {
+            this.tessdataPath = tessdataPath;
+        }
     }
 }

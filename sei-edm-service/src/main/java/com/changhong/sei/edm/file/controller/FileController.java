@@ -51,7 +51,7 @@ public class FileController {
     @Autowired
     private DocumentService documentService;
 
-    @ApiOperation("文件上传")
+    @ApiOperation("文件上传或识别")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "sys", value = "来源系统"),
             @ApiImplicitParam(name = "ocr", dataTypeClass = OcrType.class, value = "ocr识别类型: None, Barcode, InvoiceQr "),
@@ -73,9 +73,10 @@ public class FileController {
         if (resultData.successful() && StringUtils.isNotBlank(ocr)) {
             uploadResponse = resultData.getData();
             OcrType ocrType = EnumUtils.getEnum(OcrType.class, ocr);
-            if (Objects.nonNull(ocrType) && OcrType.None != ocrType) {
+            if (Objects.nonNull(uploadResponse) &&
+                    Objects.nonNull(ocrType) && OcrType.None != ocrType) {
                 // 字符识别
-                ResultData<String> readerResult = characterReaderService.read(ocrType, file.getBytes());
+                ResultData<String> readerResult = characterReaderService.read(uploadResponse.getDocumentType(), ocrType, file.getBytes());
                 if (readerResult.successful()) {
                     // 设置识别的结果
                     uploadResponse.setOcrData(readerResult.getData());

@@ -1,6 +1,7 @@
 package com.changhong.sei.edm.ocr.service;
 
 import com.changhong.sei.core.dto.ResultData;
+import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.OcrType;
 
 /**
@@ -18,5 +19,5 @@ public interface CharacterReaderService {
      * @param data    文件
      * @return 返回读取的内容
      */
-    ResultData<String> read(OcrType ocrType, byte[] data);
+    ResultData<String> read(DocumentType docType, OcrType ocrType, byte[] data);
 }
