@@ -107,6 +107,11 @@ public class PreviewController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
+        if (StringUtils.isNotBlank(markText)) {
+            // 水印内容
+            document.setMarkText(markText);
+        }
+
         // 文件预览转换
         ResultData<DocumentResponse> resultData = PreviewServiceFactory.getPreviewDocument(document);
         if (resultData.failed()) {

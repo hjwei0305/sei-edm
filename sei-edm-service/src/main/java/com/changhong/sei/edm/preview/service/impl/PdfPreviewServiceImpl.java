@@ -1,10 +1,16 @@
 package com.changhong.sei.edm.preview.service.impl;
 
 import com.changhong.sei.core.dto.ResultData;
+import com.changhong.sei.edm.common.util.PdfUtils;
 import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.preview.service.PreviewService;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.io.ByteArrayOutputStream;
 
 /**
  * 实现功能：pdf预览服务
@@ -14,6 +20,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class PdfPreviewServiceImpl implements PreviewService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PdfPreviewServiceImpl.class);
 
     /**
      * 将文档转为预览文档
@@ -28,6 +35,20 @@ public class PdfPreviewServiceImpl implements PreviewService {
         response.setFileName(document.getFileName());
         response.setData(document.getData());
         response.setSize(document.getSize());
+
+        if (StringUtils.isNotBlank(document.getMarkText())) {
+            try {
+                // 水印
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                PdfUtils.watermarkPDF(document.getData(), document.getMarkText(), outputStream);
+
+                response.setData(outputStream.toByteArray());
+
+                outputStream.close();
+            } catch (Exception e) {
+                LOGGER.error("添加水印错误", e);
+            }
+        }
         return ResultData.success(response);
     }
 }

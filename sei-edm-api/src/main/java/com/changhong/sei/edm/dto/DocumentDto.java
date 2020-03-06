@@ -35,6 +35,11 @@ public class DocumentDto implements Serializable {
      */
     @JsonIgnore
     private byte[] data;
+    /**
+     * 水印
+     */
+    @JsonIgnore
+    private String markText;
 
     public String getDocId() {
         return docId;
@@ -74,5 +79,13 @@ public class DocumentDto implements Serializable {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public String getMarkText() {
+        return markText;
+    }
+
+    public void setMarkText(String markText) {
+        this.markText = markText;
     }
 }

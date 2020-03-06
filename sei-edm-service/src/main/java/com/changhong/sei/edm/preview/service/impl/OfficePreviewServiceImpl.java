@@ -2,13 +2,17 @@ package com.changhong.sei.edm.preview.service.impl;
 
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
+import com.changhong.sei.edm.common.util.PdfUtils;
 import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.preview.service.PreviewService;
 import com.changhong.sei.util.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jodconverter.DocumentConverter;
 import org.jodconverter.document.DefaultDocumentFormatRegistry;
 import org.jodconverter.office.OfficeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +29,7 @@ import java.util.Objects;
  */
 @Service
 public class OfficePreviewServiceImpl implements PreviewService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PdfPreviewServiceImpl.class);
 
     private List<String> FILE_TYPE2_HTMLS = Arrays.asList("xls", "xlsx");
 
@@ -42,7 +47,7 @@ public class OfficePreviewServiceImpl implements PreviewService {
         if (Objects.isNull(document)) {
             return ResultData.fail("document不能为空.");
         }
-        return convertInputStream(new ByteArrayInputStream(document.getData()), document.getFileName());
+        return convertInputStream(new ByteArrayInputStream(document.getData()), document.getFileName(), document.getMarkText());
     }
 
     /**
@@ -78,7 +83,7 @@ public class OfficePreviewServiceImpl implements PreviewService {
      */
     public ResultData<File> convertInputStream2File(InputStream in, String fileName, File targetFileDir) {
         try {
-            ResultData<DocumentResponse> resultData = convertInputStream(in, fileName);
+            ResultData<DocumentResponse> resultData = convertInputStream(in, fileName, StringUtils.EMPTY);
             if (resultData.successful()) {
                 String fileExt = FileUtils.getExtension(fileName).toLowerCase();
                 String targetFileExt = this.getTargetFileExt(fileExt);
@@ -99,14 +104,14 @@ public class OfficePreviewServiceImpl implements PreviewService {
      * @param fileName 文件名
      */
     public ResultData<DocumentResponse> convertByteArray(byte[] source, String fileName) {
-        return convertInputStream(new ByteArrayInputStream(source), fileName);
+        return convertInputStream(new ByteArrayInputStream(source), fileName, StringUtils.EMPTY);
     }
 
     /**
      * @param in       文件输入流
      * @param fileName 文件名
      */
-    public ResultData<DocumentResponse> convertInputStream(InputStream in, String fileName) {
+    public ResultData<DocumentResponse> convertInputStream(InputStream in, String fileName, String markText) {
         if (Objects.isNull(fileName) || fileName.length() == 0) {
             return ResultData.fail("文件名不能为空.");
         }
@@ -130,8 +135,25 @@ public class OfficePreviewServiceImpl implements PreviewService {
             response.setFileName(FileUtils.getWithoutExtension(fileName) + FileUtils.DOT + targetFileExt);
             response.setData(out.toByteArray());
             response.setSize((long) out.size());
+//            out.flush();
+//            out.close();
+// TODO 水印异常
+
+//            if (StringUtils.isNotBlank(markText)) {
+//                try {
+//                    // 水印
+//                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//                    PdfUtils.watermarkPDF(response.getData(), markText, outputStream);
+//
+//                    response.setData(outputStream.toByteArray());
+//                    outputStream.close();
+//                } catch (Exception e) {
+//                    LOGGER.error("添加水印错误", e);
+//                }
+//            }
+
             return ResultData.success(response);
-        } catch (OfficeException e) {
+        } catch (Exception e) {
             LogUtil.error("convertByInputStream error : " + e.getMessage(), e);
             return ResultData.fail("convertByInputStream error : " + e.getMessage());
         } finally {
