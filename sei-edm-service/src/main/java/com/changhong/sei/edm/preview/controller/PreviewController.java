@@ -16,8 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletResponse;
@@ -43,10 +41,12 @@ public class PreviewController {
             @ApiImplicitParam(name = "markText", value = "水印内容", paramType = "query", example = "SEI6.0")
     })
     public String preview(@RequestParam("docId") String docId,
-                          @RequestParam(name = "markText", defaultValue = "SEI6.0", required = false) String markText,
+                          @RequestParam(name = "markText", required = false) String markText,
                           Model model) {
         model.addAttribute("docId", docId);
-        model.addAttribute("markText", markText);
+        if (StringUtils.isNotBlank(markText)) {
+            model.addAttribute("markText", markText);
+        }
 
         String view = "";
         DocumentResponse document = fileService.getDocumentInfo(docId);
@@ -95,7 +95,7 @@ public class PreviewController {
             @ApiImplicitParam(name = "markText", value = "水印内容", paramType = "query", example = "SEI6.0")
     })
     public ResponseEntity<byte[]> readFile(@RequestParam(name = "docId") String docId,
-                                           @RequestParam(name = "markText", defaultValue = "SEI6.0", required = false) String markText,
+                                           @RequestParam(name = "markText", required = false) String markText,
                                            HttpServletResponse response) {
         if (StringUtils.isBlank(docId)) {
             LogUtil.warn("fileName is blank");
@@ -107,7 +107,8 @@ public class PreviewController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        if (StringUtils.isNotBlank(markText)) {
+        if (StringUtils.isNotBlank(markText)
+                && !StringUtils.equalsAnyIgnoreCase(markText, "null")) {
             // 水印内容
             document.setMarkText(markText);
         }
