@@ -47,7 +47,14 @@ public class OfficePreviewServiceImpl implements PreviewService {
         if (Objects.isNull(document)) {
             return ResultData.fail("document不能为空.");
         }
-        return convertInputStream(new ByteArrayInputStream(document.getData()), document.getFileName(), document.getMarkText());
+        InputStream inputStream = new ByteArrayInputStream(document.getData());
+        ResultData<DocumentResponse> result = convertInputStream(inputStream, document.getFileName(), document.getMarkText());
+        try {
+            inputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     /**
@@ -77,7 +84,7 @@ public class OfficePreviewServiceImpl implements PreviewService {
     }
 
     /**
-     * @param in            文件输入流
+     * @param in            文件输入流, 需要调用方自行关闭
      * @param fileName      文件名
      * @param targetFileDir 目标文件目录
      */
@@ -104,7 +111,14 @@ public class OfficePreviewServiceImpl implements PreviewService {
      * @param fileName 文件名
      */
     public ResultData<DocumentResponse> convertByteArray(byte[] source, String fileName) {
-        return convertInputStream(new ByteArrayInputStream(source), fileName, StringUtils.EMPTY);
+        InputStream inputStream = new ByteArrayInputStream(source);
+        ResultData<DocumentResponse> result = convertInputStream(inputStream, fileName, StringUtils.EMPTY);
+        try {
+            inputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     /**
@@ -135,22 +149,21 @@ public class OfficePreviewServiceImpl implements PreviewService {
             response.setFileName(FileUtils.getWithoutExtension(fileName) + FileUtils.DOT + targetFileExt);
             response.setData(out.toByteArray());
             response.setSize((long) out.size());
-//            out.flush();
-//            out.close();
-// TODO 水印异常
 
-//            if (StringUtils.isNotBlank(markText)) {
-//                try {
-//                    // 水印
-//                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-//                    PdfUtils.watermarkPDF(response.getData(), markText, outputStream);
-//
-//                    response.setData(outputStream.toByteArray());
-//                    outputStream.close();
-//                } catch (Exception e) {
-//                    LOGGER.error("添加水印错误", e);
-//                }
-//            }
+            if (StringUtils.isNotBlank(markText) && StringUtils.equalsIgnoreCase(FileUtils.PDF, targetFileExt)) {
+                try {
+                    // 水印
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    PdfUtils.watermarkPDF(response.getData(), markText, outputStream);
+
+                    response.setData(outputStream.toByteArray());
+                    response.setSize((long) outputStream.size());
+
+                    outputStream.close();
+                } catch (Exception e) {
+                    LOGGER.error("添加水印错误", e);
+                }
+            }
 
             return ResultData.success(response);
         } catch (Exception e) {

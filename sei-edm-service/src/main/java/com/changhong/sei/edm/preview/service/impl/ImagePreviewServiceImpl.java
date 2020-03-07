@@ -38,7 +38,9 @@ public class ImagePreviewServiceImpl implements PreviewService {
                 InputStream inputStream = new ByteArrayInputStream(document.getData());
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 ImageUtils.pressText(document.getMarkText(), inputStream, outputStream, "黑体", 36, Color.red, 80, 0, 0, 0.3f);
+
                 response.setData(outputStream.toByteArray());
+                response.setSize((long) outputStream.size());
 
                 inputStream.close();
                 outputStream.close();

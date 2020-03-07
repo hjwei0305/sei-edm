@@ -43,6 +43,7 @@ public class PdfPreviewServiceImpl implements PreviewService {
                 PdfUtils.watermarkPDF(document.getData(), document.getMarkText(), outputStream);
 
                 response.setData(outputStream.toByteArray());
+                response.setSize((long) outputStream.size());
 
                 outputStream.close();
             } catch (Exception e) {
