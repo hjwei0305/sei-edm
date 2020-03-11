@@ -96,13 +96,13 @@ public class DocumentController implements DocumentApi {
      */
     @Override
     public ResultData<DocumentResponse> getEntityDocumentInfo(@NotBlank String docId) {
+        DocumentResponse response = new DocumentResponse();
         Document document = service.findByProperty(Document.FIELD_DOC_ID, docId);
         if (Objects.nonNull(document)) {
-            DocumentResponse response = new DocumentResponse();
             modelMapper.map(document, response);
-            return ResultData.success(response);
         }
-        return ResultData.fail("没有找到对应的文档信息清单");
+        return ResultData.success(response);
+//        return ResultData.fail("没有找到对应的文档信息清单");
     }
 
     /**
@@ -113,17 +113,17 @@ public class DocumentController implements DocumentApi {
      */
     @Override
     public ResultData<List<DocumentResponse>> getEntityDocumentInfos(@NotBlank String entityId) {
+        List<DocumentResponse> result = new ArrayList<>();
         List<Document> documents = service.getDocumentsByEntityId(entityId);
         if (CollectionUtils.isNotEmpty(documents)) {
-            List<DocumentResponse> result = new ArrayList<>();
             DocumentResponse response;
             for (Document document : documents) {
                 response = new DocumentResponse();
                 modelMapper.map(document, response);
                 result.add(response);
             }
-            return ResultData.success(result);
         }
-        return ResultData.fail("没有找到对应的文档信息清单");
+        return ResultData.success(result);
+//        return ResultData.fail("没有找到对应的文档信息清单");
     }
 }
