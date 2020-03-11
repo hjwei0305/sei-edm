@@ -6,10 +6,7 @@ import com.changhong.sei.edm.dto.DocumentResponse;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotBlank;
 import java.util.List;
@@ -86,7 +83,7 @@ public interface DocumentApi {
      */
     @PostMapping("bindBusinessDocuments")
     @ApiOperation(value = "提交业务实体的文档信息", notes = "提交业务实体的文档信息")
-    ResultData<String> bindBusinessDocuments(BindRequest request);
+    ResultData<String> bindBusinessDocuments(@RequestBody BindRequest request);
 
     /**
      * 删除业务实体的文档信息
