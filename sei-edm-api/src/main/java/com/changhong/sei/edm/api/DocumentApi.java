@@ -5,6 +5,7 @@ import com.changhong.sei.edm.dto.BindRequest;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +20,7 @@ import java.util.List;
  * @author 马超(Vision.Mac)
  * @version 1.0.00  2020-02-05 16:16
  */
+@Validated
 @RequestMapping(path = "document", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public interface DocumentApi {
 //    /**
