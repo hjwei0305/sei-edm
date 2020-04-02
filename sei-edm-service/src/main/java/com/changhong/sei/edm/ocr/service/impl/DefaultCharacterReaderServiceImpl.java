@@ -54,6 +54,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
      * @param data    文件
      * @return 返回读取的内容
      */
+    @Override
     public ResultData<String> read(DocumentType docType, OcrType ocrType, byte[] data) {
         String result = StringUtils.EMPTY;
         InputStream inputStream = new ByteArrayInputStream(data);

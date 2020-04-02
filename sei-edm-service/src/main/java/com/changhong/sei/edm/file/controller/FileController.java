@@ -32,10 +32,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -51,7 +48,7 @@ public class FileController {
     @Autowired
     private DocumentService documentService;
 
-    @ApiOperation("文件上传或识别")
+    @ApiOperation("单文件上传或识别")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "sys", value = "来源系统"),
             @ApiImplicitParam(name = "ocr", dataTypeClass = OcrType.class, value = "ocr识别类型: None, Barcode, InvoiceQr, Qr "),
@@ -87,6 +84,29 @@ public class FileController {
 //            uploadResponse = resultData.getData();
 //        }
 //        return ResultData.success(uploadResponse);
+    }
+
+    @ApiOperation("多文件批量上传")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "sys", value = "来源系统"),
+            @ApiImplicitParam(name = "file", value = "文件", required = true)
+    })
+    @PostMapping(value = "/batchUpload")
+    @ResponseBody
+    public ResultData<List<UploadResponse>> batchUpload(@RequestParam("file") MultipartFile[] files,
+                                                   @RequestParam(value = "sys", required = false) String sys) throws IOException {
+        if (StringUtils.isBlank(sys)) {
+            sys = ContextUtil.getAppCode();
+        }
+        List<UploadResponse> uploadResponses = new ArrayList<>();
+        for (MultipartFile file : files) {
+            // 文件上传
+            ResultData<UploadResponse> resultData = fileService.uploadDocument(file.getOriginalFilename(), sys, file.getBytes());
+            if (resultData.successful()) {
+                uploadResponses.add(resultData.getData());
+            }
+        }
+        return ResultData.success(uploadResponses);
     }
 
     @ApiOperation("按附件id清理")
