@@ -89,11 +89,12 @@ public class MongoServiceImpl implements FileService {
         }
 
         Document document;
+        InputStream dataStream = null;
         try {
             DocumentType documentType = getDocumentType(fileName);
 
             //重置数据流
-            InputStream dataStream = new ByteArrayInputStream(data);
+            dataStream = new ByteArrayInputStream(data);
             //保存数据文件
             DBObject metaData = new BasicDBObject();
             metaData.put("description", fileName);
@@ -108,6 +109,14 @@ public class MongoServiceImpl implements FileService {
         } catch (Exception e) {
             LogUtil.error("文件上传读取异常.", e);
             return ResultData.fail("文件上传读取异常.");
+        } finally {
+            if (Objects.nonNull(dataStream)) {
+                try {
+                    dataStream.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return uploadDocument(document, data);
@@ -183,6 +192,11 @@ public class MongoServiceImpl implements FileService {
             bucket.downloadToStream(fsdbFile.getId(), baos);
 
             response.setData(baos.toByteArray());
+            try {
+                baos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         return response;
@@ -232,6 +246,11 @@ public class MongoServiceImpl implements FileService {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                    }
+                    try {
+                        baos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             }
@@ -285,7 +304,7 @@ public class MongoServiceImpl implements FileService {
     /**
      * 上传一个文档
      *
-     * @param document          文档
+     * @param document 文档
      * @return 文档信息
      */
     private ResultData<UploadResponse> uploadDocument(Document document, byte[] data) {
