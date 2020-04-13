@@ -17,3 +17,6 @@ sei:
     user:
       tenant-code: 10044
       account: admin
+  http:
+    filter:
+      enable: false
