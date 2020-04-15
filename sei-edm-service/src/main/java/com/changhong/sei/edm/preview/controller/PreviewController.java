@@ -97,6 +97,9 @@ public class PreviewController {
     public ResponseEntity<byte[]> readFile(@RequestParam(name = "docId") String docId,
                                            @RequestParam(name = "markText", required = false) String markText,
                                            HttpServletResponse response) {
+        response.setHeader("Content-type", "text/html;charset=UTF-8");
+        response.setCharacterEncoding("utf-8");
+
         if (StringUtils.isBlank(docId)) {
             LogUtil.warn("fileName is blank");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
