@@ -3,6 +3,7 @@ package com.changhong.sei.edm.sdk;
 import com.changhong.sei.apitemplate.ApiTemplate;
 import com.changhong.sei.core.context.ContextUtil;
 import com.changhong.sei.core.dto.ResultData;
+import com.changhong.sei.edm.dto.BindRequest;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.exception.ServiceException;
@@ -15,9 +16,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -137,7 +141,6 @@ public class DocumentManager {
     DocumentResponse getDocument(String docId, boolean isThumbnail) {
         Map<String, String> params = new HashMap<>();
         // 添加文件源
-        params.put("docId", docId);
         params.put("isThumbnail", String.valueOf(isThumbnail));
 
         ResultData<DocumentResponse> resultData = apiTemplate.getByAppModuleCode(appCode, "/document/" + docId,
@@ -151,34 +154,53 @@ public class DocumentManager {
         return response;
     }
 
-//    /**
-//     * 提交业务实体的文档信息
-//     *
-//     * @param request 绑定业务实体文档信息请求
-//     */
-//    ResultData<String> bindBusinessDocuments(@RequestBody BindRequest request);
-//
-//    /**
-//     * 删除业务实体的文档信息
-//     *
-//     * @param entityId 业务实体Id
-//     */
-//    ResultData<String> deleteBusinessInfos(@RequestParam("entityId") @NotBlank String entityId);
-//
-//    /**
-//     * 获取一个文档(只包含文档信息,不含文档数据)
-//     *
-//     * @param docId 文档Id
-//     * @return 文档
-//     */
-//    ResultData<DocumentResponse> getEntityDocumentInfo(@RequestParam("docId") @NotBlank String docId);
-//
-//    /**
-//     * 获取业务实体的文档信息清单
-//     *
-//     * @param entityId 业务实体Id
-//     * @return 文档信息清单
-//     */
-//    ResultData<List<DocumentResponse>> getEntityDocumentInfos(@RequestParam("entityId") @NotBlank String entityId);
+    /**
+     * 提交业务实体的文档信息
+     *
+     * @param entityId 绑定业务实体文档信息请求
+     * @param docIds   绑定业务实体文档信息请求
+     */
+    void bindBusinessDocuments(String entityId, Collection<String> docIds) {
+        BindRequest request = new BindRequest();
+        request.setEntityId(entityId);
+        request.setDocumentIds(docIds);
 
+        ResultData<DocumentResponse> resultData = apiTemplate.postByAppModuleCode(appCode, "/document/bindBusinessDocuments",
+                new ParameterizedTypeReference<ResultData<DocumentResponse>>() {
+                }, request);
+        if (resultData.failed()) {
+            throw new ServiceException("通过EDM上传文件失败: " + resultData.getMessage());
+        }
+    }
+
+    /**
+     * 删除业务实体的文档信息
+     *
+     * @param entityId 业务实体Id
+     */
+    void deleteBusinessInfos(@NotBlank String entityId) {
+
+    }
+
+    /**
+     * 获取一个文档(只包含文档信息,不含文档数据)
+     *
+     * @param docId 文档Id
+     * @return 文档
+     */
+    DocumentResponse getEntityDocumentInfo(@NotBlank String docId) {
+        return null;
+
+    }
+
+    /**
+     * 获取业务实体的文档信息清单
+     *
+     * @param entityId 业务实体Id
+     * @return 文档信息清单
+     */
+    List<DocumentResponse> getEntityDocumentInfos(@NotBlank String entityId) {
+
+        return null;
+    }
 }
