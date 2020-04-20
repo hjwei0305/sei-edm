@@ -31,6 +31,11 @@ public class DocumentDto implements Serializable {
     @ApiModelProperty(notes = "文件类型")
     private DocumentType documentType;
     /**
+     * 文件数据base64编码
+     */
+    @ApiModelProperty(notes = "文件数据base64编码")
+    private String base64Data;
+    /**
      * 文档数据
      */
     @JsonIgnore
@@ -71,6 +76,14 @@ public class DocumentDto implements Serializable {
 
     public void setDocumentType(DocumentType documentType) {
         this.documentType = documentType;
+    }
+
+    public String getBase64Data() {
+        return base64Data;
+    }
+
+    public void setBase64Data(String base64Data) {
+        this.base64Data = base64Data;
     }
 
     public byte[] getData() {

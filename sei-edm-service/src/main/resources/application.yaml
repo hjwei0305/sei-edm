@@ -1,15 +1,12 @@
-# 应用全局配置
-application:
-  name: EDM文档管理服务
-  version: 6.0.1
+
 
 # spring 环境配置
 spring:
   servlet:
     multipart:
       # 上传文件大小限制
-      max-file-size: 100MB
-      max-request-size: 200MB
+      max-file-size: 200MB
+      max-request-size: 500MB
   # 模版配置
   thymeleaf:
     prefix: classpath:/templates/
@@ -45,6 +42,10 @@ spring:
   data:
     mongodb:
       uri: mongodb://edm_dev:lAjrgwbT0xqWNT8LVmmOAs1f@10.4.208.132:27017/edm
+  cloud:
+    service-registry: # 本机不自动注册到服务列表
+      auto-registration:
+        enabled: false
 
 logging:
   level:
@@ -54,9 +55,6 @@ logging:
           clients:
             NetworkClient: error
 sei:
-  http:
-    filter:
-      enable: false
   # 核心配置
   edm:
     model: mongo
@@ -65,12 +63,13 @@ sei:
       enabled: true
       office-home: /Applications/OpenOffice.app/Contents
 #      office-home: /Applications/LibreOffice.app/Contents
-      port-numbers: 8100,8101,8102
+#      port-numbers: 8100,8101,8102
+      port-numbers: 8100
       max-tasks-per-process: 100
     # 识别相关配置
     ocr:
       # 条码匹配前缀
-      match-prefix: sei,nhd,gwm
+      match-prefix: rcs,sei,nhd,gwm
       # 配置tessdata的安装路径表示启用tessdata识别
 #      tessdata-path:
 

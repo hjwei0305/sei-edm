@@ -4,9 +4,12 @@ import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.edm.api.DocumentApi;
 import com.changhong.sei.edm.dto.BindRequest;
 import com.changhong.sei.edm.dto.DocumentResponse;
+import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.service.DocumentService;
+import com.changhong.sei.util.FileUtils;
 import io.swagger.annotations.Api;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,8 @@ public class DocumentController implements DocumentApi {
     private ModelMapper modelMapper;
     @Autowired
     private DocumentService service;
+    @Autowired
+    private FileService fileService;
 
     /**
      * 获取一个文档(包含信息和数据)
@@ -40,11 +45,17 @@ public class DocumentController implements DocumentApi {
      * @param isThumbnail 是获取缩略图
      * @return 文档
      */
+    @Override
     public ResultData<DocumentResponse> getDocument(@NotBlank String docId, boolean isThumbnail) {
-        Document document = service.findByProperty(Document.FIELD_DOC_ID, docId);
-        if (Objects.nonNull(document)) {
-            DocumentResponse response = new DocumentResponse();
-            modelMapper.map(document, response);
+        DocumentResponse response;
+        if (isThumbnail) {
+            response = fileService.getThumbnail(docId, 150, 100);
+        } else {
+            response = fileService.getDocument(docId);
+        }
+        if (Objects.nonNull(response)) {
+            // 返回Base64编码过的字节数组字符串
+            response.setBase64Data(Base64.encodeBase64String(response.getData()));
             return ResultData.success(response);
         }
         return ResultData.fail("没有找到对应的文档信息清单");

@@ -18,7 +18,7 @@ import java.util.List;
  * @version 1.0.00  2020-02-05 16:16
  */
 @Validated
-@RequestMapping(path = "document", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(name = "edm-service", path = "document", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public interface DocumentApi {
 //    /**
 //     * 上传一个文档(如果是图像生成缩略图)
@@ -55,26 +55,16 @@ public interface DocumentApi {
 //    @ApiOperation(value = "上传一个文档", notes = "上传一个文档")
 //    DocumentInfo uploadScan(UploadScanVo scanVo);
 
-//    /**
-//     * 获取一个文档(包含信息和数据)
-//     *
-//     * @param docId          文档Id
-//     * @param isThumbnail 是获取缩略图
-//     * @return 文档
-//     */
-//    @GetMapping("getDocumentByThumbnail")
-//    @ApiOperation(value = "获取一个文档(包含信息和数据)", notes = "获取一个文档(包含信息和数据)")
-//    ResultData<DocumentResponse> getDocument(@RequestParam("docId") @NotBlank String docId, @RequestParam("isThumbnail") boolean isThumbnail);
-//
-//    /**
-//     * 获取一个文档(只包含文档信息,不含文档数据)
-//     *
-//     * @param docId 文档Id
-//     * @return 文档
-//     */
-//    @GetMapping("getDocument")
-//    @ApiOperation(value = "获取一个文档(只包含文档信息,不含文档数据)", notes = "获取一个文档(只包含文档信息,不含文档数据)")
-//    ResultData<DocumentResponse> getDocument(@RequestParam("docId") @NotBlank String docId);
+    /**
+     * 获取一个文档(包含信息和数据)
+     *
+     * @param docId          文档Id
+     * @param isThumbnail 是获取缩略图
+     * @return 文档
+     */
+    @GetMapping("{docId}")
+    @ApiOperation(value = "获取一个文档(包含信息和数据)", notes = "获取一个文档(包含信息和数据)")
+    ResultData<DocumentResponse> getDocument(@PathVariable("docId") String docId, @RequestParam(name = "isThumbnail", required = false) boolean isThumbnail);
 
     /**
      * 提交业务实体的文档信息
