@@ -7,6 +7,7 @@ import com.changhong.sei.edm.common.util.ZxingUtils;
 import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.OcrType;
 import com.changhong.sei.edm.ocr.service.CharacterReaderService;
+import com.google.zxing.DecodeHintType;
 import net.sourceforge.tess4j.ITessAPI;
 import net.sourceforge.tess4j.ITesseract;
 import net.sourceforge.tess4j.Tesseract;
@@ -25,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -81,40 +83,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                 BufferedImage image = null;
                 try {
                     image = ImageIO.read(inputStream);
-                    result = ZxingUtils.processImage(image, ZxingUtils.HINTS, matchPrefix);
-
-                    // 指定识别右上角
-                    if (!checkBarcode(result, matchPrefix)) {
-                        int height = image.getHeight();
-                        int width = image.getWidth();
-                        // 剪切右上角
-                        BufferedImage image1 = image.getSubimage(width / 2, 0, width / 2, height / 4);
-
-                        result = ZxingUtils.processImage(image1, ZxingUtils.HINTS, matchPrefix);
-
-                        // ocr识别
-                        if (!checkBarcode(result, matchPrefix)) {
-                            //条码识别失败，进行ocr识别
-                            result = partImgOcr(image1, matchPrefix);
-
-                            // 识别失败，原图片旋转180度再次识别
-                            if (!checkBarcode(result, matchPrefix)) {
-                                // 旋转180度
-                                image = ImageUtils.rotate(image, 180);
-
-                                // 剪切右上角
-                                BufferedImage image2 = image.getSubimage(width / 2, 0, width / 2, height / 4);
-//                        BufferedImage image2 = image.getSubimage(0, 0, width, height / 2);
-                                result = ZxingUtils.processImage(image2, ZxingUtils.HINTS, matchPrefix);
-
-                                // ocr识别
-                                if (!checkBarcode(result, matchPrefix)) {
-                                    //条码识别失败，进行ocr识别
-                                    result = partImgOcr(image2, matchPrefix);
-                                }
-                            }
-                        }
-                    }
+                    result = processImage(image, ZxingUtils.HINTS, matchPrefix);
                 } catch (Exception e) {
                     LogUtil.error("the decode image may be not exit.", e);
 //                } finally {
@@ -228,13 +197,13 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
         return result;
     }
 
-    private static String doRecogonize(PDDocument doc, float dpi, String[] matchPrefix) {
+    private String doRecogonize(PDDocument doc, float dpi, String[] matchPrefix) {
         BufferedImage image = null;
         PDFRenderer renderer = new PDFRenderer(doc);
         try {
             image = renderer.renderImageWithDPI(0, dpi, ImageType.GRAY);
 
-            return ZxingUtils.processImage(image, ZxingUtils.HINTS, matchPrefix);
+            return processImage(image, ZxingUtils.HINTS, matchPrefix);
         } catch (Exception e) {
             LogUtil.error("the decode pdf may be not exit.", e);
             return null;
@@ -243,6 +212,70 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                 image.flush();
             }
         }
+    }
+
+    private String processImage(BufferedImage image, Map<DecodeHintType, Object> hints, String[] matchPrefix) {
+        BufferedImage image1, image2;
+        String result = ZxingUtils.processImage(image, hints, matchPrefix);
+        if (!checkBarcode(result, matchPrefix)) {
+            int height = image.getHeight();
+            int width = image.getWidth();
+            // 剪切右上角
+            image1 = image.getSubimage(width / 2, 0, width / 2, height / 4);
+            // 指定识别右上角
+            result = ZxingUtils.processImage(image1, hints, matchPrefix);
+
+            // ocr识别
+            if (!checkBarcode(result, matchPrefix)) {
+                //条码识别失败，进行ocr识别
+                result = partImgOcr(image1, matchPrefix);
+            }
+            image1 = null;
+        }
+
+        // 识别失败，原图片旋转90度再次识别
+        if (!checkBarcode(result, matchPrefix)) {
+            // 旋转90度
+            image1 = ImageUtils.rotate(image, 90);
+            int height = image1.getHeight();
+            int width = image1.getWidth();
+
+            // 剪切右上角
+            image2 = image1.getSubimage(width / 2, 0, width / 2, height / 4);
+//                        BufferedImage image2 = image.getSubimage(0, 0, width, height / 2);
+            result = ZxingUtils.processImage(image2, hints, matchPrefix);
+
+            // ocr识别
+            if (!checkBarcode(result, matchPrefix)) {
+                //条码识别失败，进行ocr识别
+                result = partImgOcr(image2, matchPrefix);
+            }
+            image1 = null;
+            image2 = null;
+        }
+
+        // 识别失败，原图片旋转180度再次识别
+        if (!checkBarcode(result, matchPrefix)) {
+            // 旋转180度
+            image1 = ImageUtils.rotate(image, 180);
+            int height = image1.getHeight();
+            int width = image1.getWidth();
+
+            // 剪切右上角
+            image2 = image1.getSubimage(width / 2, 0, width / 2, height / 4);
+//                        BufferedImage image2 = image.getSubimage(0, 0, width, height / 2);
+            result = ZxingUtils.processImage(image2, hints, matchPrefix);
+
+            // ocr识别
+            if (!checkBarcode(result, matchPrefix)) {
+                //条码识别失败，进行ocr识别
+                result = partImgOcr(image2, matchPrefix);
+            }
+            image1 = null;
+            image2 = null;
+        }
+
+        return result;
     }
 
     /**
