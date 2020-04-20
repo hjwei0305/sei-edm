@@ -7,11 +7,23 @@ import com.changhong.sei.edm.common.util.ZxingUtils;
 import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.OcrType;
 import com.changhong.sei.edm.ocr.service.CharacterReaderService;
+import com.changhong.sei.util.FileUtils;
 import com.google.zxing.DecodeHintType;
+import com.tencentcloudapi.common.Credential;
+import com.tencentcloudapi.common.exception.TencentCloudSDKException;
+import com.tencentcloudapi.common.profile.ClientProfile;
+import com.tencentcloudapi.common.profile.HttpProfile;
+import com.tencentcloudapi.cvm.v20170312.CvmClient;
+import com.tencentcloudapi.cvm.v20170312.models.DescribeZonesRequest;
+import com.tencentcloudapi.cvm.v20170312.models.DescribeZonesResponse;
+import com.tencentcloudapi.ocr.v20181119.OcrClient;
+import com.tencentcloudapi.ocr.v20181119.models.QrcodeOCRRequest;
+import com.tencentcloudapi.ocr.v20181119.models.QrcodeOCRResponse;
 import net.sourceforge.tess4j.ITessAPI;
 import net.sourceforge.tess4j.ITesseract;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.Word;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
@@ -28,6 +40,9 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+// 导入对应产品模块的client
+// 导入要请求接口对应的request response类
 
 /**
  * 实现功能：
@@ -275,6 +290,56 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             image2 = null;
         }
 
+        // 识别失败，原图片旋转180度再次识别
+        if (!checkBarcode(result, matchPrefix)) {
+            InputStream is = null;
+            try {
+                is = ImageUtils.image2InputStream(image, "");
+                result = tencentQrcodeOCRApi(FileUtils.stream2Str(is));
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private String tencentQrcodeOCRApi(String image) {
+        String result = StringUtils.EMPTY;
+        try {
+            // 实例化一个认证对象，入参需要传入腾讯云账户secretId，secretKey
+            Credential cred = new Credential("AKIDCAwSlnhAVTHuHUp960CgusStT0a0LVs0 ", "tVyMZZJoIekZlhfMn8mBKEsaDZeYsxmR");
+
+            HttpProfile httpProfile = new HttpProfile();
+            httpProfile.setEndpoint("ocr.tencentcloudapi.com");
+
+            ClientProfile clientProfile = new ClientProfile();
+            clientProfile.setHttpProfile(httpProfile);
+
+            OcrClient client = new OcrClient(cred, "ap-guangzhou", clientProfile);
+
+            StringBuilder params = new StringBuilder();
+            params.append("{\"ImageBase64\":\"data:image/png;base64,").append(image).append("\"}");
+            QrcodeOCRRequest req = QrcodeOCRRequest.fromJsonString(params.toString(), QrcodeOCRRequest.class);
+            params = null;
+            // 通过client对象调用想要访问的接口，需要传入请求对象
+            QrcodeOCRResponse resp = client.QrcodeOCR(req);
+            // 输出json格式的字符串回包
+            LogUtil.debug("调用腾讯识别服务响应结果: {}", QrcodeOCRRequest.toJsonString(resp));
+            if (ArrayUtils.isNotEmpty(resp.getCodeResults())) {
+                result = resp.getCodeResults()[0].getUrl();
+            }
+        } catch (TencentCloudSDKException e) {
+            LogUtil.error("调用腾讯识别服务异常", e);
+        }
         return result;
     }
 

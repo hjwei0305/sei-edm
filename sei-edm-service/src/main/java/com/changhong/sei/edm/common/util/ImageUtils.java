@@ -1,5 +1,7 @@
 package com.changhong.sei.edm.common.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.color.ColorSpace;
@@ -581,4 +583,32 @@ public class ImageUtils {
         return new Rectangle(new Dimension(desWidth, desHeight));
     }
 
+    /**
+     * BufferedImage转byte[]
+     *
+     * @param bImage BufferedImage对象
+     * @return byte[]
+     */
+    public static byte[] image2Bytes(BufferedImage bImage, String formatName) throws IOException {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            if (StringUtils.isBlank(formatName)) {
+                formatName = "png";
+            }
+            ImageIO.write(bImage, formatName, out);
+            return out.toByteArray();
+        }
+    }
+
+    /**
+     * 将BufferedImage转换为InputStream
+     */
+    public static InputStream image2InputStream(BufferedImage image, String formatName) throws IOException {
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            if (StringUtils.isBlank(formatName)) {
+                formatName = "png";
+            }
+            ImageIO.write(image, formatName, os);
+            return new ByteArrayInputStream(os.toByteArray());
+        }
+    }
 }

@@ -17,31 +17,31 @@ dependencies {
     compile project(':sei-edm-api')
 
     // mongodb
-    compile("org.springframework.boot:spring-boot-starter-data-mongodb")
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
 
-    compile(
+    implementation(
             "org.hibernate:hibernate-java8:5.3.7.Final",
             "mysql:mysql-connector-java:$mysqlVersion",
             "com.changhong.sei:sei-service-starter:$sei_version"
     )
 
-    compile(
+    implementation(
             "org.jodconverter:jodconverter-core:$jodconverter_version",
             "org.jodconverter:jodconverter-local:$jodconverter_version"
 //            "org.jodconverter:jodconverter-spring-boot-starter:$jodconverter_version"
     )
 
-    compile("org.springframework.boot:spring-boot-starter-thymeleaf:$springBootVersion")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf:$springBootVersion")
 
     compileOnly  "org.projectlombok:lombok:1.18.4"
     annotationProcessor  "org.projectlombok:lombok:1.18.4"
 
-    compile(
+    implementation(
             "com.itextpdf:itext-asian:5.2.0",
             "com.itextpdf:itextpdf:5.5.13"
     )
 
-    compile (
+    implementation (
             "com.google.zxing:core:$zxing_version",
             "com.google.zxing:javase:$zxing_version",
             'org.apache.pdfbox:pdfbox:2.0.17',
@@ -50,7 +50,9 @@ dependencies {
             "net.java.dev.jna:jna:5.4.0"
     )
 
-    testCompile(
+    implementation("com.tencentcloudapi:tencentcloud-sdk-java:$tencentCloudApiVersion")
+
+    testImplementation(
             "com.changhong.sei:sei-test-starter:$sei_version"
 //            "org.springframework.boot:spring-boot-starter-test"
     )
