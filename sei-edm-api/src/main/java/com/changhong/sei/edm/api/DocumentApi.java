@@ -64,7 +64,7 @@ public interface DocumentApi {
      */
     @GetMapping("getDocument")
     @ApiOperation(value = "获取一个文档(包含信息和数据)", notes = "获取一个文档(包含信息和数据)")
-    ResultData<DocumentResponse> getDocument(@RequestParam("docId") String docId, @RequestParam(name = "isThumbnail", required = false) boolean isThumbnail);
+    ResultData<DocumentResponse> getDocument(@RequestParam("docId") @NotBlank String docId, @RequestParam(name = "isThumbnail", defaultValue = "false", required = false) boolean isThumbnail);
 
     /**
      * 提交业务实体的文档信息
