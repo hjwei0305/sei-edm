@@ -12,6 +12,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 /**
  * 实现功能：
@@ -67,6 +68,15 @@ public class DocumentManagerTest {
     public void getDocument() {
         String docId = "5e9dde3b9f97c8000916f93d";
         DocumentResponse response = manager.getDocument(docId, false);
+        if (Objects.nonNull(response)) {
+//            File file = new File("/Users/chaoma/Downloads/demo.pdman123.json");
+
+            try {
+                FileUtils.str2File(response.getBase64Data(), "/Users/chaoma/Downloads/demo.pdman123.json");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         System.out.println(response);
     }
 

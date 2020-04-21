@@ -126,11 +126,13 @@ public class DocumentManager {
     public DocumentResponse getDocument(String docId, boolean isThumbnail) {
         Map<String, String> params = new HashMap<>();
         // 添加文件源
+        params.put("docId", docId);
         params.put("isThumbnail", String.valueOf(isThumbnail));
 
-        ResultData<DocumentResponse> resultData = apiTemplate.getByAppModuleCode(appCode, "/document/" + docId,
+        ResultData<DocumentResponse> resultData = apiTemplate.getByAppModuleCode(appCode, "/document/getDocument",
                 new ParameterizedTypeReference<ResultData<DocumentResponse>>() {
                 }, params);
+
         if (resultData.failed()) {
             throw new ServiceException("通过EDM上传文件失败: " + resultData.getMessage());
         }
