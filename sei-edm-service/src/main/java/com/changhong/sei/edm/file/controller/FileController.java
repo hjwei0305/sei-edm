@@ -73,7 +73,7 @@ public class FileController {
         dto.setSystem(sys);
         if (StringUtils.isBlank(uploadUser)) {
             SessionUser user = ContextUtil.getSessionUser();
-            uploadUser = user.getUserName() + "[" + user.getAccount() + "]";
+            uploadUser = user.getAccount();
         }
         dto.setUploadUser(uploadUser);
 
@@ -122,7 +122,7 @@ public class FileController {
             dto.setSystem(sys);
 
             SessionUser user = ContextUtil.getSessionUser();
-            dto.setUploadUser(user.getUserName() + "[" + user.getAccount() + "]");
+            dto.setUploadUser(user.getAccount());
 
             // 文件上传
             ResultData<UploadResponse> resultData = fileService.uploadDocument(dto);
