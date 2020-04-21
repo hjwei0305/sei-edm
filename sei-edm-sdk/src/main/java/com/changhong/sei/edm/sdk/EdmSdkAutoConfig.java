@@ -1,5 +1,6 @@
 package com.changhong.sei.edm.sdk;
 
+import com.changhong.sei.apitemplate.ApiTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 public class EdmSdkAutoConfig {
 
     @Bean
-    public DocumentManager documentManager(){
-        return new DocumentManager();
+    public DocumentManager documentManager(ApiTemplate apiTemplate){
+        return new DocumentManager(apiTemplate);
     }
 }

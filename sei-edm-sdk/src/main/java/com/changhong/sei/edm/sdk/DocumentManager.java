@@ -9,7 +9,6 @@ import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.exception.ServiceException;
 import com.changhong.sei.util.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
@@ -18,6 +17,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import javax.validation.constraints.NotBlank;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -33,15 +33,19 @@ import java.util.Map;
  */
 public class DocumentManager {
 
-    private static final String appCode = "edm-service";
-    @Autowired
-    private ApiTemplate apiTemplate;
+    private static final String EDM_SERVICE = "edm-service";
+    private final ApiTemplate apiTemplate;
+
+    public DocumentManager(ApiTemplate apiTemplate) {
+        this.apiTemplate = apiTemplate;
+    }
 
     /**
      * 上传一个文档
      *
      * @param fileName 文件名
      * @param data     文件数据
+     *                 {@link FileUtils#readFileToByteArray(File)}
      * @return 文档信息
      */
     public UploadResponse uploadDocument(final String fileName, final byte[] data) {
@@ -62,8 +66,9 @@ public class DocumentManager {
         params.add("file", resource);
         params.add("sys", ContextUtil.getAppCode());
 
-        ResultData<UploadResponse> resultData = apiTemplate.uploadFileByAppModuleCode(appCode, "/file/upload",
-                new ParameterizedTypeReference<ResultData<UploadResponse>>() { }, params);
+        ResultData<UploadResponse> resultData = apiTemplate.uploadFileByAppModuleCode(EDM_SERVICE, "/file/upload",
+                new ParameterizedTypeReference<ResultData<UploadResponse>>() {
+                }, params);
         if (resultData.failed()) {
             throw new ServiceException("通过EDM上传文件失败: " + resultData.getMessage());
         }
@@ -74,6 +79,7 @@ public class DocumentManager {
      * 上传一个文档(如果是图像生成缩略图)
      *
      * @param stream   文档数据流
+     *                 {@link FileUtils#openInputStream(File)}
      * @param fileName 文件名
      * @return 文档信息
      */
@@ -107,7 +113,7 @@ public class DocumentManager {
         params.add("file", resource);
         params.add("sys", ContextUtil.getAppCode());
 
-        ResultData<UploadResponse> resultData = apiTemplate.uploadFileByAppModuleCode(appCode, "/file/upload",
+        ResultData<UploadResponse> resultData = apiTemplate.uploadFileByAppModuleCode(EDM_SERVICE, "/file/upload",
                 new ParameterizedTypeReference<ResultData<UploadResponse>>() {
                 }, params);
         if (resultData.failed()) {
@@ -120,8 +126,8 @@ public class DocumentManager {
      * 获取一个文档(包含信息和数据)
      *
      * @param docId       文档Id
-     * @param isThumbnail 是获取缩略图
-     * @return 文档
+     * @param isThumbnail 是获取缩略图(默认宽150,高100)
+     * @return 文档. {@link FileUtils#str2InputStream(String)} 或 {@link FileUtils#str2File(String, String)}
      */
     public DocumentResponse getDocument(String docId, boolean isThumbnail) {
         Map<String, String> params = new HashMap<>();
@@ -129,7 +135,7 @@ public class DocumentManager {
         params.put("docId", docId);
         params.put("isThumbnail", String.valueOf(isThumbnail));
 
-        ResultData<DocumentResponse> resultData = apiTemplate.getByAppModuleCode(appCode, "/document/getDocument",
+        ResultData<DocumentResponse> resultData = apiTemplate.getByAppModuleCode(EDM_SERVICE, "/document/getDocument",
                 new ParameterizedTypeReference<ResultData<DocumentResponse>>() {
                 }, params);
 
@@ -147,13 +153,13 @@ public class DocumentManager {
      * @param entityId 绑定业务实体文档信息请求
      * @param docIds   绑定业务实体文档信息请求
      */
-    public ResultData<DocumentResponse> bindBusinessDocuments(String entityId, Collection<String> docIds) {
+    public ResultData<String> bindBusinessDocuments(String entityId, Collection<String> docIds) {
         BindRequest request = new BindRequest();
         request.setEntityId(entityId);
         request.setDocumentIds(docIds);
 
-        ResultData<DocumentResponse> resultData = apiTemplate.postByAppModuleCode(appCode, "/document/bindBusinessDocuments",
-                new ParameterizedTypeReference<ResultData<DocumentResponse>>() {
+        ResultData<String> resultData = apiTemplate.postByAppModuleCode(EDM_SERVICE, "/document/bindBusinessDocuments",
+                new ParameterizedTypeReference<ResultData<String>>() {
                 }, request);
         return resultData;
     }
@@ -165,7 +171,9 @@ public class DocumentManager {
      */
     public ResultData<String> deleteBusinessInfos(@NotBlank String entityId) {
         try {
-            apiTemplate.deleteByAppModuleCode(appCode, "/document/deleteBusinessInfos", entityId);
+            apiTemplate.postByAppModuleCode(EDM_SERVICE, "/document/deleteBusinessInfos?entityId=" + entityId,
+                    new ParameterizedTypeReference<ResultData<String>>() {
+                    });
             return ResultData.success("OK");
         } catch (Exception e) {
             LogUtil.error("删除业务实体的文档信息失败", e);
@@ -183,7 +191,7 @@ public class DocumentManager {
         Map<String, String> params = new HashMap<>();
         params.put("docId", docId);
 
-        ResultData<DocumentResponse> resultData = apiTemplate.getByAppModuleCode(appCode, "/document/getEntityDocumentInfo",
+        ResultData<DocumentResponse> resultData = apiTemplate.getByAppModuleCode(EDM_SERVICE, "/document/getEntityDocumentInfo",
                 new ParameterizedTypeReference<ResultData<DocumentResponse>>() {
                 }, params);
         return resultData;
@@ -199,7 +207,7 @@ public class DocumentManager {
         Map<String, String> params = new HashMap<>();
         params.put("entityId", entityId);
 
-        ResultData<List<DocumentResponse>> resultData = apiTemplate.getByAppModuleCode(appCode, "/document/getEntityDocumentInfos",
+        ResultData<List<DocumentResponse>> resultData = apiTemplate.getByAppModuleCode(EDM_SERVICE, "/document/getEntityDocumentInfos",
                 new ParameterizedTypeReference<ResultData<List<DocumentResponse>>>() {
                 }, params);
         return resultData;

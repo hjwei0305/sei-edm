@@ -7,7 +7,6 @@ import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.service.DocumentService;
-import com.changhong.sei.util.FileUtils;
 import io.swagger.annotations.Api;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
