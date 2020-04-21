@@ -18,7 +18,7 @@ import java.util.List;
  * @version 1.0.00  2020-02-05 16:16
  */
 @Validated
-@RequestMapping(name = "edm-service", path = "document", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(path = "document", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public interface DocumentApi {
 //    /**
 //     * 上传一个文档(如果是图像生成缩略图)
