@@ -62,9 +62,9 @@ public interface DocumentApi {
      * @param isThumbnail 是获取缩略图
      * @return 文档
      */
-    @GetMapping("{docId}")
+    @GetMapping("getDocument")
     @ApiOperation(value = "获取一个文档(包含信息和数据)", notes = "获取一个文档(包含信息和数据)")
-    ResultData<DocumentResponse> getDocument(@PathVariable("docId") String docId, @RequestParam(name = "isThumbnail", required = false) boolean isThumbnail);
+    ResultData<DocumentResponse> getDocument(@RequestParam("docId") String docId, @RequestParam(name = "isThumbnail", required = false) boolean isThumbnail);
 
     /**
      * 提交业务实体的文档信息
