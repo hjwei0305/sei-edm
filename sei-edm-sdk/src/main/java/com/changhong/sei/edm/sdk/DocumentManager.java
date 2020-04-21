@@ -43,13 +43,12 @@ public class DocumentManager {
     /**
      * 上传一个文档
      *
-     * @param uploadUser 上传人
      * @param fileName   文件名
      * @param data       文件数据
      *                   {@link FileUtils#readFileToByteArray(File)}
      * @return 文档信息
      */
-    public UploadResponse uploadDocument(final String uploadUser, final String fileName, final byte[] data) {
+    public UploadResponse uploadDocument(final String fileName, final byte[] data) {
         Resource resource = new ByteArrayResource(data) {
             /**
              * 覆写父类方法
@@ -66,7 +65,7 @@ public class DocumentManager {
         // 添加文件源
         params.add("file", resource);
         params.add("sys", ContextUtil.getAppCode());
-        params.add("uploadUser", uploadUser);
+        params.add("uploadUser", ContextUtil.getUserAccount());
 
         ResultData<UploadResponse> resultData = apiTemplate.uploadFileByAppModuleCode(EDM_SERVICE, "/file/upload",
                 new ParameterizedTypeReference<ResultData<UploadResponse>>() {
@@ -85,7 +84,7 @@ public class DocumentManager {
      * @param fileName 文件名
      * @return 文档信息
      */
-    public UploadResponse uploadDocument(final String uploadUser, final String fileName, InputStream stream) {
+    public UploadResponse uploadDocument(final String fileName, InputStream stream) {
         Resource resource = new InputStreamResource(stream) {
             /**
              * 覆写父类方法
@@ -114,7 +113,7 @@ public class DocumentManager {
         // 添加文件源
         params.add("file", resource);
         params.add("sys", ContextUtil.getAppCode());
-        params.add("uploadUser", uploadUser);
+        params.add("uploadUser", ContextUtil.getUserAccount());
 
         ResultData<UploadResponse> resultData = apiTemplate.uploadFileByAppModuleCode(EDM_SERVICE, "/file/upload",
                 new ParameterizedTypeReference<ResultData<UploadResponse>>() {
