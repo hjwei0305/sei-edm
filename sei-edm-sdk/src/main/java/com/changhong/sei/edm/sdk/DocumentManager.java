@@ -62,11 +62,7 @@ public class DocumentManager {
         params.add("sys", ContextUtil.getAppCode());
 
         ResultData<UploadResponse> resultData = apiTemplate.uploadFileByAppModuleCode(appCode, "/file/upload",
-                new ParameterizedTypeReference<ResultData<UploadResponse>>() {
-                }, params);
-//        ResultData<UploadResponse> resultData = apiTemplate.uploadFileByUrl("http://localhost:8080/edm/file/upload",
-//                new ParameterizedTypeReference<ResultData<UploadResponse>>() {
-//                }, params);
+                new ParameterizedTypeReference<ResultData<UploadResponse>>() { }, params);
         if (resultData.failed()) {
             throw new ServiceException("通过EDM上传文件失败: " + resultData.getMessage());
         }
@@ -113,23 +109,11 @@ public class DocumentManager {
         ResultData<UploadResponse> resultData = apiTemplate.uploadFileByAppModuleCode(appCode, "/file/upload",
                 new ParameterizedTypeReference<ResultData<UploadResponse>>() {
                 }, params);
-//        ResultData<UploadResponse> resultData = apiTemplate.uploadFileByUrl("http://localhost:8080/edm/file/upload",
-//                new ParameterizedTypeReference<ResultData<UploadResponse>>() {
-//                }, params);
         if (resultData.failed()) {
             throw new ServiceException("通过EDM上传文件失败: " + resultData.getMessage());
         }
         return resultData.getData();
     }
-
-//    /**
-//     * 上传扫描件方法
-//     * （包含上传和保存关联关系）
-//     *
-//     * @param scanVo
-//     * @return
-//     */
-//    DocumentInfo uploadScan(UploadScanVo scanVo);
 
     /**
      * 获取一个文档(包含信息和数据)
