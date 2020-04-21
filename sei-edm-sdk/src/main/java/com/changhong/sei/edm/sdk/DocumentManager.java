@@ -3,6 +3,7 @@ package com.changhong.sei.edm.sdk;
 import com.changhong.sei.apitemplate.ApiTemplate;
 import com.changhong.sei.core.context.ContextUtil;
 import com.changhong.sei.core.dto.ResultData;
+import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.dto.BindRequest;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.UploadResponse;
@@ -144,7 +145,7 @@ public class DocumentManager {
      * @param entityId 绑定业务实体文档信息请求
      * @param docIds   绑定业务实体文档信息请求
      */
-    public void bindBusinessDocuments(String entityId, Collection<String> docIds) {
+    public ResultData<DocumentResponse> bindBusinessDocuments(String entityId, Collection<String> docIds) {
         BindRequest request = new BindRequest();
         request.setEntityId(entityId);
         request.setDocumentIds(docIds);
@@ -152,9 +153,7 @@ public class DocumentManager {
         ResultData<DocumentResponse> resultData = apiTemplate.postByAppModuleCode(appCode, "/document/bindBusinessDocuments",
                 new ParameterizedTypeReference<ResultData<DocumentResponse>>() {
                 }, request);
-        if (resultData.failed()) {
-            throw new ServiceException("通过EDM上传文件失败: " + resultData.getMessage());
-        }
+        return resultData;
     }
 
     /**
@@ -162,8 +161,14 @@ public class DocumentManager {
      *
      * @param entityId 业务实体Id
      */
-    public void deleteBusinessInfos(@NotBlank String entityId) {
-        apiTemplate.deleteByAppModuleCode(appCode, "/document/deleteBusinessInfos", entityId);
+    public ResultData<String> deleteBusinessInfos(@NotBlank String entityId) {
+        try {
+            apiTemplate.deleteByAppModuleCode(appCode, "/document/deleteBusinessInfos", entityId);
+            return ResultData.success("OK");
+        } catch (Exception e) {
+            LogUtil.error("删除业务实体的文档信息失败", e);
+            return ResultData.fail("删除业务实体的文档信息失败: " + e.getMessage());
+        }
     }
 
     /**
@@ -172,17 +177,14 @@ public class DocumentManager {
      * @param docId 文档Id
      * @return 文档
      */
-    public DocumentResponse getEntityDocumentInfo(@NotBlank String docId) {
+    public ResultData<DocumentResponse> getEntityDocumentInfo(@NotBlank String docId) {
         Map<String, String> params = new HashMap<>();
         params.put("docId", docId);
 
         ResultData<DocumentResponse> resultData = apiTemplate.getByAppModuleCode(appCode, "/document/getEntityDocumentInfo",
                 new ParameterizedTypeReference<ResultData<DocumentResponse>>() {
                 }, params);
-        if (resultData.failed()) {
-            throw new ServiceException("通过EDM上传文件失败: " + resultData.getMessage());
-        }
-        return resultData.getData();
+        return resultData;
     }
 
     /**
