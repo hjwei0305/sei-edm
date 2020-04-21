@@ -4,13 +4,13 @@ import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.common.constant.Constants;
 import com.changhong.sei.edm.common.util.ImageUtils;
+import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.service.DocumentService;
-import com.changhong.sei.edm.manager.service.ThumbnailService;
 import com.changhong.sei.util.FileUtils;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -49,8 +49,8 @@ public class MongoServiceImpl implements FileService {
 
     @Autowired
     private DocumentService documentService;
-    @Autowired
-    private ThumbnailService thumbnailService;
+//    @Autowired
+//    private ThumbnailService thumbnailService;
     @Autowired
     private ModelMapper modelMapper;
 
@@ -77,17 +77,20 @@ public class MongoServiceImpl implements FileService {
     /**
      * 上传一个文档(如果是图像生成缩略图)
      *
-     * @param fileName 文件名
-     * @param sys      来源系统
-     * @param data     文档数据
+     * @param dto 上传dto
      * @return 文档信息
      */
     @Override
-    public ResultData<UploadResponse> uploadDocument(String fileName, String sys, byte[] data) {
-        if (Objects.isNull(data)) {
+    public ResultData<UploadResponse> uploadDocument(DocumentDto dto) {
+        if (Objects.isNull(dto)) {
+            return ResultData.fail("文件对象为空.");
+        }
+        if (Objects.isNull(dto.getData())) {
             return ResultData.fail("文件流为空.");
         }
 
+        String fileName = dto.getFileName();
+        byte[] data = dto.getData();
         Document document;
         InputStream dataStream = null;
         try {
@@ -103,7 +106,7 @@ public class MongoServiceImpl implements FileService {
             document = new Document(fileName);
             document.setDocId(objectId.toString());
             document.setSize((long) data.length);
-            document.setSystem(sys);
+            document.setSystem(dto.getSystem());
             document.setUploadedTime(LocalDateTime.now());
             document.setDocumentType(documentType);
         } catch (Exception e) {

@@ -4,7 +4,7 @@ apply plugin: 'io.spring.dependency-management'
 dependencies {
     compile project(':sei-edm-api')
 
-    compile(
+    implementation(
             "com.changhong.sei:sei-service-starter:$sei_version"
     )
 

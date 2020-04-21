@@ -4,14 +4,13 @@ import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.common.constant.Constants;
 import com.changhong.sei.edm.common.util.ImageUtils;
+import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
-import com.changhong.sei.edm.manager.entity.Thumbnail;
 import com.changhong.sei.edm.manager.service.DocumentService;
-import com.changhong.sei.edm.manager.service.ThumbnailService;
 import com.changhong.sei.util.FileUtils;
 import com.changhong.sei.util.IdGenerator;
 import org.apache.commons.collections.CollectionUtils;
@@ -39,7 +38,7 @@ public class LocalFileServiceImpl implements FileService {
     private String storePath;
     @Autowired
     private DocumentService documentService;
-//    @Autowired
+    //    @Autowired
 //    private ThumbnailService thumbnailService;
     @Autowired
     private ModelMapper modelMapper;
@@ -79,31 +78,32 @@ public class LocalFileServiceImpl implements FileService {
     /**
      * 上传一个文档(如果是图像生成缩略图)
      *
-     * @param fileName 文件名
-     * @param sys      来源系统
-     * @param data     文档数据
+     * @param dto 上传dto
      * @return 文档信息
      */
     @Override
-    public ResultData<UploadResponse> uploadDocument(String fileName, String sys, byte[] data) {
-        if (Objects.isNull(data)) {
+    public ResultData<UploadResponse> uploadDocument(DocumentDto dto) {
+        if (Objects.isNull(dto)) {
+            return ResultData.fail("文件对象为空.");
+        }
+        if (Objects.isNull(dto.getData())) {
             return ResultData.fail("文件流为空.");
         }
 
         // 获取文件目录
         StringBuffer fileStr = this.getFileDir();
         // uuid生成新的文件名
-        fileStr.append(IdGenerator.uuid2()).append(DOT).append(FileUtils.getExtension(fileName));
+        fileStr.append(IdGenerator.uuid2()).append(DOT).append(FileUtils.getExtension(dto.getFileName()));
 
         File file = FileUtils.getFile(fileStr.toString());
         try {
-            FileUtils.writeByteArrayToFile(file, data);
+            FileUtils.writeByteArrayToFile(file, dto.getData());
         } catch (IOException e) {
             LogUtil.error("文件上传读取异常.", e);
             return ResultData.fail("文件上传读取异常.");
         }
 
-        return uploadDocument(fileName, sys, file);
+        return uploadDocument(dto.getFileName(), dto.getSystem(), dto.getUploadUser(), file);
     }
 
     /**
@@ -276,10 +276,10 @@ public class LocalFileServiceImpl implements FileService {
     /**
      * 上传一个文档
      *
-     * @param file              文档
+     * @param file 文档
      * @return 文档信息
      */
-    private ResultData<UploadResponse> uploadDocument(String originName, String sys, File file) {
+    private ResultData<UploadResponse> uploadDocument(String originName, String sys, String uploadUser, File file) {
         if (Objects.isNull(file)) {
             return ResultData.fail("文件不存在.");
         }
@@ -288,6 +288,7 @@ public class LocalFileServiceImpl implements FileService {
         document.setDocId(FileUtils.getFileName(file.getName()));
         document.setSize(file.length());
         document.setSystem(sys);
+        document.setUploadUser(uploadUser);
         document.setUploadedTime(LocalDateTime.now());
         document.setDocumentType(getDocumentType(document.getFileName()));
 

@@ -1,6 +1,7 @@
 package com.changhong.sei.edm.file.service;
 
 import com.changhong.sei.core.dto.ResultData;
+import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.UploadResponse;
 
@@ -18,12 +19,10 @@ public interface FileService {
     /**
      * 上传一个文档(如果是图像生成缩略图)
      *
-     * @param fileName 文件名
-     * @param sys      来源系统
-     * @param data     文档数据
+     * @param dto 文档上传dto
      * @return 文档信息
      */
-    ResultData<UploadResponse> uploadDocument(String fileName, String sys, byte[] data);
+    ResultData<UploadResponse> uploadDocument(DocumentDto dto);
 
     /**
      * 获取一个文档信息(不含文件内容数据)

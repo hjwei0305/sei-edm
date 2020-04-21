@@ -51,6 +51,11 @@ public class Document extends BaseEntity {
     @Column(name = "system", length = 50)
     private String system;
     /**
+     * 上传人
+     */
+    @Column(name = "upload_user")
+    private String uploadUser;
+    /**
      * 上传时间
      */
     @Column(name = "uploaded_time")
@@ -101,6 +106,14 @@ public class Document extends BaseEntity {
 
     public void setSystem(String system) {
         this.system = system;
+    }
+
+    public String getUploadUser() {
+        return uploadUser;
+    }
+
+    public void setUploadUser(String uploadUser) {
+        this.uploadUser = uploadUser;
     }
 
     public LocalDateTime getUploadedTime() {

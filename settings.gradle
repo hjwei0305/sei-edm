@@ -3,4 +3,5 @@ rootProject.name = 'sei-edm'
 include 'sei-edm-service'
 include 'sei-edm-api'
 include 'sei-edm-sdk'
+include 'sei3-edm-sdk'
 

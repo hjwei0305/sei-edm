@@ -1,9 +1,11 @@
 package com.changhong.sei.edm.file.controller;
 
 import com.changhong.sei.core.context.ContextUtil;
+import com.changhong.sei.core.context.SessionUser;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.log.LogUtil;
+import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.OcrType;
 import com.changhong.sei.edm.dto.UploadResponse;
@@ -51,6 +53,7 @@ public class FileController {
     @ApiOperation("单文件上传或识别")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "sys", value = "来源系统"),
+            @ApiImplicitParam(name = "uploadUser", value = "上传人"),
             @ApiImplicitParam(name = "ocr", dataTypeClass = OcrType.class, value = "ocr识别类型: None, Barcode, InvoiceQr, Qr "),
             @ApiImplicitParam(name = "file", value = "文件", required = true)
     })
@@ -58,15 +61,26 @@ public class FileController {
     @ResponseBody
     public ResultData<UploadResponse> upload(//@RequestParam("file") MultipartFile[] files,
                                              @RequestParam("file") MultipartFile file,
+                                             @RequestParam(value = "uploadUser", required = false) String uploadUser,
                                              @RequestParam(value = "ocr", required = false) String ocr,
                                              @RequestParam(value = "sys", required = false) String sys) throws IOException {
         if (StringUtils.isBlank(sys)) {
             sys = ContextUtil.getAppCode();
         }
+        DocumentDto dto = new DocumentDto();
+        dto.setData(file.getBytes());
+        dto.setFileName(file.getOriginalFilename());
+        dto.setSystem(sys);
+        if (StringUtils.isBlank(uploadUser)) {
+            SessionUser user = ContextUtil.getSessionUser();
+            uploadUser = user.getUserName() + "[" + user.getAccount() + "]";
+        }
+        dto.setUploadUser(uploadUser);
+
         UploadResponse uploadResponse;
 //        for (MultipartFile file : files) {
         // 文件上传
-        ResultData<UploadResponse> resultData = fileService.uploadDocument(file.getOriginalFilename(), sys, file.getBytes());
+        ResultData<UploadResponse> resultData = fileService.uploadDocument(dto);
         if (resultData.successful() && StringUtils.isNotBlank(ocr)) {
             uploadResponse = resultData.getData();
             OcrType ocrType = EnumUtils.getEnum(OcrType.class, ocr);
@@ -94,14 +108,24 @@ public class FileController {
     @PostMapping(value = "/batchUpload")
     @ResponseBody
     public ResultData<List<UploadResponse>> batchUpload(@RequestParam("file") MultipartFile[] files,
-                                                   @RequestParam(value = "sys", required = false) String sys) throws IOException {
+                                                        @RequestParam(value = "sys", required = false) String sys) throws IOException {
         if (StringUtils.isBlank(sys)) {
             sys = ContextUtil.getAppCode();
         }
+
+        DocumentDto dto;
         List<UploadResponse> uploadResponses = new ArrayList<>();
         for (MultipartFile file : files) {
+            dto = new DocumentDto();
+            dto.setData(file.getBytes());
+            dto.setFileName(file.getOriginalFilename());
+            dto.setSystem(sys);
+
+            SessionUser user = ContextUtil.getSessionUser();
+            dto.setUploadUser(user.getUserName() + "[" + user.getAccount() + "]");
+
             // 文件上传
-            ResultData<UploadResponse> resultData = fileService.uploadDocument(file.getOriginalFilename(), sys, file.getBytes());
+            ResultData<UploadResponse> resultData = fileService.uploadDocument(dto);
             if (resultData.successful()) {
                 uploadResponses.add(resultData.getData());
             }
