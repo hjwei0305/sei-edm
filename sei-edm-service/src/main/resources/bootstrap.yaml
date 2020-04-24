@@ -21,14 +21,14 @@ spring:
     name: ${sei.application.code}
   cloud:
     config: # 配置中心地址
-#      uri: http://10.4.208.86:8100/config-center
+      uri: http://10.4.208.86:8100/config-center
       profile: DEV #当前环境
       name: ${spring.application.name}
     zookeeper: #启用平台注册发现
       # zk地址
-#      connect-string: 10.4.208.132:2181
+      connect-string: 10.4.208.132:2181
       # 关闭zk可用不用依赖平台注册中心
-      enabled: false
+      enabled: true
 #  service-registry: # 不自动注册到注册中心
 #    auto-registration:
 #      enabled: false
