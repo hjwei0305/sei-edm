@@ -41,7 +41,7 @@ public class DocumentManager implements IDocumentManager, ApplicationContextAwar
     }
 
     private String getServiceUrl() {
-        return context.getEnvironment().getProperty("EDM_SERVICE", "http://10.4.208.86:20007/edm-service");
+        return context.getEnvironment().getProperty("sei.edm.service", "http://10.4.208.86:20007/edm-service");
     }
 
     /**
