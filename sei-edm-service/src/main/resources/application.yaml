@@ -71,6 +71,9 @@ sei:
       match-prefix: rcs,sei,nhd,gwm
       # 配置tessdata的安装路径表示启用tessdata识别
 #      tessdata-path:
+  http:
+    filter:
+      ignore-auth-url: /pdfjs/web/,/base/base.html,/pageoffice/,/preview/
 
 server:
   servlet:
