@@ -11,16 +11,19 @@ spring:
     check-template-location: true
     suffix: .html
     encoding: UTF-8
-    mode: HTML5
+    mode: HTML
     cache: false
     servlet:
       content-type: text/html
   # 数据库配置
   datasource:
     driverClassName: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://10.4.208.134:3306/sei_edm?characterEncoding=utf8&useSSL=false
-    username: sei
-    password: 123456
+#    url: jdbc:mysql://10.4.208.134:3306/sei_edm?characterEncoding=utf8&useSSL=false
+#    username: sei
+#    password: 123456
+    url: jdbc:mysql://10.4.3.18:3306/sei_edm?characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8
+    username: sei_edm
+    password: 2kveIDprByjvQzr
   jpa:
     hibernate:
       ddl-auto: none
@@ -33,13 +36,32 @@ spring:
     redis:
       time-to-live: 20s
   redis:
-    host: 10.4.208.132
-    port: 6379
-    password: ZmkDbgaua3Rso33T
-    database: 0
-  data:
-    mongodb:
-      uri: mongodb://edm_dev:lAjrgwbT0xqWNT8LVmmOAs1f@10.4.208.132:27017/edm
+    lettuce:
+      pool:
+        # 连接池中的最小空闲连接
+        min-idle: 5
+        # 连接池中的最大空闲连接
+        max-idle: 10
+        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1
+        # 连接池最大连接数（使用负值表示没有限制）
+        max-active: 1000
+    # 哨兵模式
+    sentinel:
+      master: master01
+      nodes: 10.4.3.18:26379,10.4.3.19:26379,10.4.3.20:26379
+    # 直连模式
+#    host: 10.4.208.132
+#    port: 6379
+      # Redis数据库索引（默认为0）
+#    database: 0
+    database: 2
+    # 密码
+#    password: ZmkDbgaua3Rso33T
+    password: f4c5b26f61f3afd121062fb8961531be
+#  data:
+#    mongodb:
+#      uri: mongodb://edm_dev:lAjrgwbT0xqWNT8LVmmOAs1f@10.4.208.132:27017/edm
 #  cloud:
 #    service-registry: # 本机不自动注册到服务列表
 #      auto-registration:
@@ -55,15 +77,20 @@ logging:
 sei:
   # 核心配置
   edm:
-    model: mongo
+    model: minio
+    # MinIO 配置
+    minio:
+      endpoint: http://ccp-minio.changhong.com
+      accesskey: BKIKJAA5BMMU2RHO6IBB
+      secretKey: V7f1CwQqAcwo80UEIJEjQ9GSrr12
     store-path: /Users/chaoma/work_space/0_temp/
     jod-converter:
       enabled: true
-#      office-home: /opt/openoffice4
-      office-home: /Applications/OpenOffice.app/Contents
+      office-home: /opt/openoffice4
+#      office-home: /Applications/OpenOffice.app/Contents
 #      office-home: /Applications/LibreOffice.app/Contents
-#      port-numbers: 8100,8101,8102
-      port-numbers: 8100
+      port-numbers: 8100,8101,8102
+#      port-numbers: 8100
       max-tasks-per-process: 100
     # 识别相关配置
     ocr:
@@ -73,8 +100,9 @@ sei:
 #      tessdata-path:
   http:
     filter:
-      ignore-auth-url: /pdfjs/web/,/base/base.html,/pageoffice/,/preview/
+      ignore-auth-url: /demo,/pdfjs/web/,/base/base.html,/pageoffice/,/preview/
 
-server:
-  servlet:
-    context-path: /edm
+
+#server:
+#  servlet:
+#    context-path: /edm
