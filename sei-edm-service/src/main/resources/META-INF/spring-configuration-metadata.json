@@ -23,6 +23,12 @@
       "type": "com.changhong.sei.edm.config.EdmConfigProperties$OcrProperties",
       "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties",
       "sourceMethod": "getOcr()"
+    },
+    {
+      "name": "sei.edm.minio",
+      "type": "com.changhong.sei.edm.config.EdmConfigProperties$MinioProperties",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties",
+      "sourceMethod": "getMinio()"
     }
   ],
   "properties": [
@@ -36,7 +42,7 @@
     {
       "name": "sei.edm.model",
       "type": "com.changhong.sei.edm.config.EdmConfigProperties$StoreModel",
-      "description": "存储类型: local-本地文件系统;mongo-MongoDB存储",
+      "description": "存储类型: local-本地文件系统;mongo-MongoDB存储;minio-MinIO是在Apache License v2.0下发布的对象存储服务器",
       "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties$StoreModel",
       "defaultValue": "local"
     },
@@ -53,6 +59,32 @@
       "type": "java.lang.String",
       "description": "tess data 安装目录",
       "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties$OcrProperties"
+    },
+
+    {
+      "name": "sei.edm.minio.endpoint",
+      "type": "java.lang.String",
+      "description": "minio 访问地址",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties$MinioProperties"
+    },
+    {
+      "name": "sei.edm.minio.accesskey",
+      "type": "java.lang.String",
+      "description": "minio Access Key",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties$MinioProperties"
+    },
+    {
+      "name": "sei.edm.minio.secretKey",
+      "type": "java.lang.String",
+      "description": "minio Secret Key",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties$MinioProperties"
+    },
+    {
+      "name": "sei.edm.minio.bucket",
+      "type": "java.lang.String",
+      "description": "minio bucket",
+      "sourceType": "com.changhong.sei.edm.config.EdmConfigProperties$MinioProperties",
+      "defaultValue": "sei-edm"
     },
 
     {

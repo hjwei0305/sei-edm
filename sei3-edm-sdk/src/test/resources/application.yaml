@@ -1,0 +1,5 @@
+ECMP_APP_ID: sei3-edm
+sei:
+  edm:
+    service: http://base-service.changhong.com/edm-service
+#    service: http://localhost:8080

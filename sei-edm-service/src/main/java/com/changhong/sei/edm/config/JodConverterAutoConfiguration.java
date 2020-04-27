@@ -1,8 +1,5 @@
 package com.changhong.sei.edm.config;
 
-import com.changhong.sei.edm.file.service.FileService;
-import com.changhong.sei.edm.file.service.local.LocalFileServiceImpl;
-import com.changhong.sei.edm.file.service.mongo.MongoServiceImpl;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -40,14 +37,13 @@ import java.util.stream.Stream;
 @ConditionalOnClass(LocalConverter.class)
 @ConditionalOnProperty(prefix = "sei.edm.jod-converter", name = "enabled", havingValue = "true")
 @EnableConfigurationProperties(EdmConfigProperties.class)
-public class JodConverterConfig implements ResourceLoaderAware {
+public class JodConverterAutoConfiguration implements ResourceLoaderAware {
 
-    private final EdmConfigProperties.StoreModel storeModel;
+
     private final JodConverterProperties properties;
     private ResourceLoader resourceLoader;
 
-    public JodConverterConfig(final EdmConfigProperties edmConfigProperties) {
-        this.storeModel = edmConfigProperties.getModel();
+    public JodConverterAutoConfiguration(final EdmConfigProperties edmConfigProperties) {
         this.properties = edmConfigProperties.getJodConverter();
     }
 
@@ -56,14 +52,6 @@ public class JodConverterConfig implements ResourceLoaderAware {
         this.resourceLoader = resourceLoader;
     }
 
-    @Bean
-    public FileService fileService() {
-        if (EdmConfigProperties.StoreModel.local == storeModel) {
-            return new LocalFileServiceImpl();
-        } else {
-            return new MongoServiceImpl();
-        }
-     }
 
     // Creates the OfficeManager bean.
     private OfficeManager createOfficeManager(final ProcessManager processManager) {

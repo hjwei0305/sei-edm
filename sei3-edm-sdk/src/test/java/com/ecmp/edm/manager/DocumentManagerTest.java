@@ -1,9 +1,15 @@
 package com.ecmp.edm.manager;
 
+import com.ecmp.context.ContextUtil;
 import com.ecmp.edm.entity.Document;
 import com.ecmp.edm.entity.DocumentInfo;
+import com.ecmp.enums.UserAuthorityPolicy;
+import com.ecmp.enums.UserType;
 import com.ecmp.util.FileUtils;
 import com.ecmp.util.JsonUtils;
+import com.ecmp.vo.LoginStatus;
+import com.ecmp.vo.SessionUser;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +36,23 @@ public class DocumentManagerTest {
     @Autowired
     private IDocumentManager manager;
 
+    @Before
+    public void before() {
+        SessionUser sessionUser = new SessionUser();
+        sessionUser.setSessionId("sei3-edm");
+        sessionUser.setUserId("sei3-edm");
+        sessionUser.setAccount("sei3-edm");
+        sessionUser.setUserName("sei3-edm");
+        sessionUser.setTenantCode("sei3-edm");
+        sessionUser.setUserType(UserType.Employee);
+        sessionUser.setAuthorityPolicy(UserAuthorityPolicy.GlobalAdmin);
+        sessionUser.setLoginTime(new Date());
+        sessionUser.setLoginStatus(LoginStatus.success);
+        String token = ContextUtil.generateToken(sessionUser);
+        sessionUser.setAccessToken(token);
+        ContextUtil.setSessionUser(sessionUser);
+    }
+
     @Test
     public void json() {
         String json = "{\"success\":true,\"message\":\"处理成功！\",\"data\":{\"docId\":\"5e9e9ee1ac99c80001a357a2\",\"fileName\":\"demo.pdman.json\",\"documentType\":\"Text\",\"ocrData\":null}}";
@@ -39,10 +63,10 @@ public class DocumentManagerTest {
     @Test
     public void uploadDocument() {
         DocumentInfo info = new DocumentInfo();
-        File file = new File("/Users/chaoma/Downloads/demo.pdman.json");
+        File file = new File("/Users/chaoma/Downloads/00000006.jpg");
         try {
-            info.setAppModule("test");
-            info.setFileName("demo.pdman.json");
+            info.setAppModule("edm");
+            info.setFileName("00000006.jpg");
             String s = FileUtils.file2Str(file);
             InputStream stream = FileUtils.str2InputStream(s);
             Document document = new Document(info, stream);

@@ -1,7 +1,9 @@
 package com.ecmp.edm.manager;
 
+import com.ecmp.context.BaseContextSupport;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 
 /**
  * <strong>实现功能:</strong>
@@ -14,5 +16,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class RestApplication {
     public static void main(String[] args) {
         SpringApplication.run(RestApplication.class, args);
+    }
+
+    @Bean
+    public BaseContextSupport contextSupport() {
+        return new BaseContextSupport();
     }
 }

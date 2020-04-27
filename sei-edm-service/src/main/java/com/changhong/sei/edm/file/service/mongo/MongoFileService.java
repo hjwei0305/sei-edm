@@ -40,7 +40,7 @@ import java.util.*;
  * @author 马超(Vision.Mac)
  * @version 1.0.00  2020-02-03 14:08
  */
-public class MongoServiceImpl implements FileService {
+public class MongoFileService implements FileService {
 
     @Autowired
     private MongoDbFactory mongoDbFactory;

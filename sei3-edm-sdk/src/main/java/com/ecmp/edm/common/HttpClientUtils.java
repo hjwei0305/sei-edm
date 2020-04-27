@@ -170,8 +170,8 @@ public class HttpClientUtils {
     /**
      * 发送post请求；带请求头和请求参数
      *
-     * @param url     请求地址
-     * @param json  请求参数集合
+     * @param url  请求地址
+     * @param json 请求参数集合
      */
     public static HttpClientResult doPostJson(String url, String json) throws Exception {
         // 创建httpClient对象
@@ -190,7 +190,7 @@ public class HttpClientUtils {
         // 设置请求头
 //		httpPost.setHeader("Cookie", "");
 //		httpPost.setHeader("Connection", "keep-alive");
-		httpPost.setHeader("Accept", "application/json");
+        httpPost.setHeader("Accept", "application/json");
 //		httpPost.setHeader("Accept-Language", "zh-CN,zh;q=0.9");
 //		httpPost.setHeader("Accept-Encoding", "gzip, deflate, br");
 //		httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36");
@@ -200,7 +200,7 @@ public class HttpClientUtils {
 
         // 封装请求参数
         if (json != null) {
-            StringEntity stringEntity = new StringEntity(json,"UTF-8");
+            StringEntity stringEntity = new StringEntity(json, "UTF-8");
             stringEntity.setContentEncoding("UTF-8");
             stringEntity.setContentType("application/json");
             httpPost.setEntity(stringEntity);

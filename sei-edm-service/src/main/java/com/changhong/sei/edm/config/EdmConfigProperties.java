@@ -16,6 +16,7 @@ public class EdmConfigProperties {
     private String storePath;
 
     private OcrProperties ocr = new OcrProperties();
+    private MinioProperties minio = new MinioProperties();
 
     @NestedConfigurationProperty
     private JodConverterProperties jodConverter = new JodConverterProperties();
@@ -44,6 +45,14 @@ public class EdmConfigProperties {
         this.ocr = ocr;
     }
 
+    public MinioProperties getMinio() {
+        return minio;
+    }
+
+    public void setMinio(MinioProperties minio) {
+        this.minio = minio;
+    }
+
     public JodConverterProperties getJodConverter() {
         return jodConverter;
     }
@@ -60,7 +69,11 @@ public class EdmConfigProperties {
         /**
          * MongoDB存储管理
          */
-        mongo
+        mongo,
+        /**
+         * MinIO是在Apache License v2.0下发布的对象存储服务器
+         */
+        minio
     }
 
     /**
@@ -84,6 +97,48 @@ public class EdmConfigProperties {
 
         public void setTessdataPath(String tessdataPath) {
             this.tessdataPath = tessdataPath;
+        }
+    }
+
+    /**
+     * MinIO 配置
+     */
+    public static class MinioProperties {
+        private String endpoint;
+        private String accesskey;
+        private String secretKey;
+        private String bucket;
+
+        public String getEndpoint() {
+            return endpoint;
+        }
+
+        public void setEndpoint(String endpoint) {
+            this.endpoint = endpoint;
+        }
+
+        public String getAccesskey() {
+            return accesskey;
+        }
+
+        public void setAccesskey(String accesskey) {
+            this.accesskey = accesskey;
+        }
+
+        public String getSecretKey() {
+            return secretKey;
+        }
+
+        public void setSecretKey(String secretKey) {
+            this.secretKey = secretKey;
+        }
+
+        public String getBucket() {
+            return bucket;
+        }
+
+        public void setBucket(String bucket) {
+            this.bucket = bucket;
         }
     }
 }

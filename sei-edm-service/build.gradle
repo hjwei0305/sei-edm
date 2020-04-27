@@ -52,6 +52,8 @@ dependencies {
 
     implementation("com.tencentcloudapi:tencentcloud-sdk-java:$tencentCloudApiVersion")
 
+    implementation 'io.minio:minio:7.0.2'
+
     testImplementation(
             "com.changhong.sei:sei-test-starter:$sei_version"
 //            "org.springframework.boot:spring-boot-starter-test"

@@ -31,7 +31,7 @@ import java.util.*;
  * @author 马超(Vision.Mac)
  * @version 1.0.00  2020-02-03 14:07
  */
-public class LocalFileServiceImpl implements FileService {
+public class LocalFileService implements FileService {
     public static final String DOT = ".";
 
     @Value("${sei.edm.store-path}")
