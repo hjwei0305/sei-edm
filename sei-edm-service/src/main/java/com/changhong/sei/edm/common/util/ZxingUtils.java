@@ -18,7 +18,6 @@ import java.net.URL;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
-import java.util.Vector;
 
 /**
  * 实现功能：
@@ -29,18 +28,26 @@ import java.util.Vector;
 public class ZxingUtils {
 
     private static final long MAX_PIXELS = 1 << 25;
-    public static final Map<DecodeHintType, Object> HINTS = new EnumMap<>(DecodeHintType.class);
+    public static final Map<DecodeHintType, Object> HINTS_ALL = new EnumMap<>(DecodeHintType.class);
+    public static final Map<DecodeHintType, Object> HINTS_BARCODE = new EnumMap<>(DecodeHintType.class);
+    public static final Map<DecodeHintType, Object> HINTS_QR = new EnumMap<>(DecodeHintType.class);
 
     static {
 //        //优化精度
 //        HINTS.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
 //        HINTS.put(DecodeHintType.CHARACTER_SET, "UTF-8");
-//        Vector<BarcodeFormat> decodeFormats = new Vector<>();
-//        decodeFormats.add(BarcodeFormat.CODE_128);
-//        decodeFormats.add(BarcodeFormat.CODE_39);
-//        decodeFormats.add(BarcodeFormat.CODE_93);
-//        HINTS.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
-        HINTS.put(DecodeHintType.POSSIBLE_FORMATS, EnumSet.allOf(BarcodeFormat.class));
+
+        HINTS_BARCODE.put(DecodeHintType.POSSIBLE_FORMATS, EnumSet.of(BarcodeFormat.CODE_128, BarcodeFormat.CODE_39, BarcodeFormat.CODE_93));
+        HINTS_QR.put(DecodeHintType.POSSIBLE_FORMATS, EnumSet.of(BarcodeFormat.QR_CODE));
+        HINTS_ALL.put(DecodeHintType.POSSIBLE_FORMATS, EnumSet.allOf(BarcodeFormat.class));
+    }
+
+    public static String processImageBarcode(BufferedImage image, String[] matchPrefix) {
+        return processImage(image, HINTS_BARCODE, matchPrefix);
+    }
+
+    public static String processImageQr(BufferedImage image, String[] matchPrefix) {
+        return processImage(image, HINTS_QR, matchPrefix);
     }
 
     public static String processImage(BufferedImage image, Map<DecodeHintType, Object> hints, String[] matchPrefix) {
