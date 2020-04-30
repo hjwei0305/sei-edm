@@ -8,9 +8,9 @@ sei: # 应用全局配置
       title: "${sei.application.name} API"
       description: "${sei.application.name} 的API文档，运行环境: ${sei.application.env}"
       version: ${sei.application.version}
-#  http:
-#    filter:
-#      enable: false
+  http:
+    filter:
+      enable: false
   mock: # 本地调试的当前用户配置
     user:
       tenant-code: 10044
