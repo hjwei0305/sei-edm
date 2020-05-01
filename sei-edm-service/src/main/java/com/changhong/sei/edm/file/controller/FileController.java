@@ -30,9 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -231,12 +229,40 @@ public class FileController {
 
         // 设置下载文件名
         setDownloadFileName(document.getFileName(), request, response);
+
+        byte[] buffer = new byte[2048];
+        InputStream is = null;
+        BufferedInputStream bis = null;
         try {
             byte[] bytes = document.getData();
-            response.getOutputStream().write(bytes);
-            return new ResponseEntity<>(bytes, HttpStatus.OK);
+//            response.getOutputStream().write(bytes);
+            is = new ByteArrayInputStream(bytes);
+            bis = new BufferedInputStream(is);
+            OutputStream os = response.getOutputStream();
+            int i = bis.read(buffer);
+            while (i != -1) {
+                os.write(buffer, 0, i);
+                i = bis.read(buffer);
+            }
+            os.flush();
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (IOException e) {
             LogUtil.error("Download error: " + e.getMessage(), e);
+        } finally {
+            if (Objects.nonNull(bis)) {
+                try {
+                    bis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (Objects.nonNull(is)) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
@@ -252,8 +278,10 @@ public class FileController {
 
             // 压缩文件
             zipDocument(documents, response.getOutputStream());
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
-        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
     /**
