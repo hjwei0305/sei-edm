@@ -276,7 +276,9 @@ public class HttpClientUtils {
                 .addBinaryBody("file", inputStream, ContentType.MULTIPART_FORM_DATA, fileName)
                 // 解决中文文件名乱码问题
                 .setCharset(StandardCharsets.UTF_8)
+                // 设置传输参数,设置编码。设置浏览器兼容模式，解决文件名乱码问题
                 .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+//                .setMode(HttpMultipartMode.RFC6532)
                 .build();
         httpPost.setEntity(httpEntity);
 
