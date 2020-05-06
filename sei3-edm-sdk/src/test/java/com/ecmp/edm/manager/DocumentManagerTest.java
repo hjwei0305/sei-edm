@@ -63,10 +63,11 @@ public class DocumentManagerTest {
     @Test
     public void uploadDocument() {
         DocumentInfo info = new DocumentInfo();
-        File file = new File("/Users/chaoma/Downloads/00000006.jpg");
+        File file = new File("/Users/chaoma/Downloads/自主产品标准化委员会.html");
+//        File file = new File("/Users/chaoma/Downloads/00000006.jpg");
         try {
             info.setAppModule("edm");
-            info.setFileName("00000006.jpg");
+            info.setFileName("自主产品标准化委员会.html");
             String s = FileUtils.file2Str(file);
             InputStream stream = FileUtils.str2InputStream(s);
             Document document = new Document(info, stream);
@@ -76,6 +77,7 @@ public class DocumentManagerTest {
             e.printStackTrace();
         }
         System.out.println(info);
+        System.out.println(info.getId());
     }
 
     @Test
@@ -112,7 +114,7 @@ public class DocumentManagerTest {
 
     @Test
     public void getEntityDocumentInfos() {
-        List<DocumentInfo> infos = manager.getEntityDocumentInfos("TEST_123456");
+        List<DocumentInfo> infos = manager.getEntityDocumentInfos("BB60035B-8AA5-11EA-8DD4-0242C0A84412");
         System.out.println(infos);
     }
 }

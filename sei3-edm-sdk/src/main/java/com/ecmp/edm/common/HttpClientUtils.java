@@ -11,6 +11,7 @@ import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -20,6 +21,8 @@ import org.apache.http.util.EntityUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -269,7 +272,12 @@ public class HttpClientUtils {
         // 设置请求头
         packageHeader(null, httpPost);
 
-        HttpEntity httpEntity = MultipartEntityBuilder.create().addBinaryBody("file", inputStream, ContentType.MULTIPART_FORM_DATA, fileName).build();
+        HttpEntity httpEntity = MultipartEntityBuilder.create()
+                .addBinaryBody("file", inputStream, ContentType.MULTIPART_FORM_DATA, fileName)
+                // 解决中文文件名乱码问题
+                .setCharset(StandardCharsets.UTF_8)
+                .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+                .build();
         httpPost.setEntity(httpEntity);
 
         // 创建httpResponse对象
