@@ -15,9 +15,9 @@
         /*<![CDATA[*/
         var baseUrl = [[${baseUrl}]];
         /*]]>*/
-        var _ctxPath = _basePath;
-        if ('none' !== baseUrl) {
-            _ctxPath = baseUrl;
+        var _ctxPath = baseUrl;
+        if ('none' === baseUrl) {
+            _ctxPath = _basePath;
         }
     </script>
 </div>
