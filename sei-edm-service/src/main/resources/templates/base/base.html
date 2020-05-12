@@ -7,12 +7,17 @@
 
     <script type="text/javascript">
         /*<![CDATA[*/
-        var _ctxPath = "[[${#request.scheme}]]://[[${#request.serverName}]]:[[${#request.serverPort}]][[${#request.contextPath}]]";
-        var _basePath = "[[${#request.scheme}]]://[[${#request.serverName}]]:[[${#request.serverPort}]]";
+        var _basePath = "[[${#request.scheme}]]://[[${#request.serverName}]]:[[${#request.serverPort}]][[${#request.contextPath}]]";
         /*]]>*/
     </script>
 
     <script type="application/javascript" th:inline="JavaScript">
-
+        /*<![CDATA[*/
+        var baseUrl = [[${baseUrl}]];
+        /*]]>*/
+        var _ctxPath = _basePath;
+        if ('none' !== baseUrl) {
+            _ctxPath = baseUrl;
+        }
     </script>
 </div>

@@ -11,6 +11,8 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -23,11 +25,15 @@ import java.io.IOException;
 import java.net.URLConnection;
 import java.util.Objects;
 
+@RefreshScope
 @Controller
 @Api(value = "文件在线预览", tags = "文件在线预览")
 public class PreviewController {
     @Autowired
     private FileService fileService;
+    //引入配置
+    @Value("${sei.edm.base-url:none}")
+    private String baseUrl;
 
 //    @Autowired
 //    private HttpServletRequest request;
@@ -43,6 +49,8 @@ public class PreviewController {
     public String preview(@RequestParam("docId") String docId,
                           @RequestParam(name = "markText", required = false) String markText,
                           Model model) {
+        model.addAttribute("baseUrl", baseUrl);
+
         model.addAttribute("docId", docId);
         if (StringUtils.isNotBlank(markText)) {
             model.addAttribute("markText", markText);
