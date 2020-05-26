@@ -9,6 +9,11 @@ import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.exception.ServiceException;
 import com.changhong.sei.util.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
@@ -31,21 +36,32 @@ import java.util.Map;
  * @author 马超(Vision.Mac)
  * @version 1.0.00  2020-04-20 22:42
  */
-public class DocumentManager {
+public class DocumentManager implements ApplicationContextAware {
+    private static final Logger LOG = LoggerFactory.getLogger(DocumentManager.class);
 
-    private static final String EDM_SERVICE = "edm-service";
+    private ApplicationContext context;
+
     private final ApiTemplate apiTemplate;
 
     public DocumentManager(ApiTemplate apiTemplate) {
         this.apiTemplate = apiTemplate;
     }
 
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.context = applicationContext;
+    }
+
+    private String getServiceUrl() {
+        return context.getEnvironment().getProperty("sei.edm.service.url", "http://10.4.208.86:20007/edm-service");
+    }
+
     /**
      * 上传一个文档
      *
-     * @param fileName   文件名
-     * @param data       文件数据
-     *                   {@link FileUtils#readFileToByteArray(File)}
+     * @param fileName 文件名
+     * @param data     文件数据
+     *                 {@link FileUtils#readFileToByteArray(File)}
      * @return 文档信息
      */
     public UploadResponse uploadDocument(final String fileName, final byte[] data) {
@@ -67,7 +83,7 @@ public class DocumentManager {
         params.add("sys", ContextUtil.getAppCode());
         params.add("uploadUser", ContextUtil.getUserAccount());
 
-        ResultData<UploadResponse> resultData = apiTemplate.uploadFileByAppModuleCode(EDM_SERVICE, "/file/upload",
+        ResultData<UploadResponse> resultData = apiTemplate.uploadFileByUrl(getServiceUrl() + "/file/upload",
                 new ParameterizedTypeReference<ResultData<UploadResponse>>() {
                 }, params);
         if (resultData.failed()) {
@@ -115,7 +131,7 @@ public class DocumentManager {
         params.add("sys", ContextUtil.getAppCode());
         params.add("uploadUser", ContextUtil.getUserAccount());
 
-        ResultData<UploadResponse> resultData = apiTemplate.uploadFileByAppModuleCode(EDM_SERVICE, "/file/upload",
+        ResultData<UploadResponse> resultData = apiTemplate.uploadFileByUrl(getServiceUrl() + "/file/upload",
                 new ParameterizedTypeReference<ResultData<UploadResponse>>() {
                 }, params);
         if (resultData.failed()) {
@@ -137,7 +153,7 @@ public class DocumentManager {
         params.put("docId", docId);
         params.put("isThumbnail", String.valueOf(isThumbnail));
 
-        ResultData<DocumentResponse> resultData = apiTemplate.getByAppModuleCode(EDM_SERVICE, "/document/getDocument",
+        ResultData<DocumentResponse> resultData = apiTemplate.getByUrl(getServiceUrl() + "/document/getDocument",
                 new ParameterizedTypeReference<ResultData<DocumentResponse>>() {
                 }, params);
 
@@ -160,7 +176,7 @@ public class DocumentManager {
         request.setEntityId(entityId);
         request.setDocumentIds(docIds);
 
-        ResultData<String> resultData = apiTemplate.postByAppModuleCode(EDM_SERVICE, "/document/bindBusinessDocuments",
+        ResultData<String> resultData = apiTemplate.postByUrl(getServiceUrl() + "/document/bindBusinessDocuments",
                 new ParameterizedTypeReference<ResultData<String>>() {
                 }, request);
         return resultData;
@@ -173,9 +189,11 @@ public class DocumentManager {
      */
     public ResultData<String> deleteBusinessInfos(@NotBlank String entityId) {
         try {
-            apiTemplate.postByAppModuleCode(EDM_SERVICE, "/document/deleteBusinessInfos?entityId=" + entityId,
+            Map<String, String> params = new HashMap<>();
+            params.put("entityId", entityId);
+            apiTemplate.postByUrl(getServiceUrl() + "/document/deleteBusinessInfos",
                     new ParameterizedTypeReference<ResultData<String>>() {
-                    });
+                    }, params);
             return ResultData.success("OK");
         } catch (Exception e) {
             LogUtil.error("删除业务实体的文档信息失败", e);
@@ -193,7 +211,7 @@ public class DocumentManager {
         Map<String, String> params = new HashMap<>();
         params.put("docId", docId);
 
-        ResultData<DocumentResponse> resultData = apiTemplate.getByAppModuleCode(EDM_SERVICE, "/document/getEntityDocumentInfo",
+        ResultData<DocumentResponse> resultData = apiTemplate.getByUrl(getServiceUrl() + "/document/getEntityDocumentInfo",
                 new ParameterizedTypeReference<ResultData<DocumentResponse>>() {
                 }, params);
         return resultData;
@@ -209,7 +227,7 @@ public class DocumentManager {
         Map<String, String> params = new HashMap<>();
         params.put("entityId", entityId);
 
-        ResultData<List<DocumentResponse>> resultData = apiTemplate.getByAppModuleCode(EDM_SERVICE, "/document/getEntityDocumentInfos",
+        ResultData<List<DocumentResponse>> resultData = apiTemplate.getByUrl(getServiceUrl() + "/document/getEntityDocumentInfos",
                 new ParameterizedTypeReference<ResultData<List<DocumentResponse>>>() {
                 }, params);
         return resultData;
