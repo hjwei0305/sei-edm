@@ -1,7 +1,7 @@
 # Docker for java  sei-edm
 
 # 基础镜像
-FROM openoffice-jre8-zh-lm:v1.0.0
+FROM openoffice-tesseract-jre8-zh-lm:v1.0.0
 
 # 作者
 LABEL maintainer="hua.feng@changhong.com"
