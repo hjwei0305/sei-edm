@@ -58,6 +58,11 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
      */
     @Value("${sei.edm.ocr.tessdata-path:none}")
     private String tessDataPath;
+    /**
+     * 是否启用云识别
+     */
+    @Value("${sei.edm.ocr.cloud.enable:false}")
+    private Boolean ocrCloudEnable;
 
     /**
      * 字符读取
@@ -302,25 +307,32 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             image2 = null;
         }
 
-        // 识别失败，原图片旋转180度再次识别
-        if (!checkBarcode(result, matchPrefix, ocrType)) {
-            InputStream is = null;
-            try {
-                is = ImageUtils.image2InputStream(image, "");
-                result = tencentQrcodeOCRApi(FileUtils.stream2Str(is));
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+        // 识别失败，调用云服务识别
+        if (!checkBarcode(result, matchPrefix, ocrType)
+                && ocrCloudEnable) {
+            result = tencentQrcodeOCRApi(image);
+        }
+
+        return result;
+    }
+
+    private String tencentQrcodeOCRApi(BufferedImage image) {
+        String result = "";
+        InputStream is = null;
+        try {
+            is = ImageUtils.image2InputStream(image, "");
+            result = tencentQrcodeOCRApi(FileUtils.stream2Str(is));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }
-
         return result;
     }
 
