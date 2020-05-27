@@ -23,7 +23,7 @@
         Your browser is too old which doesn't support HTML5 video.
     </video>
 </div>
-<script src="js/flv.min.js" th:src="@{/js/flv.min.js}"></script>
+<script src="js/flv.min.js" th:src="${baseUrl + '/js/flv.min.js'}"></script>
 <script type="text/javascript" th:inline="javascript">
     /*<![CDATA[*/
     var docId = [[${docId}]];

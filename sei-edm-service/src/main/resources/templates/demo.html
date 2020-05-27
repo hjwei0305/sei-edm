@@ -4,7 +4,7 @@
 <head>
     <th:block th:include="base/base :: base_head"/>
     <title>EDM附件管理</title>
-    <link rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" th:href="@{/css/bootstrap/bootstrap.min.css}">
+    <link rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" th:href="${baseUrl + '/css/bootstrap/bootstrap.min.css'}">
     <style type="text/css">
         .centerEle {
             height: 60px;
@@ -20,7 +20,7 @@
 <body>
 <div class="centerEle">
     <div class="form-group col-md-3  mb-2">
-        <form id="fileForm" action="/file/upload" th:action="@{/file/upload}" enctype="multipart/form-data"
+        <form id="fileForm" action="/file/upload" th:action="${baseUrl + '/file/upload'}" enctype="multipart/form-data"
               method="post">
             <input type="text" name="viewfile" id="viewfile" placeholder="未选择文件" disabled autocomplete="off"
                    class="form-control">
@@ -66,6 +66,7 @@
             return;
         }
         $("#fileForm").ajaxSubmit({
+            url: _ctxPath + "/file/upload",
             success: function (data) {
                 if (data.success) {
                     docId = data.data.docId;
@@ -114,6 +115,6 @@
         });
     }
 </script>
-<script src="/js/jquery.min.js" th:src="@{/js/jquery-3.0.0.min.js}"></script>
-<script src="/js/jquery.form.js" th:src="@{/js/jquery.form.min.js}"></script>
+<script src="/js/jquery.min.js" th:src="${baseUrl + '/js/jquery-3.0.0.min.js'}"></script>
+<script src="/js/jquery.form.js" th:src="${baseUrl + '/js/jquery.form.min.js'}"></script>
 </html>

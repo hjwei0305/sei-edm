@@ -4,7 +4,7 @@
 <head>
     <th:block th:include="base/base :: base_head"/>
     <title>多媒体文件预览</title>
-    <link rel="stylesheet" href="plyr/plyr.css" th:href="@{/plyr/plyr.css}">
+    <link rel="stylesheet" href="plyr/plyr.css" th:href="${baseUrl + '/plyr/plyr.css'}">
 </head>
 <style>
     body{background-color: #262626}
@@ -12,11 +12,11 @@
 </style>
 <body>
 <div class="m">
-    <video controls src="" th:src="@{/preview/readFile(docId=${docId})}">
+    <video controls src="" th:src="${baseUrl + '/preview/readFile(docId=${docId})'}">
         Your browser is too old which doesn't support HTML5 video.
     </video>
 </div>
-<script src="plyr/plyr.js" th:src="@{/plyr/plyr.js}"></script>
+<script src="plyr/plyr.js" th:src="${baseUrl + '/plyr/plyr.js'}"></script>
 <script>
     plyr.setup();
 </script>

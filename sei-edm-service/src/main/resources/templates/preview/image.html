@@ -5,11 +5,11 @@
     <title>图片预览图</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <link rel="stylesheet" href="/css/viewer.min.css" th:href="@{/css/viewer.min.css}">
+    <link rel="stylesheet" href="/css/viewer.min.css" th:href="${baseUrl + '/css/viewer.min.css'}">
 </head>
 <body>
-<img id="aImg" style="display:none;" alt="" src="" th:src="@{/preview/readFile(docId=${docId},markText=${markText})}"/>
-<script src="/js/viewer.min.js" th:src="@{/js/viewer.min.js}"></script>
+<img id="aImg" style="display:none;" alt="" src="" th:src="${baseUrl + '/preview/readFile(docId=${docId},markText=${markText})'}"/>
+<script src="/js/viewer.min.js" th:src="${baseUrl + '/js/viewer.min.js'}"></script>
 <script>
     var viewer = new Viewer(document.getElementById('aImg'), {
         navbar: false,

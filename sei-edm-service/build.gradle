@@ -1,5 +1,12 @@
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: "com.google.cloud.tools.jib"
+
+// 扩展定义
+ext {
+    // 启动类
+    MainClass = 'com.changhong.sei.edm.EdmApplication'
+}
 
 dependencies {
     //windows AMD/Intel
@@ -22,7 +29,7 @@ dependencies {
     implementation(
             "org.hibernate:hibernate-java8:5.3.7.Final",
             "mysql:mysql-connector-java:$mysqlVersion",
-            "com.changhong.sei:sei-service-starter:$sei_version"
+            "com.changhong.sei:sei-cloud-starter:$sei_version"
     )
 
     implementation(
@@ -60,11 +67,16 @@ dependencies {
     )
 }
 
+// 默认application文件中的配置从配置中心获取
+//processResources {
+//    excludes = ["**/application.yaml", "**/application.properties"]
+//}
+
 //打ar包
 bootJar  {
     enabled = true
-    archiveName = 'sei-edm.jar'
-    mainClassName = 'com.changhong.sei.edm.EdmApplication'
+    archiveFileName = "${rootProject.name}.${archiveExtension.get()}"
+    mainClassName = MainClass
     manifest {
         attributes("Manifest-Version": "6.0")
         attributes("Created-By": "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})".toString())
@@ -82,4 +94,59 @@ uploadArchives {
 
 install {
     enabled = false
+}
+
+jib {
+    // 拉取的镜像的配置
+    from {
+        image = 'rddgit.changhong.com:8083/openoffice/openoffice-jre8-zh-lm:v1.0.0'
+//        image = 'rddgit.changhong.com:8083/alpine-java:latest'
+//        image = 'hub.changhong.com/pass/java:8-jdk-alpine'
+//        auth {
+//            username = "${docker_registry_username}"
+//            password = "${docker_registry_password}"
+//        }
+    }
+    // 要生成的镜像的配置
+    to {
+        image = "$docker_registry_url/$docker_registry_namespace/$rootProject.name"
+        tags = ["${project.version}".toString(), 'latest']
+
+        // credHelper：鉴权信息的存放方式，Google 使用 gcr, AWS使用 ecr-login, DockerHub 根据平台使用 osxkeychain, wincred,secretservice,pass中的一种，可以参考 docker-credential-helpers
+        //credHelper = 'osxkeychain'
+        auth {
+            username = "${docker_registry_username}"
+            password = "${docker_registry_password}"
+        }
+    }
+    container {
+        // 容器创建时间用
+        creationTime = 'USE_CURRENT_TIMESTAMP'
+        // jvmFlgs: JVM 容器的参数，和 Dockerfile 的 ENTRYPOINT作用相同
+        jvmFlags = [
+                '-Djava.security.egd=file:/dev/./urandom',
+                '-Dfile.encoding=utf-8',
+                '-Duser.timezone=GMT+08',
+                '-server',
+                '-Xms1024m',
+                '-Xmx2048m'
+        ]
+        // 启动类限定名
+        mainClass = MainClass
+        // main 方法的传入参数
+        //args = ['somecp', 'args']
+        // 容器暴露的端口，和 Dockerfile 的EXPOSE作用相同
+        ports = ['8080']
+        // 定义容器环境变量 建议在镜像部署时定义
+//        environment = [
+//                SPRING_OUTPUT_ANSI_ENABLED: 'ALWAYS',
+//                JHIPSTER_SLEEP: '0'
+//        ]
+        // 添加标签,容器云环境部署有用
+        // labels = [key1:'value1', key2:'value2']
+        // 镜像格式,默认标准OCI
+        //format = 'OCI'
+    }
+    // 如果私有镜像仓库没有启用https，设置allowInsecureRegistries参数为true
+    allowInsecureRegistries = true
 }
