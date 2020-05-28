@@ -10,16 +10,16 @@ ext {
 
 dependencies {
     //windows AMD/Intel
-    compile fileTree(dir: 'bin', include: '*.dll')
+//    compile fileTree(dir: 'bin', include: '*.dll')
     //Linux AMD/Intel
-    compile fileTree(dir: 'bin', include: '*.so')
+//    compile fileTree(dir: 'bin', include: '*.so')
     //Mac OS X PowerPC/Intel
-    compile fileTree(dir: 'bin', include: '*.dylib')
+//    compile fileTree(dir: 'bin', include: '*.dylib')
     //pageOffice
     compile fileTree(dir: 'lib', include: '*.jar')
     compile fileTree(dir: 'lib', include: '*.lic')
     // font
-    compile fileTree(dir: 'font', include: '*.ttc')
+//    compile fileTree(dir: 'font', include: '*.ttc')
 
     compile project(':sei-edm-api')
 
