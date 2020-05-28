@@ -170,6 +170,8 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
         try {
             //开始识别
             ITesseract instance = new Tesseract();
+            // 解决Warning: Invalid resolution 0 dpi. Using 70 instead.
+            instance.setTessVariable("user_defined_dpi", "300");
             //语言：英文
             instance.setLanguage("eng");
             //Tesseract的文字库
@@ -232,6 +234,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
     private String processImage(BufferedImage image, String[] matchPrefix, OcrType ocrType) {
         BufferedImage image1, image2;
         String result;
+        // 原图识别
         if (Objects.equals(OcrType.Barcode, ocrType)) {
             result = ZxingUtils.processImageBarcode(image, matchPrefix);
         } else {
