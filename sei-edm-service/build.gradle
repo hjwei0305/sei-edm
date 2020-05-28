@@ -16,8 +16,8 @@ dependencies {
     //Mac OS X PowerPC/Intel
 //    compile fileTree(dir: 'bin', include: '*.dylib')
     //pageOffice
-    compile fileTree(dir: 'lib', include: '*.jar')
-    compile fileTree(dir: 'lib', include: '*.lic')
+//    compile fileTree(dir: 'lib', include: '*.jar')
+//    compile fileTree(dir: 'lib', include: '*.lic')
     // font
 //    compile fileTree(dir: 'font', include: '*.ttc')
 
