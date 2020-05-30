@@ -2,6 +2,7 @@ package com.changhong.sei.edm.demo.controller;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Controller;
@@ -22,7 +23,9 @@ public class DemoController {
     @ApiOperation("演示")
     @GetMapping(value = "/demo")
     public String uploadPage(Model model) {
-        model.addAttribute("baseUrl", baseUrl);
+        if (!StringUtils.equals("none", baseUrl)) {
+            model.addAttribute("baseUrl", baseUrl);
+        }
         return "demo.html";
     }
 }

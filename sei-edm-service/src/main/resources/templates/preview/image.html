@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="/css/viewer.min.css" th:href="${baseUrl + '/css/viewer.min.css'}">
 </head>
 <body>
-<img id="aImg" style="display:none;" alt="" src="" th:src="${baseUrl + '/preview/readFile(docId='+${docId}+',markText='+${markText}+')'}"/>
+<!-- <img id="aImg" style="display:none;" alt="" src="" th:src="${baseUrl + '/preview/readFile(docId='+${docId}+',markText='+${markText}+')'}"/>-->
+<img id="aImg" style="display:none;" alt="" src="" th:src="${baseUrl} + '/preview/readFile?docId='+${docId}+'&markText='+${markText}"/>
 <script src="/js/viewer.min.js" th:src="${baseUrl + '/js/viewer.min.js'}"></script>
 <script>
     var viewer = new Viewer(document.getElementById('aImg'), {

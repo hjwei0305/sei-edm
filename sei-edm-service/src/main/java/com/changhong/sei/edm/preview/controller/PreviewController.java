@@ -49,7 +49,9 @@ public class PreviewController {
     public String preview(@RequestParam("docId") String docId,
                           @RequestParam(name = "markText", required = false) String markText,
                           Model model) {
-        model.addAttribute("baseUrl", baseUrl);
+        if (!StringUtils.equals("none", baseUrl)) {
+            model.addAttribute("baseUrl", baseUrl);
+        }
 
         model.addAttribute("docId", docId);
         if (StringUtils.isNotBlank(markText)) {
