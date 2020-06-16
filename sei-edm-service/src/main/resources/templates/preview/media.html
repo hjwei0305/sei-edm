@@ -3,7 +3,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:include="base/base :: base_head"/>
-    <title>多媒体文件预览</title>
+    <title th:text="${fileName}">多媒体文件预览</title>
     <link rel="stylesheet" href="plyr/plyr.css" th:href="${baseUrl + '/plyr/plyr.css'}">
 </head>
 <style>

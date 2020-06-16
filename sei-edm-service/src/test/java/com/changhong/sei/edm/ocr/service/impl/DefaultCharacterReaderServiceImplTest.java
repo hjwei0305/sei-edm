@@ -33,13 +33,13 @@ public class DefaultCharacterReaderServiceImplTest {
     @Test
     public void read() {
 //        File file1 = new File("D:\\data\\img20190926_16070729.jpg");
-//        File file1 = new File("/Users/chaoma/Downloads/123211.png");
-        File file1 = new File("/Users/chaoma/Downloads/Image_00114.pdf");
+//        File file1 = new File("/Users/chaoma/Downloads/WechatIMG570.jpeg");
+        File file1 = new File("/Users/chaoma/Downloads/WechatIMG569.png");
 
         try {
             byte[] data = FileUtils.readFileToByteArray(file1);
 
-            ResultData<String> resultData = service.read(DocumentType.Pdf, OcrType.Barcode, data);
+            ResultData<String> resultData = service.read(DocumentType.Image, OcrType.Barcode, data);
             System.out.println(resultData);
             System.out.println(resultData.getData());
         } catch (IOException e) {

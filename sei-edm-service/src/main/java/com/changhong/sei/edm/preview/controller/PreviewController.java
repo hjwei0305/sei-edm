@@ -20,6 +20,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLConnection;
@@ -48,18 +49,29 @@ public class PreviewController {
     })
     public String preview(@RequestParam("docId") String docId,
                           @RequestParam(name = "markText", required = false) String markText,
-                          Model model) {
-        if (!StringUtils.equals("none", baseUrl)) {
-            model.addAttribute("baseUrl", baseUrl);
+                          Model model, HttpServletRequest request) {
+        StringBuffer url = request.getRequestURL();
+        String tempContextUrl = url.delete(url.length() - request.getRequestURI().length(), url.length()).append(request.getContextPath()).toString();
+        if (StringUtils.equals("none", baseUrl)) {
+            baseUrl = tempContextUrl;
         }
+        model.addAttribute("baseUrl", baseUrl);
 
         model.addAttribute("docId", docId);
         if (StringUtils.isNotBlank(markText)) {
             model.addAttribute("markText", markText);
         }
 
-        String view = "";
+        String view;
         DocumentResponse document = fileService.getDocumentInfo(docId);
+        if (Objects.isNull(document)) {
+            view = "preview/notfound.html";
+            model.addAttribute("docId", docId);
+            return view;
+        }
+
+        model.addAttribute("fileName", document.getFileName());
+
         switch (document.getDocumentType()) {
             case Pdf:
             case Word:
@@ -89,6 +101,7 @@ public class PreviewController {
             default:
                 // 不支持
                 view = "preview/nosupport.html";
+                model.addAttribute("fileType", document.getDocumentType().name());
         }
 
         return view;

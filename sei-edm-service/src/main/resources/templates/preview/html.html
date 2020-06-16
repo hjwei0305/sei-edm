@@ -3,7 +3,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:include="base/base :: base_head"/>
-    <title>html预览</title>
+    <title th:text="${fileName}">html预览</title>
     <style type="text/css">
         body {
             margin: 0;

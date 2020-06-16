@@ -4,7 +4,7 @@
 <head>
     <th:block th:include="base/base :: base_head"/>
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-    <title>pdf预览</title>
+    <title th:text="${fileName}">pdf预览</title>
     <style type="text/css">
         canvas {
             width: 100%;

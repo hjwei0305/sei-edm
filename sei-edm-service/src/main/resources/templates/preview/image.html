@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:include="base/base :: base_head"/>
-    <title>图片预览图</title>
+    <title th:text="${fileName}">图片预览图</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <link rel="stylesheet" href="/css/viewer.min.css" th:href="${baseUrl + '/css/viewer.min.css'}">

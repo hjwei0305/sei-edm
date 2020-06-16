@@ -9,6 +9,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RefreshScope
 @Controller
 @Api(value = "示例演示", tags = "示例演示")
@@ -22,10 +24,13 @@ public class DemoController {
      */
     @ApiOperation("演示")
     @GetMapping(value = "/demo")
-    public String uploadPage(Model model) {
-        if (!StringUtils.equals("none", baseUrl)) {
-            model.addAttribute("baseUrl", baseUrl);
+    public String uploadPage(Model model, HttpServletRequest request) {
+        StringBuffer url = request.getRequestURL();
+        String tempContextUrl = url.delete(url.length() - request.getRequestURI().length(), url.length()).append(request.getContextPath()).toString();
+        if (StringUtils.equals("none", baseUrl)) {
+            baseUrl = tempContextUrl;
         }
+        model.addAttribute("baseUrl", baseUrl);
         return "demo.html";
     }
 }
