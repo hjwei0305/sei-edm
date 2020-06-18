@@ -101,17 +101,26 @@ public class FileController {
     @ApiOperation("多文件批量上传")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "sys", value = "来源系统"),
+            @ApiImplicitParam(name = "uploadUser", value = "上传人"),
+            @ApiImplicitParam(name = "ocr", dataTypeClass = OcrType.class, value = "ocr识别类型: None, Barcode, InvoiceQr, Qr "),
             @ApiImplicitParam(name = "file", value = "文件", required = true)
     })
     @PostMapping(value = "/batchUpload")
     @ResponseBody
     public ResultData<List<UploadResponse>> batchUpload(@RequestParam("file") MultipartFile[] files,
+                                                        @RequestParam(value = "ocr", required = false) String ocr,
+                                                        @RequestParam(value = "uploadUser", required = false) String uploadUser,
                                                         @RequestParam(value = "sys", required = false) String sys) throws IOException {
         if (StringUtils.isBlank(sys)) {
             sys = ContextUtil.getAppCode();
         }
+        if (StringUtils.isBlank(uploadUser)) {
+            SessionUser user = ContextUtil.getSessionUser();
+            uploadUser = user.getAccount();
+        }
 
         DocumentDto dto;
+        UploadResponse uploadResponse;
         List<UploadResponse> uploadResponses = new ArrayList<>();
         for (MultipartFile file : files) {
             dto = new DocumentDto();
@@ -119,13 +128,25 @@ public class FileController {
             dto.setFileName(file.getOriginalFilename());
             dto.setSystem(sys);
 
-            SessionUser user = ContextUtil.getSessionUser();
-            dto.setUploadUser(user.getAccount());
+            dto.setUploadUser(uploadUser);
 
             // 文件上传
             ResultData<UploadResponse> resultData = fileService.uploadDocument(dto);
             if (resultData.successful()) {
-                uploadResponses.add(resultData.getData());
+                uploadResponse = resultData.getData();
+                if (StringUtils.isNotBlank(ocr)) {
+                    OcrType ocrType = EnumUtils.getEnum(OcrType.class, ocr);
+                    if (Objects.nonNull(uploadResponse) &&
+                            Objects.nonNull(ocrType) && OcrType.None != ocrType) {
+                        // 字符识别
+                        ResultData<String> readerResult = characterReaderService.read(uploadResponse.getDocumentType(), ocrType, file.getBytes());
+                        if (readerResult.successful()) {
+                            // 设置识别的结果
+                            uploadResponse.setOcrData(readerResult.getData());
+                        }
+                    }
+                }
+                uploadResponses.add(uploadResponse);
             }
         }
         return ResultData.success(uploadResponses);
