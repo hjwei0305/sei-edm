@@ -64,14 +64,13 @@ public class PreviewController {
 
         String view;
         DocumentResponse document = fileService.getDocumentInfo(docId);
-        if (Objects.isNull(document)) {
+        if (Objects.isNull(document) || StringUtils.isBlank(document.getFileName())) {
             view = "preview/notfound.html";
             model.addAttribute("docId", docId);
             return view;
         }
 
         model.addAttribute("fileName", document.getFileName());
-
         switch (document.getDocumentType()) {
             case Pdf:
             case Word:

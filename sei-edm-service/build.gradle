@@ -25,6 +25,8 @@ dependencies {
 
     // mongodb
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+    // thymeleaf
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     implementation(
             "org.hibernate:hibernate-java8:5.3.7.Final",
@@ -37,8 +39,6 @@ dependencies {
             "org.jodconverter:jodconverter-local:$jodconverter_version"
 //            "org.jodconverter:jodconverter-spring-boot-starter:$jodconverter_version"
     )
-
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf:$springBootVersion")
 
     compileOnly  "org.projectlombok:lombok:1.18.4"
     annotationProcessor  "org.projectlombok:lombok:1.18.4"

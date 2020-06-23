@@ -138,6 +138,8 @@ public class MongoFileService implements FileService {
         Document document = documentService.findByProperty(Document.FIELD_DOC_ID, docId);
         if (Objects.nonNull(document)) {
             modelMapper.map(document, response);
+        } else {
+            LogUtil.error("docId: {} 对应的文件不存在.", docId);
         }
 
         return response;
