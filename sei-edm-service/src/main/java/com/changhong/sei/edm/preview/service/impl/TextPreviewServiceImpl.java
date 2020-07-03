@@ -5,6 +5,7 @@ import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.preview.service.PreviewService;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,9 @@ public class TextPreviewServiceImpl implements PreviewService {
                 data = convertFileEncoding(data, "GBK");
                 response.setData(data);
                 response.setSize((long) data.length);
+            } else {
+                response.setData(document.getData());
+                response.setSize(document.getSize());
             }
         } catch (Exception e) {
             LogUtil.error("文件编码转换异常", e);
@@ -48,28 +52,74 @@ public class TextPreviewServiceImpl implements PreviewService {
      * 判断文件编码格式
      */
     private String getFileEncodeUTFGBK(byte[] data) throws IOException {
-        String enc = Charset.forName("GBK").name();
-        InputStream in = null;
-        try {
-            in = new ByteArrayInputStream(data);
-            byte[] b = new byte[3];
-            in.read(b);
-
-            if (b[0] == -17 && b[1] == -69 && b[2] == -65) {
-                enc = StandardCharsets.UTF_8.name();
+        String charset = "GBK";
+        byte[] first3Bytes = new byte[3];
+        try (BufferedInputStream bis = new BufferedInputStream(new ByteArrayInputStream(data))) {
+            boolean checked = false;
+            bis.mark(0);
+            int read = bis.read(first3Bytes, 0, 3);
+            if (read == -1) {
+                //文件编码为 ANSI
+                return charset;
+            } else if (first3Bytes[0] == (byte) 0xFF
+                    && first3Bytes[1] == (byte) 0xFE) {
+                //文件编码为 Unicode
+                charset = "UTF-16LE";
+                checked = true;
+            } else if (first3Bytes[0] == (byte) 0xFE
+                    && first3Bytes[1] == (byte) 0xFF) {
+                //文件编码为 Unicode big endian
+                charset = "UTF-16BE";
+                checked = true;
+            } else if (first3Bytes[0] == (byte) 0xEF
+                    && first3Bytes[1] == (byte) 0xBB
+                    && first3Bytes[2] == (byte) 0xBF) {
+                //文件编码为 UTF-8
+                charset = "UTF-8";
+                checked = true;
             }
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                    in = null;
-                } catch (IOException e) {
-                    e.printStackTrace();
+            bis.reset();
+            if (!checked) {
+                while ((read = bis.read()) != -1) {
+                    if (read >= 0xF0) {
+                        break;
+                    }
+                    // 单独出现BF以下的，也算是GBK
+                    if (0x80 <= read && read <= 0xBF) {
+                        break;
+                    }
+                    if (0xC0 <= read && read <= 0xDF) {
+                        read = bis.read();
+                        // 双字节 (0xC0 - 0xDF)
+                        if (0x80 <= read && read <= 0xBF) {
+                            // (0x80
+                            // - 0xBF),也可能在GB编码内
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
+                    // 也有可能出错，但是几率较小
+                    else if (0xE0 <= read && read <= 0xEF) {
+                        read = bis.read();
+                        if (0x80 <= read && read <= 0xBF) {
+                            read = bis.read();
+                            if (0x80 <= read && read <= 0xBF) {
+                                charset = "UTF-8";
+                                break;
+                            } else {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        // System.out.println("文件编码格式为:" + enc);
-        return enc;
+        return charset;
     }
 
     /**
