@@ -33,7 +33,7 @@ public class OcrController {
     })
     @PostMapping(value = "/ocr")
     @ResponseBody
-    public ResultData<String> upload(@RequestParam(value = "docId") String docId,
+    public ResultData<String> ocr(@RequestParam(value = "docId") String docId,
                                      @RequestParam(value = "ocr") String ocr) {
         ResultData<String> result;
         OcrType ocrType = Enum.valueOf(OcrType.class, ocr);

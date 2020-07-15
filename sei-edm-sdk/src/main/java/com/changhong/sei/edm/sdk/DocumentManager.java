@@ -20,6 +20,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotBlank;
 import java.io.File;
@@ -53,7 +54,11 @@ public class DocumentManager implements ApplicationContextAware {
     }
 
     private String getServiceUrl() {
-        return context.getEnvironment().getProperty("sei.edm.service.url", "http://10.4.208.86:20007/edm-service");
+        String host = context.getEnvironment().getProperty("sei.edm.service.url");
+        if (StringUtils.isEmpty(host)) {
+            throw new IllegalArgumentException("EDM服务地址未配置[sei.edm.service.url]");
+        }
+        return host;
     }
 
     /**

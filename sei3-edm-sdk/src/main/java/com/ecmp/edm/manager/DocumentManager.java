@@ -41,7 +41,11 @@ public class DocumentManager implements IDocumentManager, ApplicationContextAwar
     }
 
     private String getServiceUrl() {
-        return context.getEnvironment().getProperty("sei.edm.service.url", "http://10.4.208.86:20007/edm-service");
+        String host = context.getEnvironment().getProperty("sei.edm.service.url");
+        if (org.springframework.util.StringUtils.isEmpty(host)) {
+            throw new IllegalArgumentException("EDM服务地址未配置[sei.edm.service.url]");
+        }
+        return host;
     }
 
     /**
