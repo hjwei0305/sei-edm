@@ -25,10 +25,11 @@
 <script type="text/javascript" th:inline="javascript">
     /*<![CDATA[*/
     var docId = [[${docId}]];
+    var fn = [[${fileName}]];
     var markText = [[${markText}]];
     /*]]>*/
 
-    document.getElementsByTagName('iframe')[0].src = _ctxPath + "/pdfjs/web/viewer.html?file=" + encodeURIComponent(_ctxPath + "/preview/readFile?markText="+markText+"&docId=" + docId);
+    document.getElementsByTagName('iframe')[0].src = _ctxPath + "/pdfjs/web/viewer.html?file=" + encodeURIComponent(_ctxPath + "/preview/readFile?docId="+docId+"&fn="+fn+"&markText="+markText);
     document.getElementsByTagName('iframe')[0].height = document.documentElement.clientHeight - 10;
     /**
      * 页面变化调整高度
