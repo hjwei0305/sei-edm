@@ -69,13 +69,13 @@ public class PreviewController {
             model.addAttribute("docId", docId);
             return view;
         }
-
-        model.addAttribute("fileName", document.getFileName());
+        String fileName = document.getFileName();
         switch (document.getDocumentType()) {
             case Pdf:
             case Word:
             case Powerpoint:
                 view = "preview/pdf.html";
+                fileName = fileName.substring(0, fileName.lastIndexOf(".")).concat(".pdf");
                 break;
             case Excel:
                 view = "preview/html.html";
@@ -94,8 +94,6 @@ public class PreviewController {
                 }
                 break;
             case Compressed:
-
-//                break;
             case Other:
             default:
                 // 不支持
@@ -103,6 +101,7 @@ public class PreviewController {
                 model.addAttribute("fileType", document.getDocumentType().name());
         }
 
+        model.addAttribute("fileName", fileName);
         return view;
     }
 
