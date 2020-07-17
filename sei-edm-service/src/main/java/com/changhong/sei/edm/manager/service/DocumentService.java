@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -60,6 +61,7 @@ public class DocumentService extends BaseEntityService<Document> {
      * @param entityId 业务实体Id
      * @param docIds   文档Id清单
      */
+    @Transactional
     public ResultData<String> bindBusinessDocuments(String entityId, Collection<String> docIds) {
         //如果文档Id清单为空，不执行操作
         if (Objects.isNull(docIds)) {
