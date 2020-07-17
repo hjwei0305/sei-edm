@@ -9,6 +9,7 @@ import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.OcrType;
 import com.changhong.sei.edm.ocr.service.CharacterReaderService;
 import com.changhong.sei.util.AmountUtils;
+import com.changhong.sei.util.DateUtils;
 import com.changhong.sei.util.FileUtils;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
@@ -40,12 +41,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 // 导入对应产品模块的client
 // 导入要请求接口对应的request response类
@@ -473,8 +469,8 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             // 总金额（含税）价税合计
             invoiceVO.setTotalAmount(AmountUtils.changeF2Y(Double.parseDouble(billRecord.get("total_amount").toString())).toString());
             // 开票日期 arr[5]
-            LocalDate date = LocalDate.ofEpochDay(Long.parseLong(billRecord.get("time").toString()));
-            invoiceVO.setDate(date.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            Date date = new Date(Long.parseLong(billRecord.get("time").toString()) * 1000L);
+            invoiceVO.setDate(DateUtils.formatDate(date));
             // 校验码
             invoiceVO.setCheckCode(String.valueOf(billRecord.get("tx_hash")));
 
