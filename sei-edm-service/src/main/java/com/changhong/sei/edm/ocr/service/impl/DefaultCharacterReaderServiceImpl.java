@@ -2,11 +2,13 @@ package com.changhong.sei.edm.ocr.service.impl;
 
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
+import com.changhong.sei.core.util.JsonUtils;
 import com.changhong.sei.edm.common.util.ImageUtils;
 import com.changhong.sei.edm.common.util.ZxingUtils;
 import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.OcrType;
 import com.changhong.sei.edm.ocr.service.CharacterReaderService;
+import com.changhong.sei.util.AmountUtils;
 import com.changhong.sei.util.FileUtils;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
@@ -25,15 +27,24 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.RestTemplate;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 // 导入对应产品模块的client
@@ -125,32 +136,36 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
         if (OcrType.InvoiceQr == ocrType) {
             String[] arr;
             if (StringUtils.isNotBlank(result)) {
-                arr = result.split("[,]");
-                if (arr.length >= 7) {
-                    StringBuilder s = new StringBuilder();
-                    // 发票代码
-                    s.append("{\"code\":\"").append(arr[2]).append("\",");
-                    // 发票号码
-                    s.append("\"number\":\"").append(arr[3]).append("\",");
-                    // 发票种类 01-增值税专用发票 04-增值税普通发票 10-增值税电子普通发票
-                    if ("01".equals(arr[1])) {
-                        s.append("\"category\":\"增值税专用发票\",");
-                    } else if ("04".equals(arr[1])) {
-                        s.append("\"category\":\"增值税普通发票\",");
-                    } else if ("10".equals(arr[1])) {
-                        s.append("\"category\":\"增值税电子普通发票\",");
+                if (result.startsWith("https")) {
+                    result = getBlockChainInvoice(result);
+                } else {
+                    arr = result.split("[,]");
+                    if (arr.length >= 7) {
+                        InvoiceVO invoiceVO = new InvoiceVO();
+                        // 发票代码
+                        invoiceVO.setCode(arr[2]);
+                        // 发票号码
+                        invoiceVO.setNumber(arr[3]);
+                        // 发票种类 01-增值税专用发票 04-增值税普通发票 10-增值税电子普通发票
+                        if ("01".equals(arr[1])) {
+                            invoiceVO.setCategory("增值税专用发票");
+                        } else if ("04".equals(arr[1])) {
+                            invoiceVO.setCategory("增值税普通发票");
+                        } else if ("10".equals(arr[1])) {
+                            invoiceVO.setCategory("增值税电子普通发票");
+                        }
+                        // 开票金额(不含税) arr[4]
+                        invoiceVO.setAmount(arr[4]);
+                        // 开票日期 arr[5]
+                        invoiceVO.setDate(arr[5]);
+                        // 校验码
+                        invoiceVO.setCheckCode(arr[6]);
+                        if (arr.length > 7) {
+                            //随机码
+                            invoiceVO.setRandom(arr[7]);
+                        }
+                        result = JsonUtils.toJson(invoiceVO);
                     }
-                    // 开票金额(不含税) arr[4]
-                    s.append("\"amount\":").append(arr[4]).append(",");
-                    // 开票日期 arr[5]
-                    s.append("\"date\":\"").append(arr[5]).append("\",");
-                    // 校验码
-                    s.append("\"checkCode\":\"").append(arr[6]).append("\",");
-                    if (arr.length > 7) {
-                        //随机码
-                        s.append("\"random\":\"").append(arr[7]).append("\"}");
-                    }
-                    result = s.toString();
                 }
             }
         }
@@ -386,5 +401,218 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             }
         }
         return true;
+    }
+
+    static final String BLOCK_CHAIN_INVOICE_HOST = "bcfp.shenzhen.chinatax.gov.cn";
+
+    private String getBlockChainInvoice(String invoiceStr) {
+        //https://bcfp.shenzhen.chinatax.gov.cn/verify/scan?hash=008c9dd9fb50e876a80ca41a767f54664d8c62771c1499cf6420869c88d24759e7&bill_num=05264260&total_amount=30000
+        try {
+            URI uri = new URI(invoiceStr);
+            if (!BLOCK_CHAIN_INVOICE_HOST.equalsIgnoreCase(uri.getHost())) {
+                return null;
+            }
+
+            HashMap<String, String> paraMap = new HashMap<>();
+            String[] paraArr = uri.getQuery().split("&");
+            for (String item : paraArr) {
+                int index = item.indexOf("=");
+                if (index == -1) {
+                    continue;
+                }
+                String paraName = item.substring(0, index).toLowerCase();
+                String paraValue = item.substring(index + 1);
+
+                paraMap.put(paraName, paraValue);
+            }
+
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+
+            Map<String, String> postParameters = new HashMap<>();
+            postParameters.put("bill_num", paraMap.get("bill_num"));
+            postParameters.put("total_amount", paraMap.get("total_amount"));
+            postParameters.put("tx_hash", paraMap.get("hash"));
+            HttpEntity<String> entity = new HttpEntity<>(JsonUtils.toJson(postParameters), headers);
+
+            String url = uri.getScheme() + "://" + uri.getHost() + "/dzswj/bers_ep_web/query_bill_detail";
+            ResponseEntity<HashMap> response = restTemplate.exchange(url, HttpMethod.POST, entity, HashMap.class);
+            if (200 != response.getStatusCode().value()) {
+                return null;
+            }
+
+            HashMap<String, Object> billRecord = (HashMap<String, Object>) response.getBody().get("bill_record");
+
+            // billRecord.get("") 拿出想要的数据，这里的金额需要注意一下
+            // 取出来的具体值需要 * 0.01，才是我们需要的值
+            // bill_code
+            // bill_num
+            // amount：不含税总金额
+            // tax_amount：税额
+            // total_amount：总金额（含税）
+            // time
+            // seller_name
+            // seller_taxpayer_id
+            // buyer_name
+            InvoiceVO invoiceVO = new InvoiceVO();
+            // 发票代码
+            invoiceVO.setCode(String.valueOf(billRecord.get("bill_code")));
+            // 发票号码
+            invoiceVO.setNumber(String.valueOf(billRecord.get("bill_num")));
+            invoiceVO.setCategory("区块链电子发票");
+            // 购买方名称
+            invoiceVO.setBuyerName(String.valueOf(billRecord.get("buyer_name")));
+            // 销货方名称
+            invoiceVO.setBuyerName(String.valueOf(billRecord.get("seller_name")));
+            invoiceVO.setBuyerName(String.valueOf(billRecord.get("seller_taxpayer_id")));
+            // 开票金额(不含税) arr[4]
+            invoiceVO.setAmount(AmountUtils.changeF2Y(Double.parseDouble(billRecord.get("amount").toString())).toString());
+            // 税额
+            invoiceVO.setTaxAmount(AmountUtils.changeF2Y(Double.parseDouble(billRecord.get("tax_amount").toString())).toString());
+            // 总金额（含税）价税合计
+            invoiceVO.setTotalAmount(AmountUtils.changeF2Y(Double.parseDouble(billRecord.get("total_amount").toString())).toString());
+            // 开票日期 arr[5]
+            LocalDate date = LocalDate.ofEpochDay(Long.parseLong(billRecord.get("time").toString()));
+            invoiceVO.setDate(date.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            // 校验码
+            invoiceVO.setCheckCode(String.valueOf(billRecord.get("tx_hash")));
+
+            return JsonUtils.toJson(invoiceVO);
+        } catch (URISyntaxException e) {
+            return null;
+        }
+    }
+
+    static class InvoiceVO implements Serializable {
+        private static final long serialVersionUID = 8754280672814795379L;
+        // 发票代码
+        private String code;
+        // 发票号码
+        private String number;
+        // 发票类型
+        private String category;
+        // 购买方名称
+        private String buyerName;
+        // 销货方名称
+        private String sellerName;
+        private String sellerTaxpayerId;
+        // 开票金额(不含税)
+        private String amount;
+        // 税额
+        private String taxAmount;
+        // 总金额（含税）价税合计
+        private String totalAmount;
+        // 开票日期
+        private String date;
+        // 校验码
+        private String checkCode;
+        private String random;
+        // 发票状态
+        private String status;
+
+        public String getCode() {
+            return code;
+        }
+
+        public void setCode(String code) {
+            this.code = code;
+        }
+
+        public String getNumber() {
+            return number;
+        }
+
+        public void setNumber(String number) {
+            this.number = number;
+        }
+
+        public String getCategory() {
+            return category;
+        }
+
+        public void setCategory(String category) {
+            this.category = category;
+        }
+
+        public String getBuyerName() {
+            return buyerName;
+        }
+
+        public void setBuyerName(String buyerName) {
+            this.buyerName = buyerName;
+        }
+
+        public String getSellerName() {
+            return sellerName;
+        }
+
+        public void setSellerName(String sellerName) {
+            this.sellerName = sellerName;
+        }
+
+        public String getSellerTaxpayerId() {
+            return sellerTaxpayerId;
+        }
+
+        public void setSellerTaxpayerId(String sellerTaxpayerId) {
+            this.sellerTaxpayerId = sellerTaxpayerId;
+        }
+
+        public String getAmount() {
+            return amount;
+        }
+
+        public void setAmount(String amount) {
+            this.amount = amount;
+        }
+
+        public String getTaxAmount() {
+            return taxAmount;
+        }
+
+        public void setTaxAmount(String taxAmount) {
+            this.taxAmount = taxAmount;
+        }
+
+        public String getTotalAmount() {
+            return totalAmount;
+        }
+
+        public void setTotalAmount(String totalAmount) {
+            this.totalAmount = totalAmount;
+        }
+
+        public String getDate() {
+            return date;
+        }
+
+        public void setDate(String date) {
+            this.date = date;
+        }
+
+        public String getCheckCode() {
+            return checkCode;
+        }
+
+        public void setCheckCode(String checkCode) {
+            this.checkCode = checkCode;
+        }
+
+        public String getRandom() {
+            return random;
+        }
+
+        public void setRandom(String random) {
+            this.random = random;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
     }
 }
