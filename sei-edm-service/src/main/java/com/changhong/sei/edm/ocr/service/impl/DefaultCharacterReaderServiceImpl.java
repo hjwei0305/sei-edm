@@ -460,8 +460,8 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             // 购买方名称
             invoiceVO.setBuyerName(String.valueOf(billRecord.get("buyer_name")));
             // 销货方名称
-            invoiceVO.setBuyerName(String.valueOf(billRecord.get("seller_name")));
-            invoiceVO.setBuyerName(String.valueOf(billRecord.get("seller_taxpayer_id")));
+            invoiceVO.setSellerName(String.valueOf(billRecord.get("seller_name")));
+            invoiceVO.setSellerTaxpayerId(String.valueOf(billRecord.get("seller_taxpayer_id")));
             // 开票金额(不含税) arr[4]
             invoiceVO.setAmount(AmountUtils.changeF2Y(Double.parseDouble(billRecord.get("amount").toString())).toString());
             // 税额
