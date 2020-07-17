@@ -248,14 +248,14 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             // 指定识别右上角
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image1, matchPrefix);
+
+                // ocr识别
+                if (!checkBarcode(result, matchPrefix, ocrType)) {
+                    //条码识别失败，进行ocr识别
+                    result = partImgOcr(image1, matchPrefix);
+                }
             } else {
                 result = ZxingUtils.processImageQr(image1, matchPrefix);
-            }
-
-            // ocr识别
-            if (!checkBarcode(result, matchPrefix, ocrType)) {
-                //条码识别失败，进行ocr识别
-                result = partImgOcr(image1, matchPrefix);
             }
             image1 = null;
         }
@@ -272,14 +272,14 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
 //                        BufferedImage image2 = image.getSubimage(0, 0, width, height / 2);
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image2, matchPrefix);
+
+                // ocr识别
+                if (!checkBarcode(result, matchPrefix, ocrType)) {
+                    //条码识别失败，进行ocr识别
+                    result = partImgOcr(image2, matchPrefix);
+                }
             } else {
                 result = ZxingUtils.processImageQr(image2, matchPrefix);
-            }
-
-            // ocr识别
-            if (!checkBarcode(result, matchPrefix, ocrType)) {
-                //条码识别失败，进行ocr识别
-                result = partImgOcr(image2, matchPrefix);
             }
             image1 = null;
             image2 = null;
@@ -297,14 +297,14 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
 //                        BufferedImage image2 = image.getSubimage(0, 0, width, height / 2);
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image2, matchPrefix);
+
+                // ocr识别
+                if (!checkBarcode(result, matchPrefix, ocrType)) {
+                    //条码识别失败，进行ocr识别
+                    result = partImgOcr(image2, matchPrefix);
+                }
             } else {
                 result = ZxingUtils.processImageQr(image2, matchPrefix);
-            }
-
-            // ocr识别
-            if (!checkBarcode(result, matchPrefix, ocrType)) {
-                //条码识别失败，进行ocr识别
-                result = partImgOcr(image2, matchPrefix);
             }
             image1 = null;
             image2 = null;
