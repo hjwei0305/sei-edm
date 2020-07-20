@@ -74,7 +74,7 @@ public class DocumentService extends BaseEntityService<Document> {
             //删除需要删除的部分
             List<BusinessDocument> deleteInfos = infos.parallelStream().filter(i -> !docIds.contains(i.getDocId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(deleteInfos)) {
-                businessDocumentDao.deleteAll(infos);
+                businessDocumentDao.deleteAll(deleteInfos);
             }
             //插入部分移除已存在部分
             docIds.removeAll(existDocId);
