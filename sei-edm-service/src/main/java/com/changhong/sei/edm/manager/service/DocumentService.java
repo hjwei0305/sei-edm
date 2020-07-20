@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 实现功能：
@@ -67,18 +68,23 @@ public class DocumentService extends BaseEntityService<Document> {
         if (Objects.isNull(docIds)) {
             return ResultData.fail("文档Id清单为空");
         }
-        //先移除现有业务信息
         List<BusinessDocument> infos = businessDocumentDao.findAllByEntityId(entityId);
         if (CollectionUtils.isNotEmpty(infos)) {
-            businessDocumentDao.deleteAll(infos);
-        }
-        if (CollectionUtils.isNotEmpty(docIds)) {
-            //插入文档信息
-            BusinessDocument bizDoc;
-            for (String docId : docIds) {
-                bizDoc = new BusinessDocument(entityId, docId);
-                businessDocumentDao.save(bizDoc);
+            List<String> existDocId = infos.parallelStream().map(BusinessDocument::getDocId).collect(Collectors.toList());
+            //删除需要删除的部分
+            List<BusinessDocument> deleteInfos = infos.parallelStream().filter(i -> !docIds.contains(i.getDocId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(deleteInfos)) {
+                businessDocumentDao.deleteAll(infos);
             }
+            //插入部分移除已存在部分
+            docIds.removeAll(existDocId);
+        }
+        //插入文档信息
+        if (CollectionUtils.isNotEmpty(docIds)) {
+            docIds.stream().filter(Objects::nonNull).forEach(i -> {
+                BusinessDocument bizDoc = new BusinessDocument(entityId, i);
+                businessDocumentDao.save(bizDoc);
+            });
         }
         return ResultData.success("ok");
     }
@@ -88,7 +94,6 @@ public class DocumentService extends BaseEntityService<Document> {
      *
      * @param entityId 业务实体Id
      */
-    @Transactional
     public ResultData<String> unbindBusinessDocuments(String entityId) {
         return bindBusinessDocuments(entityId, new ArrayList<>());
     }
