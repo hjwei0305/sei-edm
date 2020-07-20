@@ -69,14 +69,16 @@ public class DocumentService extends BaseEntityService<Document> {
         }
         //先移除现有业务信息
         List<BusinessDocument> infos = businessDocumentDao.findAllByEntityId(entityId);
-        if (Objects.nonNull(infos) && !infos.isEmpty()) {
+        if (CollectionUtils.isNotEmpty(infos)) {
             businessDocumentDao.deleteAll(infos);
         }
-        //插入文档信息
-        BusinessDocument bizDoc;
-        for (String docId : docIds) {
-            bizDoc = new BusinessDocument(entityId, docId);
-            businessDocumentDao.save(bizDoc);
+        if (CollectionUtils.isNotEmpty(docIds)) {
+            //插入文档信息
+            BusinessDocument bizDoc;
+            for (String docId : docIds) {
+                bizDoc = new BusinessDocument(entityId, docId);
+                businessDocumentDao.save(bizDoc);
+            }
         }
         return ResultData.success("ok");
     }
@@ -86,6 +88,7 @@ public class DocumentService extends BaseEntityService<Document> {
      *
      * @param entityId 业务实体Id
      */
+    @Transactional
     public ResultData<String> unbindBusinessDocuments(String entityId) {
         return bindBusinessDocuments(entityId, new ArrayList<>());
     }
