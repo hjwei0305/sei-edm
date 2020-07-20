@@ -94,6 +94,7 @@ public class DocumentService extends BaseEntityService<Document> {
      *
      * @param entityId 业务实体Id
      */
+    @Transactional
     public ResultData<String> unbindBusinessDocuments(String entityId) {
         return bindBusinessDocuments(entityId, new ArrayList<>());
     }
