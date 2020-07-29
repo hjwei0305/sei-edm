@@ -7,12 +7,14 @@ import com.ecmp.edm.entity.DocumentInfo;
 import com.ecmp.util.DateUtils;
 import com.ecmp.util.FileUtils;
 import com.ecmp.util.JsonUtils;
+import com.ecmp.vo.ResponseData;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.ParameterizedTypeReference;
 
 import java.io.InputStream;
 import java.util.*;
@@ -284,5 +286,39 @@ public class DocumentManager implements IDocumentManager, ApplicationContextAwar
             LOG.error("获取文档异常", e);
         }
         return infos;
+    }
+
+    /**
+     * 转为pdf文件并存储
+     * 目前支持Word,Powerpoint转为pdf文件
+     *
+     * @param docId    文档id,必须
+     * @param markText 文档水印
+     * @return 返回成功转为pdf存储的docId, 不能成功转为pdf的返回原docId
+     */
+    public ResponseData<String> convert2PdfAndSave(String docId, String markText) {
+        Map<String, String> params = new HashMap<>();
+        params.put("docId", docId);
+        if (StringUtils.isBlank(markText)) {
+            markText = StringUtils.EMPTY;
+        }
+        params.put("markText", markText);
+
+        ResponseData<String> resultData;
+        String url = getServiceUrl() + "/document/convert2PdfAndSave";
+        try {
+            HttpClientResult result = HttpClientUtils.doGet(url, params);
+            if (200 == result.getCode()) {
+                Map map = JsonUtils.fromJson(result.getContent(), Map.class);
+                docId = (String) map.get("data");
+                resultData = ResponseData.operationSuccessWithData(docId);
+            } else {
+                resultData = ResponseData.operationFailure(result.getContent());
+            }
+        } catch (Exception e) {
+            LOG.error("转为pdf文件存储异常", e);
+            resultData = ResponseData.operationFailure("转为pdf文件存储异常");
+        }
+        return resultData;
     }
 }

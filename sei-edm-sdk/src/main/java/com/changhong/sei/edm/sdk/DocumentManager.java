@@ -9,6 +9,7 @@ import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.exception.ServiceException;
 import com.changhong.sei.util.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -20,7 +21,6 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotBlank;
 import java.io.File;
@@ -234,6 +234,28 @@ public class DocumentManager implements ApplicationContextAware {
 
         ResultData<List<DocumentResponse>> resultData = apiTemplate.getByUrl(getServiceUrl() + "/document/getEntityDocumentInfos",
                 new ParameterizedTypeReference<ResultData<List<DocumentResponse>>>() {
+                }, params);
+        return resultData;
+    }
+
+    /**
+     * 转为pdf文件并存储
+     * 目前支持Word,Powerpoint转为pdf文件
+     *
+     * @param docId    文档id,必须
+     * @param markText 文档水印
+     * @return 返回成功转为pdf存储的docId, 不能成功转为pdf的返回原docId
+     */
+    public ResultData<String> convert2PdfAndSave(@NotBlank String docId, String markText) {
+        Map<String, String> params = new HashMap<>();
+        params.put("docId", docId);
+        if (StringUtils.isBlank(markText)) {
+            markText = StringUtils.EMPTY;
+        }
+        params.put("markText", markText);
+
+        ResultData<String> resultData = apiTemplate.getByUrl(getServiceUrl() + "/document/convert2PdfAndSave",
+                new ParameterizedTypeReference<ResultData<String>>() {
                 }, params);
         return resultData;
     }

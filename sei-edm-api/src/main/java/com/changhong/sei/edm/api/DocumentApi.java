@@ -58,7 +58,7 @@ public interface DocumentApi {
     /**
      * 获取一个文档(包含信息和数据)
      *
-     * @param docId          文档Id
+     * @param docId       文档Id
      * @param isThumbnail 是获取缩略图
      * @return 文档
      */
@@ -103,4 +103,17 @@ public interface DocumentApi {
     @GetMapping("getEntityDocumentInfos")
     @ApiOperation(value = "获取业务实体的文档信息清单", notes = "获取业务实体的文档信息清单")
     ResultData<List<DocumentResponse>> getEntityDocumentInfos(@RequestParam("entityId") @NotBlank String entityId);
+
+    /**
+     * 转为pdf文件并存储
+     * 目前支持Word,Powerpoint转为pdf文件
+     *
+     * @param docId    文档id
+     * @param markText 文档水印
+     * @return 返回成功转为pdf存储的docId, 不能成功转为pdf的返回原docId
+     */
+    @GetMapping("convert2PdfAndSave")
+    @ApiOperation(value = "转为pdf文件并存储", notes = "目前支持Word,Powerpoint转为pdf文件, 返回成功转为pdf存储的docId, 不能成功转为pdf的返回原docId")
+    ResultData<String> convert2PdfAndSave(@RequestParam("docId") @NotBlank String docId,
+                                          @RequestParam(name = "markText", required = false) String markText);
 }

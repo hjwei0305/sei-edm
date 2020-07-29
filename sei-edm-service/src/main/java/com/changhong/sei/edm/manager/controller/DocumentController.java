@@ -4,6 +4,7 @@ import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.edm.api.DocumentApi;
 import com.changhong.sei.edm.dto.BindRequest;
 import com.changhong.sei.edm.dto.DocumentResponse;
+import com.changhong.sei.edm.file.service.FileConverterService;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.service.DocumentService;
@@ -36,6 +37,8 @@ public class DocumentController implements DocumentApi {
     private DocumentService service;
     @Autowired
     private FileService fileService;
+    @Autowired
+    private FileConverterService fileConverterService;
 
     /**
      * 获取一个文档(包含信息和数据)
@@ -135,5 +138,18 @@ public class DocumentController implements DocumentApi {
         }
         return ResultData.success(result);
 //        return ResultData.fail("没有找到对应的文档信息清单");
+    }
+
+    /**
+     * 转为pdf文件并存储
+     * 目前支持Word,Powerpoint转为pdf文件
+     *
+     * @param docId    文档id
+     * @param markText 文档水印
+     * @return 返回成功转为pdf存储的docId, 不能成功转为pdf的返回原docId
+     */
+    @Override
+    public ResultData<String> convert2PdfAndSave(String docId, String markText) {
+        return fileConverterService.convert2PdfAndSave(docId, markText);
     }
 }
