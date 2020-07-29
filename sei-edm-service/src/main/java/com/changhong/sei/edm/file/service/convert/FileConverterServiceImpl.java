@@ -57,7 +57,7 @@ public class FileConverterServiceImpl implements FileConverterService {
         }
 
         if (Objects.equals(DocumentType.Word, response.getDocumentType())
-                && Objects.equals(DocumentType.Powerpoint, response.getDocumentType())) {
+                || Objects.equals(DocumentType.Powerpoint, response.getDocumentType())) {
             ResultData<DocumentResponse> resultData = convertByteArray(response.getData(), response.getFileName(), markText);
             if (resultData.successful()) {
                 DocumentResponse docResponse = resultData.getData();
