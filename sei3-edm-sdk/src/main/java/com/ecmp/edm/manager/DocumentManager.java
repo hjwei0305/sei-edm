@@ -296,6 +296,7 @@ public class DocumentManager implements IDocumentManager, ApplicationContextAwar
      * @param markText 文档水印
      * @return 返回成功转为pdf存储的docId, 不能成功转为pdf的返回原docId
      */
+    @Override
     public ResponseData<String> convert2PdfAndSave(String docId, String markText) {
         Map<String, String> params = new HashMap<>();
         params.put("docId", docId);

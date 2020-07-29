@@ -2,6 +2,7 @@ package com.ecmp.edm.manager;
 
 import com.ecmp.edm.entity.Document;
 import com.ecmp.edm.entity.DocumentInfo;
+import com.ecmp.vo.ResponseData;
 
 import java.io.InputStream;
 import java.util.Collection;
@@ -77,4 +78,13 @@ public interface IDocumentManager {
      */
     List<DocumentInfo> getEntityDocumentInfos(String entityId);
 
+    /**
+     * 转为pdf文件并存储
+     * 目前支持Word,Powerpoint转为pdf文件
+     *
+     * @param docId    文档id,必须
+     * @param markText 文档水印
+     * @return 返回成功转为pdf存储的docId, 不能成功转为pdf的返回原docId
+     */
+    ResponseData<String> convert2PdfAndSave(String docId, String markText);
 }
