@@ -5,6 +5,7 @@ import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.preview.service.PreviewServiceFactory;
+import com.changhong.sei.util.FileUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -101,7 +102,7 @@ public class PreviewController {
                 model.addAttribute("fileType", document.getDocumentType().name());
         }
 
-        model.addAttribute("fileName", fileName);
+        model.addAttribute("fileName", FileUtils.getFileName(fileName));
         return view;
     }
 
