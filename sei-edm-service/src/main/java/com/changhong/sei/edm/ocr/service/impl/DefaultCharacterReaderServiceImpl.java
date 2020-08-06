@@ -81,52 +81,53 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
     @Override
     public ResultData<String> read(DocumentType docType, OcrType ocrType, byte[] data) {
         String result = StringUtils.EMPTY;
-        InputStream inputStream = new ByteArrayInputStream(data);
 
         // 条码前缀匹配内容
         String[] matchPrefix = StringUtils.split(matchStr.toLowerCase(), ",");
-
-        switch (docType) {
-            case Pdf:
-                // 解码PDF中的条码信息.实质是将pdf转为图片后再解码
-                try (PDDocument doc = PDDocument.load(inputStream)) {
-                    result = doRecogonize(doc, 72, matchPrefix, ocrType);
-                    if (StringUtils.isBlank(result)) {
-                        result = doRecogonize(doc, 2 * 72, matchPrefix, ocrType);
+        Set<String> resultSet = new HashSet<>();
+        try (InputStream inputStream = new ByteArrayInputStream(data)) {
+            switch (docType) {
+                case Pdf:
+                    // 解码PDF中的条码信息.实质是将pdf转为图片后再解码
+                    try (PDDocument doc = PDDocument.load(inputStream)) {
+                        result = doRecogonize(doc, 72, matchPrefix, ocrType, resultSet);
+                        if (StringUtils.isBlank(result)) {
+                            result = doRecogonize(doc, 2 * 72, matchPrefix, ocrType, resultSet);
+                        }
+                        if (StringUtils.isBlank(result)) {
+                            result = doRecogonize(doc, 3 * 72, matchPrefix, ocrType, resultSet);
+                        }
+                    } catch (Exception e) {
+                        LogUtil.error("the decode pdf may be not exit.");
                     }
-                    if (StringUtils.isBlank(result)) {
-                        result = doRecogonize(doc, 3 * 72, matchPrefix, ocrType);
-                    }
-                } catch (Exception e) {
-                    LogUtil.error("the decode pdf may be not exit.");
-                }
-                break;
-            case Image:
-                BufferedImage image = null;
-                try {
-                    image = ImageIO.read(inputStream);
-                    result = processImage(image, matchPrefix, ocrType);
-                } catch (Exception e) {
-                    LogUtil.error("the decode image may be not exit.", e);
+                    break;
+                case Image:
+                    BufferedImage image = null;
+                    try {
+                        image = ImageIO.read(inputStream);
+                        result = processImage(image, matchPrefix, ocrType, resultSet);
+                    } catch (Exception e) {
+                        LogUtil.error("the decode image may be not exit.", e);
 //                } finally {
 //                    if (image != null) {
 //                        image.flush();
 //                    }
-                }
+                    }
 
-                break;
-            default:
-                //throw new IllegalArgumentException("不支持的文件类型。");
-        }
-
-        try {
-            inputStream.close();
+                    break;
+                default:
+                    //throw new IllegalArgumentException("不支持的文件类型。");
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            LogUtil.error("文档识别异常", e);
         }
 
-        if (!checkBarcode(result, matchPrefix, ocrType)) {
+        if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
             result = StringUtils.EMPTY;
+        }
+        if (StringUtils.isBlank(result) && resultSet.size() > 0) {
+            result = resultSet.stream().filter(StringUtils::isNotBlank).findAny().orElse(StringUtils.EMPTY);
+            resultSet.clear();
         }
 
         if (OcrType.InvoiceQr == ocrType) {
@@ -225,13 +226,13 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
         return result;
     }
 
-    private String doRecogonize(PDDocument doc, float dpi, String[] matchPrefix, OcrType ocrType) {
+    private String doRecogonize(PDDocument doc, float dpi, String[] matchPrefix, OcrType ocrType, Set<String> resultSet) {
         BufferedImage image = null;
         PDFRenderer renderer = new PDFRenderer(doc);
         try {
             image = renderer.renderImageWithDPI(0, dpi, ImageType.GRAY);
 
-            return processImage(image, matchPrefix, ocrType);
+            return processImage(image, matchPrefix, ocrType, resultSet);
         } catch (Exception e) {
             LogUtil.error("the decode pdf may be not exit.", e);
             return null;
@@ -242,7 +243,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
         }
     }
 
-    private String processImage(BufferedImage image, String[] matchPrefix, OcrType ocrType) {
+    private String processImage(BufferedImage image, String[] matchPrefix, OcrType ocrType, Set<String> resultSet) {
         BufferedImage image1, image2;
         String result;
         // 原图识别
@@ -251,7 +252,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
         } else {
             result = ZxingUtils.processImageQr(image, matchPrefix);
         }
-        if (!checkBarcode(result, matchPrefix, ocrType)) {
+        if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
             int height = image.getHeight();
             int width = image.getWidth();
             // 剪切右上角
@@ -261,7 +262,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                 result = ZxingUtils.processImageBarcode(image1, matchPrefix);
 
                 // ocr识别
-                if (!checkBarcode(result, matchPrefix, ocrType)) {
+                if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
                     //条码识别失败，进行ocr识别
                     result = partImgOcr(image1, matchPrefix);
                 }
@@ -271,10 +272,10 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             image1 = null;
         }
 
-        // 识别失败，原图片旋转90度再次识别
-        if (!checkBarcode(result, matchPrefix, ocrType)) {
-            // 旋转90度
-            image1 = ImageUtils.rotate(image, 90);
+        // 识别失败，原图片旋转270度再次识别
+        if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
+            // 旋转270度
+            image1 = ImageUtils.rotate(image, 270);
             int height = image1.getHeight();
             int width = image1.getWidth();
 
@@ -285,7 +286,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                 result = ZxingUtils.processImageBarcode(image2, matchPrefix);
 
                 // ocr识别
-                if (!checkBarcode(result, matchPrefix, ocrType)) {
+                if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
                     //条码识别失败，进行ocr识别
                     result = partImgOcr(image2, matchPrefix);
                 }
@@ -297,7 +298,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
         }
 
         // 识别失败，原图片旋转180度再次识别
-        if (!checkBarcode(result, matchPrefix, ocrType)) {
+        if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
             // 旋转180度
             image1 = ImageUtils.rotate(image, 180);
             int height = image1.getHeight();
@@ -310,7 +311,32 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                 result = ZxingUtils.processImageBarcode(image2, matchPrefix);
 
                 // ocr识别
-                if (!checkBarcode(result, matchPrefix, ocrType)) {
+                if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
+                    //条码识别失败，进行ocr识别
+                    result = partImgOcr(image2, matchPrefix);
+                }
+            } else {
+                result = ZxingUtils.processImageQr(image2, matchPrefix);
+            }
+            image1 = null;
+            image2 = null;
+        }
+
+        // 识别失败，原图片旋转90度再次识别
+        if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
+            // 旋转90度
+            image1 = ImageUtils.rotate(image, 90);
+            int height = image1.getHeight();
+            int width = image1.getWidth();
+
+            // 剪切右上角
+            image2 = image1.getSubimage(width / 2, 0, width / 2, height / 4);
+//                        BufferedImage image2 = image.getSubimage(0, 0, width, height / 2);
+            if (Objects.equals(OcrType.Barcode, ocrType)) {
+                result = ZxingUtils.processImageBarcode(image2, matchPrefix);
+
+                // ocr识别
+                if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
                     //条码识别失败，进行ocr识别
                     result = partImgOcr(image2, matchPrefix);
                 }
@@ -322,7 +348,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
         }
 
         // 识别失败，调用云服务识别
-        if (!checkBarcode(result, matchPrefix, ocrType)
+        if (!checkBarcode(result, matchPrefix, ocrType, resultSet)
                 && ocrCloudEnable) {
             result = tencentQrcodeOCRApi(image);
         }
@@ -384,9 +410,11 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
     /**
      * 检查识别内容
      */
-    private boolean checkBarcode(String data, String[] matchPrefix, OcrType ocrType) {
+    private boolean checkBarcode(String data, String[] matchPrefix, OcrType ocrType, Set<String> resultSet) {
         if (StringUtils.isBlank(data)) {
             return false;
+        } else {
+            resultSet.add(data);
         }
         // 是否是条码
         if (OcrType.Barcode == ocrType) {
