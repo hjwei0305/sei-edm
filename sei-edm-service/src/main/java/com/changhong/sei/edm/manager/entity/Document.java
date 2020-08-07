@@ -27,12 +27,12 @@ public class Document extends BaseEntity {
      * local: 当本地存储时,为真实文件名(不含路径)
      * mongo: 当mongo存储时,为mongo返回的id
      */
-    @Column(name = "doc_id", length = 100, unique = true)
+    @Column(name = "doc_id", length = 200, unique = true)
     private String docId;
     /**
      * 文件名（包括后缀,不含路径）
      */
-    @Column(name = "file_name", length = 100)
+    @Column(name = "file_name", length = 200)
     private String fileName;
     /**
      * 文件大小
