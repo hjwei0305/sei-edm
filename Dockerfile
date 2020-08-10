@@ -1,7 +1,7 @@
 # Docker for java  sei-edm
 
 # 基础镜像
-FROM openoffice-tesseract-jre8-zh-lm:v1.0.0
+FROM openoffice-tesseract-jre8-zh-lm:v1.0.3
 
 # 作者
 LABEL maintainer="hua.feng@changhong.com"
@@ -15,4 +15,4 @@ ENV JAVA_OPTS=""  APP_NAME="sei-edm"  SERVER_NAME="edm-service"
 ADD $APP_NAME-service/build/libs/$APP_NAME.jar /usr/app/$SERVER_NAME.jar
 
 # 启动应用
-CMD ["/usr/local/limit_memory.sh"]
+CMD ["/usr/local/entrypoint.sh"]
