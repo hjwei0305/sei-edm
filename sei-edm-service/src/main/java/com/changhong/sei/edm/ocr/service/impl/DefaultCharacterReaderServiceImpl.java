@@ -163,6 +163,25 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                         }
                         result = JsonUtils.toJson(invoiceVO);
                     }
+                    // 浙江通用电子发票
+                    else if (arr.length == 5) {
+                        InvoiceVO invoiceVO = new InvoiceVO();
+                        // 发票代码
+                        invoiceVO.setCode(arr[0]);
+                        // 发票号码
+                        invoiceVO.setNumber(arr[1]);
+                        // 发票种类 01-增值税专用发票 04-增值税普通发票 10-增值税电子普通发票
+                        //invoiceVO.setCategory("增值税专用发票");
+                        //invoiceVO.setCategory("增值税普通发票");
+                        invoiceVO.setCategory("增值税电子普通发票");
+                        // 总金额（含税）价税合计
+                        invoiceVO.setTotalAmount(arr[3]);
+                        // 开票日期 arr[5]
+                        invoiceVO.setDate(arr[2]);
+                        // 校验码
+                        invoiceVO.setCheckCode(arr[4]);
+                        result = JsonUtils.toJson(invoiceVO);
+                    }
                 }
             }
         }
