@@ -153,8 +153,12 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                         }
                         // 开票金额(不含税) arr[4]
                         invoiceVO.setAmount(arr[4]);
-                        // 开票日期 arr[5]
-                        invoiceVO.setDate(arr[5]);
+                        // 开票日期 arr[5]，截取日期
+                        String invoiceDate = arr[5];
+                        if (StringUtils.isNoneBlank(invoiceDate) && invoiceDate.length() > 8) {
+                            invoiceDate = invoiceDate.substring(0, 8);
+                        }
+                        invoiceVO.setDate(invoiceDate);
                         // 校验码
                         invoiceVO.setCheckCode(arr[6]);
                         if (arr.length > 7) {
@@ -176,8 +180,12 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                         invoiceVO.setCategory("增值税电子普通发票");
                         // 总金额（含税）价税合计
                         invoiceVO.setTotalAmount(arr[3]);
-                        // 开票日期 arr[5]
-                        invoiceVO.setDate(arr[2]);
+                        // 开票日期 arr[2]
+                        String invoiceDate = arr[2];
+                        if (StringUtils.isNoneBlank(invoiceDate) && invoiceDate.length() > 8) {
+                            invoiceDate = invoiceDate.substring(0, 8);
+                        }
+                        invoiceVO.setDate(invoiceDate);
                         // 校验码
                         invoiceVO.setCheckCode(arr[4]);
                         result = JsonUtils.toJson(invoiceVO);
