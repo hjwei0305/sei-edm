@@ -1,6 +1,7 @@
 package com.changhong.sei.edm.manager.controller;
 
 import com.changhong.sei.core.dto.ResultData;
+import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.edm.api.DocumentApi;
 import com.changhong.sei.edm.dto.BindRequest;
 import com.changhong.sei.edm.dto.DocumentResponse;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 实现功能：
@@ -116,6 +118,28 @@ public class DocumentController implements DocumentApi {
         }
         return ResultData.success(response);
 //        return ResultData.fail("没有找到对应的文档信息清单");
+    }
+
+    /**
+     * 获取文档清单(只包含文档信息,不含文档数据)
+     *
+     * @param docIds 文档Id清单
+     * @return 文档
+     */
+    @Override
+    public ResultData<List<DocumentResponse>> getEntityDocumentInfoList(@NotBlank List<String> docIds) {
+        List<DocumentResponse> responseList = new ArrayList<>();
+        List<Document> documentList = service.findByFilter(new SearchFilter(Document.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN));
+        if (CollectionUtils.isNotEmpty(documentList)) {
+            responseList = documentList.parallelStream().map(document -> {
+                DocumentResponse response = new DocumentResponse();
+                if (Objects.nonNull(document)) {
+                    modelMapper.map(document, response);
+                }
+                return response;
+            }).collect(Collectors.toList());
+        }
+        return ResultData.success(responseList);
     }
 
     /**

@@ -95,6 +95,16 @@ public interface DocumentApi {
     ResultData<DocumentResponse> getEntityDocumentInfo(@RequestParam("docId") @NotBlank String docId);
 
     /**
+     * 获取文档清单(只包含文档信息,不含文档数据)
+     *
+     * @param docIds 文档Id清单
+     * @return 文档
+     */
+    @GetMapping("getEntityDocumentInfoList")
+    @ApiOperation(value = "获取文档清单(只包含文档信息,不含文档数据)", notes = "获取文档清单(只包含文档信息,不含文档数据)")
+    ResultData<List<DocumentResponse>> getEntityDocumentInfoList(@RequestParam("docIds") @NotBlank List<String> docIds);
+
+    /**
      * 获取业务实体的文档信息清单
      *
      * @param entityId 业务实体Id
