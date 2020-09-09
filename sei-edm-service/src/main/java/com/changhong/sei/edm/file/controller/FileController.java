@@ -5,13 +5,12 @@ import com.changhong.sei.core.context.SessionUser;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.log.LogUtil;
-import com.changhong.sei.edm.dto.DocumentDto;
-import com.changhong.sei.edm.dto.DocumentResponse;
-import com.changhong.sei.edm.dto.OcrType;
-import com.changhong.sei.edm.dto.UploadResponse;
+import com.changhong.sei.edm.dto.*;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
+import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.service.DocumentService;
+import com.changhong.sei.edm.manager.service.FileChunkService;
 import com.changhong.sei.edm.ocr.service.CharacterReaderService;
 import com.changhong.sei.util.EnumUtils;
 import com.changhong.sei.util.IdGenerator;
@@ -21,6 +20,7 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
@@ -47,6 +48,48 @@ public class FileController {
     private CharacterReaderService characterReaderService;
     @Autowired
     private DocumentService documentService;
+    @Autowired
+    private FileChunkService fileChunkService;
+
+    @ApiOperation("检查分片")
+    @RequestMapping(path = "/chunk", method = RequestMethod.GET)
+    public ResultData<FileChunkResponse> checkChunk(@RequestParam(name = "fileMD5") String fileMD5, HttpServletResponse response) {
+
+
+        return ResultData.success();
+    }
+
+    @ApiOperation("文件分片上传")
+    @RequestMapping(path = "/chunk", method = RequestMethod.POST)
+    public ResultData<UploadResponse> uploadChunk(@RequestBody @Valid FileChunkRequest chunk) {
+        MultipartFile file = chunk.getFile();
+        LogUtil.debug("file originName: {}, chunkNumber: {}", file.getOriginalFilename(), chunk.getChunkNumber());
+        try {
+            byte[] bytes = file.getBytes();
+//            LogUtil.debug("文件 {} 写入成功, uuid:{}", chunk.getFilename(), chunk.getIdentifier());
+
+            FileChunk fileChunk = new ModelMapper().map(chunk, FileChunk.class);
+            fileChunkService.save(fileChunk);
+
+            return ResultData.success();
+        } catch (IOException e) {
+            LogUtil.error("上传异常", e);
+            return ResultData.fail("上传异常:" + e.getMessage());
+        }
+    }
+
+    @ApiOperation("合并文件分片")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "sys", value = "来源系统"),
+            @ApiImplicitParam(name = "uploadUser", value = "上传人"),
+            @ApiImplicitParam(name = "ocr", dataTypeClass = OcrType.class, value = "ocr识别类型: None, Barcode, InvoiceQr, Qr "),
+            @ApiImplicitParam(name = "file", value = "文件", required = true)
+    })
+    @RequestMapping(path = "/mergeFile", method = RequestMethod.POST)
+    public ResultData<UploadResponse> mergeFile(@RequestParam(name = "fileMD5") String fileMD5, @RequestParam(name = "fileName") String fileName) {
+
+        return ResultData.success();
+    }
 
     @ApiOperation("单文件上传或识别")
     @ApiImplicitParams({
@@ -192,7 +235,6 @@ public class FileController {
             // 单文件下载
             return singleDownload(docId, Boolean.TRUE, width, height, request, response);
         }
-
     }
 
     @ApiOperation("文件下载 docIds和entityId二选一")

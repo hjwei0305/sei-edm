@@ -38,6 +38,8 @@ public class DocumentService extends BaseEntityService<Document> {
     private ThumbnailDao thumbnailDao;
     @Autowired
     private BusinessDocumentDao businessDocumentDao;
+    @Autowired
+    private FileChunkService fileChunkService;
 
     @Override
     protected BaseEntityDao<Document> getDao() {

@@ -128,7 +128,7 @@ public class DocumentController implements DocumentApi {
      * @return 文档
      */
     @Override
-    public ResultData<List<DocumentResponse>> getEntityDocumentInfoList(@Valid List<String> docIds) {
+    public ResultData<List<DocumentResponse>> getEntityDocumentInfoList(List<String> docIds) {
         List<DocumentResponse> responseList = new ArrayList<>();
         List<Document> documentList = service.findByFilter(new SearchFilter(Document.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN));
         if (CollectionUtils.isNotEmpty(documentList)) {
