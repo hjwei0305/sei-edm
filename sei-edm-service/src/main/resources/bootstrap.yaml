@@ -25,10 +25,10 @@ spring:
       uri: http://dsei.changhong.com/config-center
       profile: ${sei.application.env}
       name: ${spring.application.name}
-      enabled: false
+      enabled: true
     zookeeper:
       # zookeeper注册中心开关
-      enabled: false
+      enabled: true
       # zk 地址
       connect-string: 10.4.208.132:2181
     consul:
