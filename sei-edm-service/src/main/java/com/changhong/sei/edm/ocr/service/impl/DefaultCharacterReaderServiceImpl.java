@@ -137,35 +137,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                     result = getBlockChainInvoice(result);
                 } else {
                     arr = result.split("[,]");
-                    if (arr.length == 8) {
-                        // 云南通用电子发票
-                        InvoiceVO invoiceVO = new InvoiceVO();
-                        // 发票代码
-                        invoiceVO.setCode(arr[2]);
-                        // 发票号码
-                        invoiceVO.setNumber(arr[3]);
-                        // 发票种类 01-增值税专用发票 04-增值税普通发票 10-增值税电子普通发票
-                        if ("01".equals(arr[1])) {
-                            invoiceVO.setCategory("增值税专用发票");
-                        } else if ("04".equals(arr[1])) {
-                            invoiceVO.setCategory("增值税普通发票");
-                        } else if ("10".equals(arr[1])) {
-                            invoiceVO.setCategory("增值税电子普通发票");
-                        }
-                        // 开票金额(不含税) arr[5]  免税
-                        invoiceVO.setAmount(arr[5]);
-                        // 开票金额(含税) arr[5]
-                        invoiceVO.setTotalAmount(arr[5]);
-                        // 开票日期 arr[5]，截取日期
-                        String invoiceDate = arr[6];
-                        if (StringUtils.isNoneBlank(invoiceDate) && invoiceDate.length() > 8) {
-                            invoiceDate = invoiceDate.substring(0, 8);
-                        }
-                        invoiceVO.setDate(invoiceDate);
-                        // 校验码
-                        invoiceVO.setCheckCode(arr[7]);
-                        result = JsonUtils.toJson(invoiceVO);
-                    } else if (arr.length >= 7) {
+                    if (arr.length >= 7) {
                         InvoiceVO invoiceVO = new InvoiceVO();
                         // 发票代码
                         String invoiceCode = arr[2];
