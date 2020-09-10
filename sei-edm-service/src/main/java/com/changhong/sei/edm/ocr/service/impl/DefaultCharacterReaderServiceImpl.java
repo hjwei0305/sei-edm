@@ -168,7 +168,8 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                     } else if (arr.length >= 7) {
                         InvoiceVO invoiceVO = new InvoiceVO();
                         // 发票代码
-                        invoiceVO.setCode(arr[2]);
+                        String invoiceCode = arr[2];
+                        invoiceVO.setCode(invoiceCode);
                         // 发票号码
                         invoiceVO.setNumber(arr[3]);
                         // 发票种类 01-增值税专用发票 04-增值税普通发票 10-增值税电子普通发票
@@ -179,20 +180,33 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                         } else if ("10".equals(arr[1])) {
                             invoiceVO.setCategory("增值税电子普通发票");
                         }
-                        // 开票金额(不含税) arr[4]
-                        invoiceVO.setAmount(arr[4]);
-                        // 开票日期 arr[5]，截取日期
-                        String invoiceDate = arr[5];
+                        String invoiceDate;
+                        //增值税电子普通发票的发票代码最后一位数为“1”，而区块链电子发票的发票代码最后一位数为“0”
+                        if (invoiceCode.endsWith("0")) {
+                            //区块链发票：01,10,153002009100,00253776,92530828MA6P3AA16R,1100.00,20200815,003297b4988d0c0e12fce1584451b2d7cb4b8f169316243905c40338d6e7657add
+                            // 开票金额(不含税) arr[5]
+                            invoiceVO.setAmount(arr[5]);
+                            // 开票日期 arr[6]，
+                            invoiceDate = arr[6];
+                            //二维码信息无校验码
+                        } else {
+                            //普通发票：01,10,053001800111,30219862,800.00,20200728,07039881687041428131,7497
+                            // 开票金额(不含税) arr[4]
+                            invoiceVO.setAmount(arr[4]);
+                            // 开票日期 arr[5]
+                            invoiceDate = arr[5];
+                            // 校验码
+                            invoiceVO.setCheckCode(arr[6]);
+                            if (arr.length > 7) {
+                                //随机码
+                                invoiceVO.setRandom(arr[7]);
+                            }
+                        }
+                        // 开票日期截取日期
                         if (StringUtils.isNoneBlank(invoiceDate) && invoiceDate.length() > 8) {
                             invoiceDate = invoiceDate.substring(0, 8);
                         }
                         invoiceVO.setDate(invoiceDate);
-                        // 校验码
-                        invoiceVO.setCheckCode(arr[6]);
-                        if (arr.length > 7) {
-                            //随机码
-                            invoiceVO.setRandom(arr[7]);
-                        }
                         result = JsonUtils.toJson(invoiceVO);
                     }
                     // 浙江通用电子发票
