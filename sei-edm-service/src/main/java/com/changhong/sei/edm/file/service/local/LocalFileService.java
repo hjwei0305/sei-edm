@@ -10,6 +10,7 @@ import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
+import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.util.FileUtils;
 import com.changhong.sei.util.IdGenerator;
@@ -19,11 +20,10 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 实现功能：
@@ -113,11 +113,87 @@ public class LocalFileService implements FileService {
      */
     @Override
     public ResultData<UploadResponse> mergeFile(String fileMd5, String fileName) {
-        return null;
+        List<FileChunk> chunks = documentService.getFileChunk(fileMd5);
+        if (CollectionUtils.isNotEmpty(chunks)) {
+            Set<String> chunkIds = new HashSet<>();
+            Set<String> docIds = new HashSet<>();
+            ByteArrayOutputStream out;
+            List<FileInputStream> inputStreamList = new ArrayList<>(chunks.size());
+
+            // 获取文件目录
+            StringBuffer fileStr = this.getFileDir();
+            for (FileChunk chunk : chunks) {
+                chunkIds.add(chunk.getId());
+                docIds.add(chunk.getDocId());
+                try {
+                    File file = FileUtils.getFile(fileStr + chunk.getDocId());
+                    if (file.exists()) {
+                        inputStreamList.add(new FileInputStream(file));
+                    }
+                } catch (IOException e) {
+                    LogUtil.error("[" + chunk.getDocId() + "]分片文件读取异常.", e);
+                }
+            }
+
+            // 检查分片数量是否一致
+            if (chunks.size() != inputStreamList.size()) {
+                return ResultData.fail("分片错误");
+            }
+
+            // uuid生成新的文件名
+            final String docId = IdGenerator.uuid2() + DOT + FileUtils.getExtension(fileName);
+
+            // 异步上传持久化
+            CompletableFuture.runAsync(() -> {
+                //将集合中的枚举 赋值给 en
+                Enumeration<FileInputStream> en = Collections.enumeration(inputStreamList);
+                //en中的 多个流合并成一个
+                InputStream sis = new SequenceInputStream(en);
+
+                FileOutputStream fos = null;
+                byte[] buf = new byte[1024];
+                int len = 0;
+                try {
+                    File originFile = new File(fileStr + docId);
+                    fos = new FileOutputStream(originFile);
+                    while ((len = sis.read(buf)) != -1) {
+                        fos.write(buf, 0, len);
+                    }
+
+                    uploadDocument(fileMd5, fileName, "", "", originFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        if (fos != null) {
+                            fos.close();
+                        }
+                        sis.close();
+                    } catch (IOException ignored) {
+                    }
+                }
+
+                // 删除分片文件
+                removeByDocIds(docIds);
+                // 删除分片信息
+                documentService.deleteFileChunk(chunkIds);
+
+                LogUtil.debug("异步处理完成");
+            });
+
+            UploadResponse response = new UploadResponse();
+            response.setDocId(docId);
+            response.setFileName(fileName);
+            response.setDocumentType(getDocumentType(fileName));
+
+            return ResultData.success(response);
+        } else {
+            return ResultData.fail("文件分片不存在.");
+        }
     }
 
     /**
-     * 获取一个文档(包含信息和数据)
+     * 获取一个文档(不含文件内容数据)
      *
      * @param docId 文档Id
      * @return 文档

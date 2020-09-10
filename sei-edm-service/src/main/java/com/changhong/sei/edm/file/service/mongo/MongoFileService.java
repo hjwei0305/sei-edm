@@ -162,7 +162,7 @@ public class MongoFileService implements FileService {
                 // 删除分片信息
                 documentService.deleteFileChunk(chunkIds);
 
-                System.out.println("异步处理完成");
+                LogUtil.debug("异步处理完成");
             });
 
             UploadResponse response = new UploadResponse();

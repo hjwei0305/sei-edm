@@ -183,7 +183,7 @@ public class DocumentService extends BaseEntityService<Document> {
      * @return 存在返回文档信息
      */
     public Document getDocumentByMd5(String fileMd5) {
-        return dao.findByProperty(Document.FIELD_FILE_MD5, fileMd5);
+        return dao.findFirstByProperty(Document.FIELD_FILE_MD5, fileMd5);
     }
 
     /**
