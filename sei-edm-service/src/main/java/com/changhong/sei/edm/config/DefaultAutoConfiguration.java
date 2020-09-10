@@ -3,15 +3,20 @@ package com.changhong.sei.edm.config;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.file.service.local.LocalFileService;
 import com.changhong.sei.edm.file.service.mongo.MongoFileService;
+import com.changhong.sei.edm.file.service.mongo.SeiGridFsOperations;
+import com.changhong.sei.edm.file.service.mongo.SeiGridFsTemplate;
 import com.changhong.sei.edm.file.service.s3.MinIOFileService;
 import io.minio.MinioClient;
 import io.minio.errors.InvalidEndpointException;
 import io.minio.errors.InvalidPortException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 /**
  * 实现功能：
@@ -50,6 +55,13 @@ public class DefaultAutoConfiguration {
     @ConditionalOnProperty(prefix = "sei.edm", name = "model", havingValue = "minio")
     public MinioClient minioClient() throws InvalidPortException, InvalidEndpointException {
         return new MinioClient(minioProperties.getEndpoint(), minioProperties.getAccesskey(), minioProperties.getSecretKey());
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = "sei.edm", name = "model", havingValue = "mongo")
+    public SeiGridFsOperations seiGridFsTemplate(MongoDbFactory mongoDbFactory, MongoTemplate mongoTemplate) {
+        return new SeiGridFsTemplate(mongoDbFactory, mongoTemplate.getConverter(), "fs");
     }
 
 }

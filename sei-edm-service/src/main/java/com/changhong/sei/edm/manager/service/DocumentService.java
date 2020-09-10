@@ -222,4 +222,15 @@ public class DocumentService extends BaseEntityService<Document> {
         return chunks;
     }
 
+    /**
+     * 删除分片文件数据
+     *
+     * @param ids 分片文件id
+     */
+    public void deleteFileChunk(Set<String> ids) {
+        if (CollectionUtils.isNotEmpty(ids)) {
+            fileChunkService.delete(ids);
+        }
+    }
+
 }

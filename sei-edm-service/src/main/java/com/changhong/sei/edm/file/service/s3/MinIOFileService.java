@@ -112,6 +112,18 @@ public class MinIOFileService implements FileService {
     }
 
     /**
+     * 合并文件分片
+     *
+     * @param fileMd5  源整文件md5
+     * @param fileName 文件名
+     * @return 文档信息
+     */
+    @Override
+    public ResultData<UploadResponse> mergeFile(String fileMd5, String fileName) {
+        return null;
+    }
+
+    /**
      * 获取一个文档(包含信息和数据)
      *
      * @param docId 文档Id

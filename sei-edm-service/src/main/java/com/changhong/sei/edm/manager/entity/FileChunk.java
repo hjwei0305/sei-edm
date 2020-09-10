@@ -63,6 +63,11 @@ public class FileChunk extends BaseEntity {
     @Column(name = "file_name", length = 200)
     private String filename;
     /**
+     * 合并时关联整体文件的docId
+     */
+    @Column(name = "origin_doc_id")
+    private String originDocId;
+    /**
      * 上传时间
      */
     @Column(name = "uploaded_time")
@@ -130,6 +135,14 @@ public class FileChunk extends BaseEntity {
 
     public void setFilename(String filename) {
         this.filename = filename;
+    }
+
+    public String getOriginDocId() {
+        return originDocId;
+    }
+
+    public void setOriginDocId(String originDocId) {
+        this.originDocId = originDocId;
     }
 
     public LocalDateTime getUploadedTime() {

@@ -30,7 +30,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
@@ -50,9 +49,8 @@ public class FileController {
     private DocumentService documentService;
 
     @ApiOperation("检查分片")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "fileMd5", value = "来源系统")
-    })
+    @ApiImplicitParam(name = "fileMd5", value = "来源系统", required = true)
+    @ResponseBody
     @RequestMapping(path = "/checkChunk", method = RequestMethod.GET)
     public ResultData<FileChunkResponse> checkChunk(@RequestParam(name = "fileMd5") String fileMd5) {
         FileChunkResponse response = new FileChunkResponse();
@@ -94,17 +92,40 @@ public class FileController {
     }
 
     @ApiOperation("文件分片上传")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "chunkNumber", value = "当前文件块，从1开始", required = true),
+            @ApiImplicitParam(name = "currentChunkSize", value = "当前分块大小", required = true),
+            @ApiImplicitParam(name = "chunkSize", value = "分块大小", required = true),
+            @ApiImplicitParam(name = "totalSize", value = "总大小", required = true),
+            @ApiImplicitParam(name = "totalChunks", value = "总块数", required = true),
+            @ApiImplicitParam(name = "fileMd5", value = "原整体文件MD5", required = true),
+            @ApiImplicitParam(name = "file", value = "文件", required = true)
+    })
+    @ResponseBody
     @RequestMapping(path = "/uploadChunk", method = RequestMethod.POST)
-    public ResultData<UploadResponse> uploadChunk(@RequestBody @Valid FileChunkRequest chunk) {
-        MultipartFile file = chunk.getFile();
-        LogUtil.debug("file originName: {}, chunkNumber: {}", file.getOriginalFilename(), chunk.getChunkNumber());
+    public ResultData<UploadResponse> uploadChunk(@RequestParam("file") MultipartFile file,
+                                                  @RequestParam(value = "chunkNumber") Integer chunkNumber,
+                                                  @RequestParam(value = "currentChunkSize") Long currentChunkSize,
+                                                  @RequestParam(value = "chunkSize") Long chunkSize,
+                                                  @RequestParam(value = "totalSize") Long totalSize,
+                                                  @RequestParam(value = "totalChunks") Integer totalChunks,
+                                                  @RequestParam(value = "fileMd5") String fileMd5) {
+        LogUtil.debug("file originName: {}, chunkNumber: {}", file.getOriginalFilename(), chunkNumber);
         try {
             ResultData<UploadResponse> resultData = uploadFile(file, "SEI", "");
             if (resultData.successful()) {
                 UploadResponse response = resultData.getData();
-                LogUtil.debug("文件 {} 写入成功, docId:{}", response.getFileName(), chunk.getDocId());
+                LogUtil.debug("文件 {} 写入成功, docId:{}", response.getFileName(), response.getDocId());
 
-                FileChunk fileChunk = new ModelMapper().map(chunk, FileChunk.class);
+                FileChunk fileChunk = new FileChunk();
+                fileChunk.setDocId(response.getDocId());
+                fileChunk.setChunkNumber(chunkNumber);
+                fileChunk.setCurrentChunkSize(currentChunkSize);
+                fileChunk.setChunkSize(chunkSize);
+                fileChunk.setTotalSize(totalSize);
+                fileChunk.setTotalChunks(totalChunks);
+                fileChunk.setFileMd5(fileMd5);
+
                 documentService.saveFileChunk(fileChunk, response.getDocId(), response.getFileName());
 
                 return ResultData.success(response);
@@ -119,11 +140,10 @@ public class FileController {
 
     @ApiOperation("合并文件分片")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "sys", value = "来源系统"),
-            @ApiImplicitParam(name = "uploadUser", value = "上传人"),
-            @ApiImplicitParam(name = "ocr", dataTypeClass = OcrType.class, value = "ocr识别类型: None, Barcode, InvoiceQr, Qr "),
-            @ApiImplicitParam(name = "file", value = "文件", required = true)
+            @ApiImplicitParam(name = "fileName", value = "文件名", required = true),
+            @ApiImplicitParam(name = "fileMd5", value = "原整体文件MD5", required = true)
     })
+    @ResponseBody
     @RequestMapping(path = "/mergeFile", method = RequestMethod.POST)
     public ResultData<UploadResponse> mergeFile(@RequestParam(name = "fileMd5") String fileMd5, @RequestParam(name = "fileName") String fileName) {
         return fileService.mergeFile(fileMd5, fileName);
