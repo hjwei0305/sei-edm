@@ -9,6 +9,7 @@ import com.changhong.sei.edm.manager.dao.DocumentDao;
 import com.changhong.sei.edm.manager.dao.ThumbnailDao;
 import com.changhong.sei.edm.manager.entity.BusinessDocument;
 import com.changhong.sei.edm.manager.entity.Document;
+import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.entity.Thumbnail;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -173,6 +174,52 @@ public class DocumentService extends BaseEntityService<Document> {
             dao.deleteInBatch(documents);
         }
         return ResultData.success("OK");
+    }
+
+    /**
+     * 根据文件md5获取文档信息
+     *
+     * @param fileMd5 文件md5
+     * @return 存在返回文档信息
+     */
+    public Document getDocumentByMd5(String fileMd5) {
+        return dao.findByProperty(Document.FIELD_FILE_MD5, fileMd5);
+    }
+
+    /**
+     * 根据文件md5获取文档信息
+     *
+     * @param chunk    文件块
+     * @param docId    文件块docId
+     * @param fileName 文件名
+     * @return 存在返回文档信息
+     */
+    public FileChunk saveFileChunk(FileChunk chunk, String docId, String fileName) {
+        if (Objects.nonNull(chunk)) {
+            chunk.setDocId(docId);
+            chunk.setFilename(fileName);
+            chunk.setUploadedTime(LocalDateTime.now());
+            fileChunkService.save(chunk);
+        }
+        return chunk;
+    }
+
+    /**
+     * 根据文件md5获取文档信息
+     *
+     * @param fileMd5 文件MD5
+     * @return 存在返回文档信息
+     */
+    public List<FileChunk> getFileChunk(String fileMd5) {
+        List<FileChunk> chunks;
+        if (StringUtils.isNotBlank(fileMd5)) {
+            chunks = fileChunkService.findListByProperty(FileChunk.FIELD_FILE_MD5, fileMd5);
+            // 按文件块序号排序
+            chunks.sort(Comparator.comparingInt(FileChunk::getChunkNumber));
+        } else {
+            chunks = new ArrayList<>();
+        }
+        return chunks;
     }
 
 }

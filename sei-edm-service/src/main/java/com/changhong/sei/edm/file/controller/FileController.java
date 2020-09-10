@@ -5,12 +5,12 @@ import com.changhong.sei.core.context.SessionUser;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.log.LogUtil;
+import com.changhong.sei.edm.common.util.MD5Utils;
 import com.changhong.sei.edm.dto.*;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.service.DocumentService;
-import com.changhong.sei.edm.manager.service.FileChunkService;
 import com.changhong.sei.edm.ocr.service.CharacterReaderService;
 import com.changhong.sei.util.EnumUtils;
 import com.changhong.sei.util.IdGenerator;
@@ -48,30 +48,69 @@ public class FileController {
     private CharacterReaderService characterReaderService;
     @Autowired
     private DocumentService documentService;
-    @Autowired
-    private FileChunkService fileChunkService;
 
     @ApiOperation("检查分片")
-    @RequestMapping(path = "/chunk", method = RequestMethod.GET)
-    public ResultData<FileChunkResponse> checkChunk(@RequestParam(name = "fileMD5") String fileMD5, HttpServletResponse response) {
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "fileMd5", value = "来源系统")
+    })
+    @RequestMapping(path = "/checkChunk", method = RequestMethod.GET)
+    public ResultData<FileChunkResponse> checkChunk(@RequestParam(name = "fileMd5") String fileMd5) {
+        FileChunkResponse response = new FileChunkResponse();
+        // 通过源文件的md5检查是否有存在的文件,存在返回docId
+        Document document = documentService.getDocumentByMd5(fileMd5);
+        if (Objects.nonNull(document)) {
+            response.setDocId(document.getDocId());
+            // 上传状态为完成
+            response.setUploadState(FileChunkResponse.UploadEnum.completed);
+            return ResultData.success(response);
+        }
 
+        // 当不存在.继续检查是否是续传(之前有分块未传完或合并),存在则返回已上传完成的文件块
+        List<FileChunk> chunks = documentService.getFileChunk(fileMd5);
+        if (CollectionUtils.isNotEmpty(chunks)) {
+            FileChunkDto chunkDto = null;
+            ModelMapper modelMapper = new ModelMapper();
+            List<FileChunkDto> chunkDtos = new ArrayList<>();
+            for (FileChunk chunk : chunks) {
+                chunkDto = modelMapper.map(chunk, FileChunkDto.class);
+                chunkDtos.add(chunkDto);
+            }
 
-        return ResultData.success();
+            if (Objects.nonNull(chunkDto)) {
+                response.setChunks(chunkDtos);
+                // 上传状态为部分完成
+                response.setUploadState(FileChunkResponse.UploadEnum.undone);
+                response.setTotalChunks(chunkDto.getTotalChunks());
+                response.setTotalSize(chunkDto.getTotalSize());
+                response.setChunkSize(chunkDto.getChunkSize());
+
+                return ResultData.success(response);
+            }
+        }
+
+        // 不存在.返回上传状态UploadEnum.none
+        response.setUploadState(FileChunkResponse.UploadEnum.none);
+        return ResultData.success(response);
     }
 
     @ApiOperation("文件分片上传")
-    @RequestMapping(path = "/chunk", method = RequestMethod.POST)
+    @RequestMapping(path = "/uploadChunk", method = RequestMethod.POST)
     public ResultData<UploadResponse> uploadChunk(@RequestBody @Valid FileChunkRequest chunk) {
         MultipartFile file = chunk.getFile();
         LogUtil.debug("file originName: {}, chunkNumber: {}", file.getOriginalFilename(), chunk.getChunkNumber());
         try {
-            byte[] bytes = file.getBytes();
-//            LogUtil.debug("文件 {} 写入成功, uuid:{}", chunk.getFilename(), chunk.getIdentifier());
+            ResultData<UploadResponse> resultData = uploadFile(file, "SEI", "");
+            if (resultData.successful()) {
+                UploadResponse response = resultData.getData();
+                LogUtil.debug("文件 {} 写入成功, docId:{}", response.getFileName(), chunk.getDocId());
 
-            FileChunk fileChunk = new ModelMapper().map(chunk, FileChunk.class);
-            fileChunkService.save(fileChunk);
+                FileChunk fileChunk = new ModelMapper().map(chunk, FileChunk.class);
+                documentService.saveFileChunk(fileChunk, response.getDocId(), response.getFileName());
 
-            return ResultData.success();
+                return ResultData.success(response);
+            } else {
+                return ResultData.fail(resultData.getMessage());
+            }
         } catch (IOException e) {
             LogUtil.error("上传异常", e);
             return ResultData.fail("上传异常:" + e.getMessage());
@@ -86,9 +125,8 @@ public class FileController {
             @ApiImplicitParam(name = "file", value = "文件", required = true)
     })
     @RequestMapping(path = "/mergeFile", method = RequestMethod.POST)
-    public ResultData<UploadResponse> mergeFile(@RequestParam(name = "fileMD5") String fileMD5, @RequestParam(name = "fileName") String fileName) {
-
-        return ResultData.success();
+    public ResultData<UploadResponse> mergeFile(@RequestParam(name = "fileMd5") String fileMd5, @RequestParam(name = "fileName") String fileName) {
+        return fileService.mergeFile(fileMd5, fileName);
     }
 
     @ApiOperation("单文件上传或识别")
@@ -108,22 +146,9 @@ public class FileController {
         if (StringUtils.isBlank(sys)) {
             sys = ContextUtil.getAppCode();
         }
-        DocumentDto dto = new DocumentDto();
-        dto.setData(file.getBytes());
-        dto.setFileName(file.getOriginalFilename());
-        dto.setSystem(sys);
-        if (StringUtils.isBlank(uploadUser)) {
-            SessionUser user = ContextUtil.getSessionUser();
-            uploadUser = user.getAccount();
-        }
-        dto.setUploadUser(uploadUser);
-
-        UploadResponse uploadResponse;
-//        for (MultipartFile file : files) {
-        // 文件上传
-        ResultData<UploadResponse> resultData = fileService.uploadDocument(dto);
+        ResultData<UploadResponse> resultData = uploadFile(file, sys, uploadUser);
         if (resultData.successful() && StringUtils.isNotBlank(ocr)) {
-            uploadResponse = resultData.getData();
+            UploadResponse uploadResponse = resultData.getData();
             OcrType ocrType = EnumUtils.getEnum(OcrType.class, ocr);
             if (Objects.nonNull(uploadResponse) &&
                     Objects.nonNull(ocrType) && OcrType.None != ocrType) {
@@ -136,9 +161,6 @@ public class FileController {
             }
         }
         return resultData;
-//            uploadResponse = resultData.getData();
-//        }
-//        return ResultData.success(uploadResponse);
     }
 
     @ApiOperation("多文件批量上传")
@@ -269,6 +291,23 @@ public class FileController {
             // 多文件下载
             return multipleDownload(documents, request, response);
         }
+    }
+
+    private ResultData<UploadResponse> uploadFile(MultipartFile file, String sys, String uploadUser) throws IOException {
+        DocumentDto dto = new DocumentDto();
+        dto.setData(file.getBytes());
+        // 计算文件MD5
+        dto.setFileMd5(MD5Utils.md5Stream(file.getInputStream()));
+        dto.setFileName(file.getOriginalFilename());
+        dto.setSystem(sys);
+        if (StringUtils.isBlank(uploadUser)) {
+            SessionUser user = ContextUtil.getSessionUser();
+            uploadUser = user.getAccount();
+        }
+        dto.setUploadUser(uploadUser);
+
+        // 文件上传
+        return fileService.uploadDocument(dto);
     }
 
     /**

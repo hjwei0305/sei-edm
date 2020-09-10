@@ -98,6 +98,7 @@ public class MinIOFileService implements FileService {
 
             document = new Document(fileName);
             document.setDocId(objectId);
+            document.setFileMd5(dto.getFileMd5());
             document.setSize((long) data.length);
             document.setSystem(dto.getSystem());
             document.setUploadedTime(LocalDateTime.now());

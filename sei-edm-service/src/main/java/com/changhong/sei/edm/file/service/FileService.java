@@ -25,6 +25,15 @@ public interface FileService {
     ResultData<UploadResponse> uploadDocument(DocumentDto dto);
 
     /**
+     * 合并文件分片
+     *
+     * @param fileMd5  源整文件md5
+     * @param fileName 文件名
+     * @return 文档信息
+     */
+    ResultData<UploadResponse> mergeFile(String fileMd5, String fileName);
+
+    /**
      * 获取一个文档信息(不含文件内容数据)
      *
      * @param docId 文档Id

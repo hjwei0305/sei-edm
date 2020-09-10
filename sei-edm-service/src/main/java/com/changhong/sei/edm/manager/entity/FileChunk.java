@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 @DynamicUpdate
 public class FileChunk extends BaseEntity {
     private static final long serialVersionUID = -2978085016335609068L;
+    public static final String FIELD_FILE_MD5 = "fileMd5";
+
     /**
      * 当前文件块标识
      */

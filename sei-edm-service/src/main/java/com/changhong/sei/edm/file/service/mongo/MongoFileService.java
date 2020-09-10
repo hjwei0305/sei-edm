@@ -10,6 +10,7 @@ import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
+import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.util.FileUtils;
 import com.mongodb.BasicDBObject;
@@ -49,7 +50,7 @@ public class MongoFileService implements FileService {
 
     @Autowired
     private DocumentService documentService;
-//    @Autowired
+    //    @Autowired
 //    private ThumbnailService thumbnailService;
     @Autowired
     private ModelMapper modelMapper;
@@ -105,6 +106,7 @@ public class MongoFileService implements FileService {
 
             document = new Document(fileName);
             document.setDocId(objectId.toString());
+            document.setFileMd5(dto.getFileMd5());
             document.setSize((long) data.length);
             document.setSystem(dto.getSystem());
             document.setUploadedTime(LocalDateTime.now());
@@ -123,6 +125,33 @@ public class MongoFileService implements FileService {
         }
 
         return uploadDocument(document, data);
+    }
+
+    /**
+     * 合并文件分片
+     *
+     * @param fileMd5  源整文件md5
+     * @param fileName 文件名
+     * @return 文档信息
+     */
+    @Override
+    public ResultData<UploadResponse> mergeFile(String fileMd5, String fileName) {
+        List<FileChunk> chunks = documentService.getFileChunk(fileMd5);
+        if (CollectionUtils.isNotEmpty(chunks)) {
+            UploadResponse response = new UploadResponse();
+
+            ByteArrayOutputStream out;
+            for (FileChunk chunk :chunks) {
+                out = getByteArray(chunk.getDocId());
+            }
+
+
+
+
+            return ResultData.success();
+        } else {
+            return ResultData.fail("文件分片不存在.");
+        }
     }
 
     /**
@@ -186,25 +215,37 @@ public class MongoFileService implements FileService {
         if (Objects.nonNull(document)) {
             modelMapper.map(document, response);
 
-            //获取原图
-            GridFSFile fsdbFile = edmGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
-            if (Objects.isNull(fsdbFile)) {
-                LogUtil.error("[{}]缩略图不存在.", docId);
-                return null;
-            }
-            GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bucket.downloadToStream(fsdbFile.getId(), baos);
-
-            response.setData(baos.toByteArray());
-            try {
-                baos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            ByteArrayOutputStream baos = getByteArray(docId);
+            if (baos != null) {
+                response.setData(baos.toByteArray());
+                try {
+                    baos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
         return response;
+    }
+
+    /**
+     * 获取文档
+     *
+     * @param docId 文档id
+     * @return 返回输出流
+     */
+    private ByteArrayOutputStream getByteArray(String docId) {
+        //获取原图
+        GridFSFile fsdbFile = edmGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
+        if (Objects.isNull(fsdbFile)) {
+            LogUtil.error("[{}]缩略图不存在.", docId);
+            return null;
+        }
+        GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bucket.downloadToStream(fsdbFile.getId(), baos);
+        return baos;
     }
 
     /**

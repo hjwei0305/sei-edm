@@ -5,7 +5,6 @@ import io.swagger.annotations.ApiModelProperty;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * 实现功能：
@@ -14,13 +13,25 @@ import java.util.List;
  * @version 1.0.00  2020-09-08 16:07
  */
 @ApiModel(description = "文件分片上传")
-public class FileChunkResponse implements Serializable {
+public class FileChunkDto implements Serializable {
     private static final long serialVersionUID = -5924767220212635679L;
     /**
      * 文件分块标识
      */
-    @ApiModelProperty(notes = "文件分块标识")
+    @ApiModelProperty(notes = "文件分块标识", required = true)
     private String docId;
+    /**
+     * 当前文件块，从1开始
+     */
+    @NotNull
+    @ApiModelProperty(notes = "当前文件块，从1开始", required = true)
+    private Integer chunkNumber;
+    /**
+     * 当前分块大小
+     */
+    @NotNull
+    @ApiModelProperty(notes = "当前分块大小", required = true)
+    private Long currentChunkSize;
     /**
      * 分块大小
      */
@@ -40,16 +51,11 @@ public class FileChunkResponse implements Serializable {
     @ApiModelProperty(notes = "总块数", required = true)
     private Integer totalChunks;
     /**
-     * 上传状态
+     * 原整体文件MD5
      */
-    @ApiModelProperty(notes = "上传状态")
-    private UploadEnum uploadState;
-
-    /**
-     * 已上传完成的文件块
-     */
-    @ApiModelProperty(notes = "已上传完成的文件块")
-    private List<FileChunkDto> chunks;
+    @NotNull
+    @ApiModelProperty(notes = "原整体文件MD5", required = true)
+    private String fileMd5;
 
     public String getDocId() {
         return docId;
@@ -59,12 +65,28 @@ public class FileChunkResponse implements Serializable {
         this.docId = docId;
     }
 
+    public Integer getChunkNumber() {
+        return chunkNumber;
+    }
+
+    public void setChunkNumber(Integer chunkNumber) {
+        this.chunkNumber = chunkNumber;
+    }
+
     public Long getChunkSize() {
         return chunkSize;
     }
 
     public void setChunkSize(Long chunkSize) {
         this.chunkSize = chunkSize;
+    }
+
+    public Long getCurrentChunkSize() {
+        return currentChunkSize;
+    }
+
+    public void setCurrentChunkSize(Long currentChunkSize) {
+        this.currentChunkSize = currentChunkSize;
     }
 
     public Long getTotalSize() {
@@ -83,34 +105,12 @@ public class FileChunkResponse implements Serializable {
         this.totalChunks = totalChunks;
     }
 
-    public UploadEnum getUploadState() {
-        return uploadState;
+    public String getFileMd5() {
+        return fileMd5;
     }
 
-    public void setUploadState(UploadEnum uploadState) {
-        this.uploadState = uploadState;
+    public void setFileMd5(String fileMd5) {
+        this.fileMd5 = fileMd5;
     }
 
-    public List<FileChunkDto> getChunks() {
-        return chunks;
-    }
-
-    public void setChunks(List<FileChunkDto> chunks) {
-        this.chunks = chunks;
-    }
-
-    public enum UploadEnum {
-        /**
-         * 不存在
-         */
-        none,
-        /**
-         * 未完成
-         */
-        undone,
-        /**
-         * 已完成
-         */
-        completed
-    }
 }

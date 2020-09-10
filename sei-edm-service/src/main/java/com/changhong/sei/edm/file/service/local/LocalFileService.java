@@ -38,8 +38,6 @@ public class LocalFileService implements FileService {
     private String storePath;
     @Autowired
     private DocumentService documentService;
-    //    @Autowired
-//    private ThumbnailService thumbnailService;
     @Autowired
     private ModelMapper modelMapper;
 
@@ -103,7 +101,7 @@ public class LocalFileService implements FileService {
             return ResultData.fail("文件上传读取异常.");
         }
 
-        return uploadDocument(dto.getFileName(), dto.getSystem(), dto.getUploadUser(), file);
+        return uploadDocument(dto.getFileMd5(), dto.getFileName(), dto.getSystem(), dto.getUploadUser(), file);
     }
 
     /**
@@ -281,52 +279,19 @@ public class LocalFileService implements FileService {
      * @param file 文档
      * @return 文档信息
      */
-    private ResultData<UploadResponse> uploadDocument(String originName, String sys, String uploadUser, File file) {
+    private ResultData<UploadResponse> uploadDocument(String md5, String originName, String sys, String uploadUser, File file) {
         if (Objects.isNull(file)) {
             return ResultData.fail("文件不存在.");
         }
 
         Document document = new Document(originName);
+        document.setFileMd5(md5);
         document.setDocId(FileUtils.getFileName(file.getName()));
         document.setSize(file.length());
         document.setSystem(sys);
         document.setUploadUser(uploadUser);
         document.setUploadedTime(LocalDateTime.now());
         document.setDocumentType(getDocumentType(document.getFileName()));
-
-//        获取文档类型
-//        DocumentType documentType = document.getDocumentType();
-//        Thumbnail thumbnail;
-//        //如果是图像文档，生成缩略图
-//        if (DocumentType.Image.equals(documentType) && generateThumbnail) {
-//            //复制数据流
-//            FileInputStream imageStream = null;
-//            try {
-//                imageStream = FileUtils.openInputStream(file);
-//
-//                String ext = FileUtils.getExtension(document.getFileName());
-//                byte[] thumbData = ImageUtils.scale2(imageStream, ext, 100, 150, true);
-//                if (Objects.nonNull(thumbData)) {
-////                FileUtils.writeByteArrayToFile(new File(storePath + "123."+ext), thumbData);
-//                    thumbnail = new Thumbnail();
-//                    thumbnail.setDocId(document.getDocId());
-//                    thumbnail.setFileName(document.getFileName());
-//                    thumbnail.setImage(thumbData);
-//
-//                    thumbnailService.save(thumbnail);
-//                }
-//            } catch (IOException e) {
-//                LogUtil.error("生成缩略图异常.", e);
-//            } finally {
-//                if (Objects.nonNull(imageStream)) {
-//                    try {
-//                        imageStream.close();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        }
 
         documentService.save(document);
 

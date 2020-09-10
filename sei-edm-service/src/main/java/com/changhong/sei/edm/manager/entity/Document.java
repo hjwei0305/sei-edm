@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 public class Document extends BaseEntity {
     private static final long serialVersionUID = 1189243298194997374L;
     public static final String FIELD_DOC_ID = "docId";
+    public static final String FIELD_FILE_MD5 = "fileMd5";
 
     /**
      * docId

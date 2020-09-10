@@ -13,7 +13,7 @@ import java.io.Serializable;
  * @version 1.0.00  2020-09-08 16:07
  */
 @ApiModel(description = "文件分片上传")
-public class FileChunkRequest extends FileChunkResponse implements Serializable {
+public class FileChunkRequest extends FileChunkDto implements Serializable {
     private static final long serialVersionUID = -5924767220212635679L;
 
     @ApiModelProperty(notes = "文件", required = true)
