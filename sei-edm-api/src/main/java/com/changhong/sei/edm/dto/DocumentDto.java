@@ -18,6 +18,11 @@ public class DocumentDto implements Serializable {
     @ApiModelProperty(notes = "文档id")
     private String docId;
     /**
+     * 文件MD5
+     */
+    @ApiModelProperty(notes = "文件MD5")
+    private String fileMd5;
+    /**
      * 文件名（包括后缀）
      */
     @ApiModelProperty(notes = "文件名（包括后缀）")
@@ -70,6 +75,14 @@ public class DocumentDto implements Serializable {
 
     public void setDocId(String docId) {
         this.docId = docId;
+    }
+
+    public String getFileMd5() {
+        return fileMd5;
+    }
+
+    public void setFileMd5(String fileMd5) {
+        this.fileMd5 = fileMd5;
     }
 
     public String getFileName() {

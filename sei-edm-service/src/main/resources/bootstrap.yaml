@@ -21,8 +21,8 @@ spring:
     name: ${sei.application.code}
   cloud:
     config:
-      uri: http://10.4.208.86:8100/config-center
-#      uri: http://base-service.changhong.com/config-center
+      # 配置中心地址
+      uri: http://dsei.changhong.com/config-center
       profile: ${sei.application.env}
       name: ${spring.application.name}
       enabled: true

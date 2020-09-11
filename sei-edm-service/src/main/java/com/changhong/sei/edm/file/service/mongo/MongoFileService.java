@@ -10,6 +10,7 @@ import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
+import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.util.FileUtils;
 import com.mongodb.BasicDBObject;
@@ -25,14 +26,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.gridfs.GridFsOperations;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 实现功能：
@@ -44,13 +43,13 @@ public class MongoFileService implements FileService {
 
     @Autowired
     private MongoDbFactory mongoDbFactory;
+    //    @Autowired
+//    private GridFsOperations edmGridFsTemplate;
     @Autowired
-    private GridFsOperations edmGridFsTemplate;
+    private SeiGridFsOperations seiGridFsTemplate;
 
     @Autowired
     private DocumentService documentService;
-//    @Autowired
-//    private ThumbnailService thumbnailService;
     @Autowired
     private ModelMapper modelMapper;
 
@@ -81,52 +80,102 @@ public class MongoFileService implements FileService {
      * @return 文档信息
      */
     @Override
+    @Transactional
     public ResultData<UploadResponse> uploadDocument(DocumentDto dto) {
         if (Objects.isNull(dto)) {
             return ResultData.fail("文件对象为空.");
         }
-        if (Objects.isNull(dto.getData())) {
+
+        final byte[] data = dto.getData();
+        if (Objects.isNull(data)) {
             return ResultData.fail("文件流为空.");
         }
 
+        ObjectId objectId = new ObjectId();
         String fileName = dto.getFileName();
-        byte[] data = dto.getData();
-        Document document;
-        InputStream dataStream = null;
-        try {
-            DocumentType documentType = getDocumentType(fileName);
 
-            //重置数据流
-            dataStream = new ByteArrayInputStream(data);
-            //保存数据文件
-            DBObject metaData = new BasicDBObject();
-            metaData.put("description", fileName);
-            ObjectId objectId = edmGridFsTemplate.store(dataStream, fileName, documentType.toString(), metaData);
+        // 异步上传持久化
+        uploadDocument(objectId, new ByteArrayInputStream(data), fileName, dto.getFileMd5(), data.length);
 
-            document = new Document(fileName);
-            document.setDocId(objectId.toString());
-            document.setSize((long) data.length);
-            document.setSystem(dto.getSystem());
-            document.setUploadedTime(LocalDateTime.now());
-            document.setDocumentType(documentType);
-        } catch (Exception e) {
-            LogUtil.error("文件上传读取异常.", e);
-            return ResultData.fail("文件上传读取异常.");
-        } finally {
-            if (Objects.nonNull(dataStream)) {
-                try {
-                    dataStream.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        UploadResponse response = new UploadResponse();
+        response.setDocId(objectId.toString());
+        response.setFileName(fileName);
+        response.setDocumentType(getDocumentType(fileName));
 
-        return uploadDocument(document, data);
+        return ResultData.success(response);
     }
 
     /**
-     * 获取一个文档(包含信息和数据)
+     * 合并文件分片
+     *
+     * @param fileMd5  源整文件md5
+     * @param fileName 文件名
+     * @return 文档信息
+     */
+    @Override
+    @Transactional
+    public ResultData<UploadResponse> mergeFile(String fileMd5, String fileName) {
+        List<FileChunk> chunks = documentService.getFileChunk(fileMd5);
+        if (CollectionUtils.isNotEmpty(chunks)) {
+            Set<String> chunkIds = new HashSet<>();
+            Set<String> docIds = new HashSet<>();
+            ByteArrayOutputStream out;
+            List<ByteArrayInputStream> inputStreamList = new ArrayList<>(chunks.size());
+            for (FileChunk chunk : chunks) {
+                chunkIds.add(chunk.getId());
+                docIds.add(chunk.getDocId());
+
+                out = getByteArray(chunk.getDocId());
+                if (Objects.nonNull(out)) {
+                    inputStreamList.add(new ByteArrayInputStream(out.toByteArray()));
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    return ResultData.fail("分片错误");
+                }
+            }
+
+            // 检查分片数量是否一致
+            if (chunks.size() != inputStreamList.size()) {
+                return ResultData.fail("分片错误");
+            }
+
+            final long size = chunks.get(0).getTotalSize();
+            ObjectId objectId = new ObjectId();
+
+            // 异步上传持久化
+            CompletableFuture.runAsync(() -> {
+                //将集合中的枚举 赋值给 en
+                Enumeration<ByteArrayInputStream> en = Collections.enumeration(inputStreamList);
+                //en中的 多个流合并成一个
+                InputStream sis = new SequenceInputStream(en);
+
+                uploadDocument(objectId, sis, fileName, fileMd5, size);
+
+                // 删除分片文件
+                removeByDocIds(docIds);
+                // 删除分片信息
+                documentService.deleteFileChunk(chunkIds);
+
+                LogUtil.debug("异步处理完成");
+            });
+
+            UploadResponse response = new UploadResponse();
+            response.setDocId(objectId.toString());
+            response.setFileName(fileName);
+            response.setDocumentType(getDocumentType(fileName));
+
+            return ResultData.success(response);
+        } else {
+            return ResultData.fail("文件分片不存在.");
+        }
+    }
+
+    /**
+     * 获取一个文档(不包含信息和数据)
      *
      * @param docId 文档Id
      * @return 文档
@@ -186,21 +235,14 @@ public class MongoFileService implements FileService {
         if (Objects.nonNull(document)) {
             modelMapper.map(document, response);
 
-            //获取原图
-            GridFSFile fsdbFile = edmGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
-            if (Objects.isNull(fsdbFile)) {
-                LogUtil.error("[{}]缩略图不存在.", docId);
-                return null;
-            }
-            GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bucket.downloadToStream(fsdbFile.getId(), baos);
-
-            response.setData(baos.toByteArray());
-            try {
-                baos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            ByteArrayOutputStream baos = getByteArray(docId);
+            if (baos != null) {
+                response.setData(baos.toByteArray());
+                try {
+                    baos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -225,7 +267,7 @@ public class MongoFileService implements FileService {
                 modelMapper.map(document, response);
 
                 //获取原图
-                GridFSFile fsdbFile = edmGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
+                GridFSFile fsdbFile = seiGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
                 if (Objects.isNull(fsdbFile)) {
                     LogUtil.error("[{}]缩略图不存在.", docId);
                     return null;
@@ -271,6 +313,7 @@ public class MongoFileService implements FileService {
      * @return 删除结果
      */
     @Override
+    @Transactional
     public ResultData<String> removeByDocIds(Set<String> docIds) {
         if (CollectionUtils.isNotEmpty(docIds)) {
             // 删除文档信息
@@ -280,7 +323,7 @@ public class MongoFileService implements FileService {
                 try {
                     //删除文档数据
                     Query query = new Query().addCriteria(Criteria.where("_id").is(docId));
-                    edmGridFsTemplate.delete(query);
+                    seiGridFsTemplate.delete(query);
                 } catch (Exception e) {
                     LogUtil.error("[" + docId + "]文件删除异常.", e);
                 }
@@ -293,6 +336,7 @@ public class MongoFileService implements FileService {
      * 清理所有文档(删除无业务信息的文档)
      */
     @Override
+    @Transactional
     public ResultData<String> removeInvalidDocuments() {
         ResultData<Set<String>> resultData = documentService.getInvalidDocIds();
         if (resultData.successful()) {
@@ -307,57 +351,54 @@ public class MongoFileService implements FileService {
     }
 
     /**
-     * 上传一个文档
+     * 获取文档
      *
-     * @param document 文档
-     * @return 文档信息
+     * @param docId 文档id
+     * @return 返回输出流
      */
-    private ResultData<UploadResponse> uploadDocument(Document document, byte[] data) {
-        if (Objects.isNull(document)) {
-            return ResultData.fail("文档不能为空.");
+    private ByteArrayOutputStream getByteArray(String docId) {
+        //获取原图
+        GridFSFile fsdbFile = seiGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
+        if (Objects.isNull(fsdbFile)) {
+            LogUtil.error("[{}]文件不存在.", docId);
+            return null;
         }
+        GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bucket.downloadToStream(fsdbFile.getId(), baos);
+        return baos;
+    }
 
-//        //获取文档类型
-//        DocumentType documentType = document.getDocumentType();
-//        Thumbnail thumbnail;
-//        //如果是图像文档，生成缩略图
-//        if (DocumentType.Image.equals(documentType) && generateThumbnail) {
-//            //复制数据流
-//            InputStream imageStream = null;
-//            try {
-//                imageStream = new ByteArrayInputStream(data);
-//
-//                String ext = FileUtils.getExtension(document.getFileName());
-//                byte[] thumbData = ImageUtils.scale2(imageStream, ext, 100, 150, true);
-//                if (Objects.nonNull(thumbData)) {
-////                FileUtils.writeByteArrayToFile(new File(storePath + "123."+ext), thumbData);
-//                    thumbnail = new Thumbnail();
-//                    thumbnail.setDocId(document.getDocId());
-//                    thumbnail.setFileName(document.getFileName());
-//                    thumbnail.setImage(thumbData);
-//
-//                    thumbnailService.save(thumbnail);
-//                }
-//            } catch (Exception e) {
-//                LogUtil.error("生成缩略图异常.", e);
-//            } finally {
-//                if (Objects.nonNull(imageStream)) {
-//                    try {
-//                        imageStream.close();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        }
+    /**
+     * 上传一个文档
+     */
+    private void uploadDocument(ObjectId objectId, InputStream inputStream, String fileName, String fileMd5, long size) {
+        try {
+            DocumentType documentType = getDocumentType(fileName);
 
-        documentService.save(document);
+            //重置数据流
+            //保存数据文件
+            DBObject metaData = new BasicDBObject();
+            metaData.put("description", fileName);
+//            ObjectId objectId = edmGridFsTemplate.store(inputStream, fileName, documentType.toString(), metaData);
+            seiGridFsTemplate.store(objectId, inputStream, fileName, documentType.toString(), metaData);
 
-        UploadResponse response = new UploadResponse();
-        response.setDocId(document.getDocId());
-        response.setFileName(document.getFileName());
-        response.setDocumentType(document.getDocumentType());
+            Document document = new Document(fileName);
+            document.setDocId(objectId.toString());
+            document.setFileMd5(fileMd5);
+            document.setSize(size);
+            document.setUploadedTime(LocalDateTime.now());
+            document.setDocumentType(documentType);
 
-        return ResultData.success(response);
+            documentService.save(document);
+        } catch (Exception e) {
+            LogUtil.error("[" + objectId + "]文件上传读取异常.", e);
+        } finally {
+            try {
+                inputStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

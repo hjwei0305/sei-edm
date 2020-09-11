@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 public class Document extends BaseEntity {
     private static final long serialVersionUID = 1189243298194997374L;
     public static final String FIELD_DOC_ID = "docId";
+    public static final String FIELD_FILE_MD5 = "fileMd5";
 
     /**
      * docId
@@ -34,6 +35,11 @@ public class Document extends BaseEntity {
      */
     @Column(name = "file_name", length = 200)
     private String fileName;
+    /**
+     * 文件MD5
+     */
+    @Column(name = "file_md5")
+    private String fileMd5;
     /**
      * 文件大小
      */
@@ -82,6 +88,14 @@ public class Document extends BaseEntity {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public String getFileMd5() {
+        return fileMd5;
+    }
+
+    public void setFileMd5(String fileMd5) {
+        this.fileMd5 = fileMd5;
     }
 
     public Long getSize() {

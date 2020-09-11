@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 import java.io.Serializable;
+import java.util.StringJoiner;
 
 /**
  * 实现功能：
@@ -64,5 +65,13 @@ public class UploadResponse implements Serializable {
 
     public void setOcrData(String ocrData) {
         this.ocrData = ocrData;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", UploadResponse.class.getSimpleName() + "[", "]")
+                .add("docId='" + docId + "'")
+                .add("fileName='" + fileName + "'")
+                .toString();
     }
 }
