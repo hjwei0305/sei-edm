@@ -10,6 +10,7 @@ import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
+import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.util.FileUtils;
 import com.changhong.sei.util.IdGenerator;
@@ -22,10 +23,10 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 实现功能：MinIO是在Apache License v2.0下发布的对象存储服务器
@@ -79,36 +80,22 @@ public class MinIOFileService implements FileService {
             return ResultData.fail("文件流为空.");
         }
 
-        String fileName = dto.getFileName();
-        byte[] data = dto.getData();
-        Document document;
-        try (InputStream dataStream = new ByteArrayInputStream(data)) {
-            DocumentType documentType = getDocumentType(fileName);
-
-            // Check if the bucket already exists.
-            boolean isExist = minioClient.bucketExists(bucketName);
-            if (!isExist) {
-                // Make a new bucket called asiatrip to hold a zip file of photos.
-                minioClient.makeBucket(bucketName);
-            }
-
-            String objectId = IdGenerator.uuid2();
-            // Upload file to the bucket with putObject
-            minioClient.putObject(bucketName, objectId, dataStream, new PutObjectOptions(dataStream.available(), -1));
-
-            document = new Document(fileName);
-            document.setDocId(objectId);
-            document.setFileMd5(dto.getFileMd5());
-            document.setSize((long) data.length);
-            document.setSystem(dto.getSystem());
-            document.setUploadedTime(LocalDateTime.now());
-            document.setDocumentType(documentType);
-        } catch (Exception e) {
-            LogUtil.error("文件上传读取异常.", e);
-            return ResultData.fail("文件上传读取异常.");
+        final byte[] data = dto.getData();
+        if (Objects.isNull(data)) {
+            return ResultData.fail("文件流为空.");
         }
 
-        return uploadDocument(document, data);
+        String objectId = IdGenerator.uuid2();
+        String fileName = dto.getFileName();
+
+        uploadDocument(objectId, new ByteArrayInputStream(data), fileName, dto.getFileMd5(), data.length);
+
+        UploadResponse response = new UploadResponse();
+        response.setDocId(objectId);
+        response.setFileName(fileName);
+        response.setDocumentType(getDocumentType(fileName));
+
+        return ResultData.success(response);
     }
 
     /**
@@ -120,11 +107,63 @@ public class MinIOFileService implements FileService {
      */
     @Override
     public ResultData<UploadResponse> mergeFile(String fileMd5, String fileName) {
-        return null;
+        List<FileChunk> chunks = documentService.getFileChunk(fileMd5);
+        if (CollectionUtils.isNotEmpty(chunks)) {
+            Set<String> chunkIds = new HashSet<>();
+            Set<String> docIds = new HashSet<>();
+            ByteArrayOutputStream out;
+            List<InputStream> inputStreamList = new ArrayList<>(chunks.size());
+            for (FileChunk chunk : chunks) {
+                chunkIds.add(chunk.getId());
+                docIds.add(chunk.getDocId());
+
+                try {
+                    InputStream in = minioClient.getObject(bucketName, chunk.getDocId());
+                    inputStreamList.add(in);
+                } catch (Exception e) {
+                    LogUtil.error("获取分片异常", e);
+                    return ResultData.fail("获取分片异常");
+                }
+            }
+
+            // 检查分片数量是否一致
+            if (chunks.size() != inputStreamList.size()) {
+                return ResultData.fail("分片错误");
+            }
+
+            final long size = chunks.get(0).getTotalSize();
+            String objectId = IdGenerator.uuid2();
+
+            // 异步上传持久化
+            CompletableFuture.runAsync(() -> {
+                //将集合中的枚举 赋值给 en
+                Enumeration<InputStream> en = Collections.enumeration(inputStreamList);
+                //en中的 多个流合并成一个
+                InputStream sis = new SequenceInputStream(en);
+
+                uploadDocument(objectId, sis, fileName, fileMd5, size);
+
+                // 删除分片文件
+                removeByDocIds(docIds);
+                // 删除分片信息
+                documentService.deleteFileChunk(chunkIds);
+
+                LogUtil.debug("异步处理完成");
+            });
+
+            UploadResponse response = new UploadResponse();
+            response.setDocId(objectId);
+            response.setFileName(fileName);
+            response.setDocumentType(getDocumentType(fileName));
+
+            return ResultData.success(response);
+        } else {
+            return ResultData.fail("文件分片不存在.");
+        }
     }
 
     /**
-     * 获取一个文档(包含信息和数据)
+     * 获取一个文档(不含文件内容数据)
      *
      * @param docId 文档Id
      * @return 文档
@@ -266,22 +305,38 @@ public class MinIOFileService implements FileService {
 
     /**
      * 上传一个文档
-     *
-     * @param document 文档
-     * @return 文档信息
      */
-    private ResultData<UploadResponse> uploadDocument(Document document, byte[] data) {
-        if (Objects.isNull(document)) {
-            return ResultData.fail("文档不能为空.");
+    private void uploadDocument(String objectId, InputStream inputStream, String fileName, String fileMd5, long size) {
+        Document document;
+        try {
+            DocumentType documentType = getDocumentType(fileName);
+
+            // Check if the bucket already exists.
+            boolean isExist = minioClient.bucketExists(bucketName);
+            if (!isExist) {
+                // Make a new bucket called asiatrip to hold a zip file of photos.
+                minioClient.makeBucket(bucketName);
+            }
+
+            // Upload file to the bucket with putObject
+            minioClient.putObject(bucketName, objectId, inputStream, new PutObjectOptions(inputStream.available(), -1));
+
+            document = new Document(fileName);
+            document.setDocId(objectId);
+            document.setFileMd5(fileMd5);
+            document.setSize(size);
+            document.setUploadedTime(LocalDateTime.now());
+            document.setDocumentType(documentType);
+
+            documentService.save(document);
+        } catch (Exception e) {
+            LogUtil.error("[" + objectId + "]文件上传读取异常.", e);
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
-        documentService.save(document);
-
-        UploadResponse response = new UploadResponse();
-        response.setDocId(document.getDocId());
-        response.setFileName(document.getFileName());
-        response.setDocumentType(document.getDocumentType());
-
-        return ResultData.success(response);
     }
 }

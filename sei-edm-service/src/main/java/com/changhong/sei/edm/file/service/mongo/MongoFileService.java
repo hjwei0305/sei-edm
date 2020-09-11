@@ -95,9 +95,7 @@ public class MongoFileService implements FileService {
         String fileName = dto.getFileName();
 
         // 异步上传持久化
-//        CompletableFuture.runAsync(() -> {
         uploadDocument(objectId, new ByteArrayInputStream(data), fileName, dto.getFileMd5(), data.length);
-//        });
 
         UploadResponse response = new UploadResponse();
         response.setDocId(objectId.toString());
@@ -373,8 +371,6 @@ public class MongoFileService implements FileService {
 
     /**
      * 上传一个文档
-     *
-     * @return 文档信息
      */
     private void uploadDocument(ObjectId objectId, InputStream inputStream, String fileName, String fileMd5, long size) {
         try {

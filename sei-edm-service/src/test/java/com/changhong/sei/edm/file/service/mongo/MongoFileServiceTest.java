@@ -37,9 +37,9 @@ public class MongoFileServiceTest {
 
     @Test
     public void testMergeFile() {
-        String fileMd5 = "aebf97290b30e0e98954ea327eb87154";
+        String fileMd5 = "172c82eb224c92e76a328deb788772f6";
 
-        ResultData<UploadResponse> responseResultData = service.mergeFile(fileMd5, "easy-ui-design.zip");
+        ResultData<UploadResponse> responseResultData = service.mergeFile(fileMd5, "BaiduNetdisk_mac_3.3.2.dmg");
         System.out.println(responseResultData);
 
         try {
@@ -51,7 +51,7 @@ public class MongoFileServiceTest {
 
     @Test
     public void getDocument() {
-        String docId = "5f598af8896d3cd3565127dd";
+        String docId = "5f5ac672896d3c565de77763";
 
         DocumentResponse response = service.getDocument(docId);
         System.out.println(response);
