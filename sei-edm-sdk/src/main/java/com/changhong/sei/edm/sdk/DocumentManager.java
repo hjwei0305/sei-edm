@@ -25,8 +25,6 @@ import org.springframework.util.MultiValueMap;
 
 import javax.validation.constraints.NotBlank;
 import java.io.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -71,7 +69,7 @@ public class DocumentManager implements ApplicationContextAware {
      * @return 返回上传结果
      */
     public ResultData<UploadResponse> uploadChunk(final String fileName, InputStream stream) throws IOException {
-        ByteArrayOutputStream byteArrayOut = cloneInputStream(stream);
+        ByteArrayOutputStream byteArrayOut = FileUtils.cloneInputStream(stream);
         if (Objects.isNull(byteArrayOut)) {
             throw new ServiceException("文件流不能为空.");
         }
@@ -148,7 +146,7 @@ public class DocumentManager implements ApplicationContextAware {
         //
         byte[][] chunkData = new byte[totalChunks][];
         try {
-            this.splitChunks(byteArray, totalSize, chunkSize, chunkData, excludeChunks);
+            FileUtils.splitChunks(byteArray, totalSize, chunkSize, chunkData, excludeChunks);
 
             final int chunkSizeTemp = chunkSize;
             final long totalSizeTemp = totalSize;
@@ -216,66 +214,6 @@ public class DocumentManager implements ApplicationContextAware {
     }
 
     /**
-     * 拆分byte数组
-     *
-     * @param bytes 要拆分的数组
-     * @param size  要按几个组成一份
-     * @return
-     */
-    public byte[][] splitBytes(byte[] bytes, int size) {
-        double splitLength = Double.parseDouble(size + "");
-        int arrayLength = (int) Math.ceil(bytes.length / splitLength);
-        byte[][] result = new byte[arrayLength][];
-        int from, to;
-        for (int i = 0; i < arrayLength; i++) {
-            from = (int) (i * splitLength);
-            to = (int) (from + splitLength);
-            if (to > bytes.length) {
-                to = bytes.length;
-            }
-            result[i] = Arrays.copyOfRange(bytes, from, to);
-        }
-        return result;
-    }
-
-    /**
-     * @param data      数据
-     * @param totalSize 数据流的大小
-     * @param chunkSize 每次读取数据流的大小
-     */
-    private void splitChunks(final byte[] data, final long totalSize, final int chunkSize, byte[][] chunkData, Set<Integer> excludeChunks) {
-        //已经读取的数据的大小
-        int readSize = 0;
-        int size = chunkSize;
-        // 分块序号
-        int index = 0;
-        int len;
-        byte[] buffer = new byte[chunkSize];
-        try (InputStream stream = new ByteArrayInputStream(data)) {
-            while ((len = stream.read(buffer, 0, size)) > 0) {
-                readSize += len;
-                if (excludeChunks.contains(index)) {
-                    index++;
-                    buffer = new byte[size];
-                    continue;
-                }
-                chunkData[index++] = buffer;
-
-                //如果数据流的总长度减去已经读取的数据流的长度值小于每次读取数据流的设定的大小，那么就重新为buffer字节数组设定大小
-                if ((totalSize - readSize) < size) {
-                    //这样可以避免最终得到的数据的结尾处多出多余的空值
-                    size = (int) totalSize - readSize;
-                    buffer = new byte[size];
-                } else {
-                    buffer = new byte[size];
-                }
-            }
-        } catch (IOException e) {
-            throw new ServiceException("数据流分块异常", e);
-        }
-    }
-
-    /**
      * 上传一个文档
      *
      * @param fileName 文件名
@@ -339,7 +277,7 @@ public class DocumentManager implements ApplicationContextAware {
              * @see #getInputStream()
              */
             @Override
-            public long contentLength() throws IOException {
+            public long contentLength() {
                 return 1;
             }
         };
@@ -474,98 +412,4 @@ public class DocumentManager implements ApplicationContextAware {
         return resultData;
     }
 
-    //获得文件的md5值
-    public String md5File(File file) {
-        MessageDigest md;
-        //创建文件输入流
-        try (FileInputStream fis = new FileInputStream(file)) {
-            //初始化摘要对象
-            md = MessageDigest.getInstance("md5");
-            //将文件中的数据写入md对象
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = fis.read(buffer)) != -1) {
-                md.update(buffer, 0, len);
-            }
-        } catch (IOException | NoSuchAlgorithmException e) {
-            throw new ServiceException("获取文件MD5异常", e);
-        }
-        //生成摘要数组
-        byte[] digest = md.digest();
-        //清空摘要数据
-        md.reset();
-
-        return formatByteArray2Str(digest);
-    }
-
-    private static ByteArrayOutputStream cloneInputStream(InputStream input) {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = input.read(buffer)) > -1) {
-                baos.write(buffer, 0, len);
-            }
-            baos.flush();
-            return baos;
-        } catch (IOException e) {
-            LOG.error("复制流异常", e);
-            return null;
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    //获得文件输入流的md5值
-    public String md5Stream(InputStream is) {
-        MessageDigest md;
-        try {
-            //初始化摘要对象
-            md = MessageDigest.getInstance("md5");
-            //将文件中的数据写入md对象
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = is.read(buffer)) != -1) {
-                md.update(buffer, 0, len);
-            }
-        } catch (IOException | NoSuchAlgorithmException e) {
-            throw new ServiceException("获取文件MD5异常", e);
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        //生成摘要数组
-        byte[] digest = md.digest();
-        //清空摘要数据
-        md.reset();
-        return formatByteArray2Str(digest);
-    }
-
-    //将摘要字节数组转换为md5值
-    private String formatByteArray2Str(byte[] digest) {
-        //创建sb用于保存md5值
-        StringBuilder sb = new StringBuilder();
-        int temp;
-        for (byte b : digest) {
-            //将数据转化为0到255之间的数据
-            temp = b & 0xff;
-            if (temp < 16) {
-                sb.append(0);
-            }
-            //Integer.toHexString(temp)将10进制数字转换为16进制
-            sb.append(Integer.toHexString(temp));
-        }
-        return sb.toString();
-    }
 }
