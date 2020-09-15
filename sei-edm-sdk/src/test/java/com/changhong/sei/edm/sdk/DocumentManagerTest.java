@@ -31,6 +31,20 @@ public class DocumentManagerTest {
     private DocumentManager manager;
 
     @Test
+    public void uploadChunk() {
+        String fileName = "《大数据之路：阿里巴巴大数据实践》.pdf";
+        File file1 = new File("/Users/chaoma/Downloads/《大数据之路：阿里巴巴大数据实践》.pdf");
+        try (InputStream stream = FileUtils.openInputStream(file1)) {
+            ResultData<UploadResponse> resultData = manager.uploadChunk(fileName, stream);
+            System.out.println(resultData);
+
+            Thread.sleep(300 * 1000);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
     public void uploadDocument() {
         File file1 = new File("/Users/chaoma/Downloads/demo.pdman.json");
 

@@ -1,6 +1,8 @@
-package com.changhong.sei.edm.common.constant;
+package com.changhong.sei.edm.common.util;
 
 import com.changhong.sei.edm.dto.DocumentType;
+import com.changhong.sei.util.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +14,7 @@ import java.util.Map;
  * @author 马超(Vision.Mac)
  * @version 1.0.00  2020-02-07 13:41
  */
-public final class Constants {
+public final class DocumentTypeUtil {
 
     public static final Map<DocumentType, String> DOC_TYPE_MAP;
 
@@ -36,6 +38,26 @@ public final class Constants {
         DOC_TYPE_MAP.put(DocumentType.Text, "txt|html|htm|asp|jsp|xml|json|properties|md|gitignore|java|py|c|cpp|sql|sh|bat|m|bas|prg|cmd");
     }
 
-    private Constants() {
+    private DocumentTypeUtil() {
+    }
+
+    /**
+     * 通过文件名获取文档类型
+     *
+     * @param fileName 文件名
+     * @return 文档类型
+     */
+    public static DocumentType getDocumentType(String fileName) {
+        String extension = FileUtils.getExtension(fileName);
+        if (StringUtils.isBlank(extension)) {
+            return DocumentType.Other;
+        }
+        extension = extension.toLowerCase();
+        for (Map.Entry<DocumentType, String> entry : DocumentTypeUtil.DOC_TYPE_MAP.entrySet()) {
+            if (StringUtils.contains(entry.getValue(), extension)) {
+                return entry.getKey();
+            }
+        }
+        return DocumentType.Other;
     }
 }

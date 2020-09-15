@@ -2,7 +2,7 @@ package com.changhong.sei.edm.file.service.local;
 
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
-import com.changhong.sei.edm.common.constant.Constants;
+import com.changhong.sei.edm.common.util.DocumentTypeUtil;
 import com.changhong.sei.edm.common.util.ImageUtils;
 import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
@@ -51,26 +51,6 @@ public class LocalFileService implements FileService {
             dir.append(File.pathSeparator);
         }
         return dir;
-    }
-
-    /**
-     * 通过文件名获取文档类型
-     *
-     * @param fileName 文件名
-     * @return 文档类型
-     */
-    public DocumentType getDocumentType(String fileName) {
-        String extension = FileUtils.getExtension(fileName);
-        if (StringUtils.isBlank(extension)) {
-            return DocumentType.Other;
-        }
-        extension = extension.toLowerCase();
-        for (Map.Entry<DocumentType, String> entry : Constants.DOC_TYPE_MAP.entrySet()) {
-            if (StringUtils.contains(entry.getValue(), extension)) {
-                return entry.getKey();
-            }
-        }
-        return DocumentType.Other;
     }
 
     /**
@@ -184,7 +164,7 @@ public class LocalFileService implements FileService {
             UploadResponse response = new UploadResponse();
             response.setDocId(docId);
             response.setFileName(fileName);
-            response.setDocumentType(getDocumentType(fileName));
+            response.setDocumentType(DocumentTypeUtil.getDocumentType(fileName));
 
             return ResultData.success(response);
         } else {
@@ -379,7 +359,7 @@ public class LocalFileService implements FileService {
         document.setSystem(sys);
         document.setUploadUser(uploadUser);
         document.setUploadedTime(LocalDateTime.now());
-        document.setDocumentType(getDocumentType(document.getFileName()));
+        document.setDocumentType(DocumentTypeUtil.getDocumentType(document.getFileName()));
 
         documentService.save(document);
 

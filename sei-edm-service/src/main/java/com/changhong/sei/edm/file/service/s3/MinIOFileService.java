@@ -2,7 +2,7 @@ package com.changhong.sei.edm.file.service.s3;
 
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
-import com.changhong.sei.edm.common.constant.Constants;
+import com.changhong.sei.edm.common.util.DocumentTypeUtil;
 import com.changhong.sei.edm.common.util.ImageUtils;
 import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
@@ -18,7 +18,6 @@ import io.minio.MinioClient;
 import io.minio.PutObjectOptions;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,26 +43,6 @@ public class MinIOFileService implements FileService {
     private MinioClient minioClient;
     @Value("${sei.edm.minio.bucket:sei-edm}")
     private String bucketName;
-
-    /**
-     * 通过文件名获取文档类型
-     *
-     * @param fileName 文件名
-     * @return 文档类型
-     */
-    public DocumentType getDocumentType(String fileName) {
-        String extension = FileUtils.getExtension(fileName);
-        if (StringUtils.isBlank(extension)) {
-            return DocumentType.Other;
-        }
-        extension = extension.toLowerCase();
-        for (Map.Entry<DocumentType, String> entry : Constants.DOC_TYPE_MAP.entrySet()) {
-            if (StringUtils.contains(entry.getValue(), extension)) {
-                return entry.getKey();
-            }
-        }
-        return DocumentType.Other;
-    }
 
     /**
      * 上传一个文档(如果是图像生成缩略图)
@@ -93,7 +72,7 @@ public class MinIOFileService implements FileService {
         UploadResponse response = new UploadResponse();
         response.setDocId(objectId);
         response.setFileName(fileName);
-        response.setDocumentType(getDocumentType(fileName));
+        response.setDocumentType(DocumentTypeUtil.getDocumentType(fileName));
 
         return ResultData.success(response);
     }
@@ -154,7 +133,7 @@ public class MinIOFileService implements FileService {
             UploadResponse response = new UploadResponse();
             response.setDocId(objectId);
             response.setFileName(fileName);
-            response.setDocumentType(getDocumentType(fileName));
+            response.setDocumentType(DocumentTypeUtil.getDocumentType(fileName));
 
             return ResultData.success(response);
         } else {
@@ -309,7 +288,7 @@ public class MinIOFileService implements FileService {
     private void uploadDocument(String objectId, InputStream inputStream, String fileName, String fileMd5, long size) {
         Document document;
         try {
-            DocumentType documentType = getDocumentType(fileName);
+            DocumentType documentType = DocumentTypeUtil.getDocumentType(fileName);
 
             // Check if the bucket already exists.
             boolean isExist = minioClient.bucketExists(bucketName);
