@@ -19,6 +19,8 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,14 +75,20 @@ public class MongoFileService implements FileService {
         ObjectId objectId = new ObjectId();
         String fileName = dto.getFileName();
 
-        // 异步上传持久化
-        uploadDocument(objectId, new ByteArrayInputStream(data), fileName, dto.getFileMd5(), data.length);
-
         UploadResponse response = new UploadResponse();
-        response.setDocId(objectId.toString());
-        response.setFileName(fileName);
-        response.setDocumentType(DocumentTypeUtil.getDocumentType(fileName));
+        Document document = documentService.getDocumentByMd5(dto.getFileMd5());
+        if (Objects.isNull(document)) {
+            // 异步上传持久化
+            uploadDocument(objectId, new ByteArrayInputStream(data), fileName, dto.getFileMd5(), data.length);
 
+            response.setDocId(objectId.toString());
+            response.setFileName(fileName);
+            response.setDocumentType(DocumentTypeUtil.getDocumentType(fileName));
+        } else {
+            response.setDocId(document.getDocId());
+            response.setFileName(document.getFileName());
+            response.setDocumentType(document.getDocumentType());
+        }
         return ResultData.success(response);
     }
 
@@ -109,6 +117,7 @@ public class MongoFileService implements FileService {
                     inputStreamList.add(new ByteArrayInputStream(out.toByteArray()));
                     try {
                         out.close();
+                        out = null;
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -133,9 +142,10 @@ public class MongoFileService implements FileService {
                 InputStream sis = new SequenceInputStream(en);
 
                 uploadDocument(objectId, sis, fileName, fileMd5, size);
+                inputStreamList.clear();
 
                 // 删除分片文件
-                removeByDocIds(docIds);
+                removeByDocIds(docIds, true);
                 // 删除分片信息
                 documentService.deleteFileChunk(chunkIds);
 
@@ -204,6 +214,41 @@ public class MongoFileService implements FileService {
      * 获取一个文档(包含信息和数据)
      *
      * @param docId 文档Id
+     */
+    @Override
+    public void getDocumentOutputStream(String docId, boolean hasChunk, OutputStream out) {
+        if (StringUtils.isNotBlank(docId)) {
+            if (hasChunk) {
+                List<FileChunk> chunks = documentService.getFileChunkByOriginDocId(docId);
+                if (CollectionUtils.isNotEmpty(chunks)) {
+                    ByteArrayOutputStream byteArrayOut;
+                    for (FileChunk chunk : chunks) {
+                        byteArrayOut = getByteArray(chunk.getDocId());
+                        if (Objects.nonNull(byteArrayOut)) {
+                            try {
+                                byte[] data = byteArrayOut.toByteArray();
+                                out.write(data, 0, data.length);
+
+                                byteArrayOut.close();
+                                byteArrayOut = null;
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                } else {
+                    LogUtil.error("{} 文件的分块不存在.", docId);
+                }
+            } else {
+                getByteArray(docId, out);
+            }
+        }
+    }
+
+    /**
+     * 获取一个文档(包含信息和数据)
+     *
+     * @param docId 文档Id
      * @return 文档
      */
     @Override
@@ -214,13 +259,36 @@ public class MongoFileService implements FileService {
         if (Objects.nonNull(document)) {
             modelMapper.map(document, response);
 
-            ByteArrayOutputStream baos = getByteArray(docId);
-            if (baos != null) {
-                response.setData(baos.toByteArray());
-                try {
-                    baos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            if (document.getHasChunk()) {
+                List<FileChunk> chunks = documentService.getFileChunkByOriginDocId(docId);
+                if (CollectionUtils.isNotEmpty(chunks)) {
+                    ByteArrayOutputStream out;
+                    byte[] data = null;
+                    for (FileChunk chunk : chunks) {
+                        out = getByteArray(chunk.getDocId());
+                        if (Objects.nonNull(out)) {
+                            data = ArrayUtils.addAll(data, out.toByteArray());
+                            try {
+                                out.close();
+                                out = null;
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    response.setData(data);
+                } else {
+                    LogUtil.error("{} 文件的分块不存在.", docId);
+                }
+            } else {
+                ByteArrayOutputStream baos = getByteArray(docId);
+                if (baos != null) {
+                    response.setData(baos.toByteArray());
+                    try {
+                        baos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -293,10 +361,14 @@ public class MongoFileService implements FileService {
      */
     @Override
     @Transactional
-    public ResultData<String> removeByDocIds(Set<String> docIds) {
+    public ResultData<String> removeByDocIds(Set<String> docIds, boolean isChunk) {
         if (CollectionUtils.isNotEmpty(docIds)) {
             // 删除文档信息
-            documentService.deleteByDocIds(docIds);
+            if (isChunk) {
+                documentService.deleteChunkByDocIdIn(docIds);
+            } else {
+                documentService.deleteByDocIds(docIds);
+            }
 
             for (String docId : docIds) {
                 try {
@@ -317,16 +389,39 @@ public class MongoFileService implements FileService {
     @Override
     @Transactional
     public ResultData<String> removeInvalidDocuments() {
-        ResultData<Set<String>> resultData = documentService.getInvalidDocIds();
+        long count = 0;
+        // 获取未关联业务的分块
+        ResultData<Set<String>> resultData = documentService.getInvalidChunkDocIds();
         if (resultData.successful()) {
             Set<String> docIdSet = resultData.getData();
             if (CollectionUtils.isNotEmpty(docIdSet)) {
                 // 删除文档
-                removeByDocIds(docIdSet);
+                ResultData<String> removeResult = removeByDocIds(docIdSet, true);
+                if (removeResult.failed()) {
+                    LogUtil.error("清理过期无业务信息的文档失败: {}", removeResult.getMessage());
+                }
             }
-            return ResultData.success("成功清理: " + docIdSet.size() + "个");
+            count = docIdSet.size();
+        } else {
+            LogUtil.error("清理过期无业务信息的文档失败: {}", resultData.getMessage());
         }
-        return ResultData.fail(resultData.getMessage());
+
+        // 获取无效文档id(无业务信息的文档)
+        resultData = documentService.getInvalidDocIds();
+        if (resultData.successful()) {
+            Set<String> docIdSet = resultData.getData();
+            if (CollectionUtils.isNotEmpty(docIdSet)) {
+                // 删除文档
+                ResultData<String> removeResult = removeByDocIds(docIdSet, false);
+                if (removeResult.failed()) {
+                    LogUtil.error("清理过期无业务信息的文档失败: {}", removeResult.getMessage());
+                }
+            }
+            count += docIdSet.size();
+        } else {
+            LogUtil.error("清理过期无业务信息的文档失败: {}", resultData.getMessage());
+        }
+        return ResultData.success("成功清理: " + count + "个");
     }
 
     /**
@@ -346,6 +441,24 @@ public class MongoFileService implements FileService {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bucket.downloadToStream(fsdbFile.getId(), baos);
         return baos;
+    }
+
+    /**
+     * 获取文档
+     *
+     * @param docId 文档id
+     * @return 返回输出流
+     */
+    private OutputStream getByteArray(String docId, OutputStream out) {
+        //获取原图
+        GridFSFile fsdbFile = seiGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
+        if (Objects.isNull(fsdbFile)) {
+            LogUtil.error("[{}]文件不存在.", docId);
+            return null;
+        }
+        GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
+        bucket.downloadToStream(fsdbFile.getId(), out);
+        return out;
     }
 
     /**

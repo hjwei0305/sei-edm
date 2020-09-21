@@ -15,10 +15,12 @@ import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.util.FileUtils;
 import com.changhong.sei.util.IdGenerator;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.time.LocalDateTime;
@@ -154,7 +156,7 @@ public class LocalFileService implements FileService {
                 }
 
                 // 删除分片文件
-                removeByDocIds(docIds);
+                removeByDocIds(docIds, true);
                 // 删除分片信息
                 documentService.deleteFileChunk(chunkIds);
 
@@ -222,6 +224,54 @@ public class LocalFileService implements FileService {
     /**
      * 获取一个文档(包含信息和数据)
      *
+     * @param docId    文档Id
+     * @param hasChunk
+     * @param out
+     */
+    @Override
+    public void getDocumentOutputStream(String docId, boolean hasChunk, OutputStream out) {
+        if (StringUtils.isNotBlank(docId)) {
+            // 获取文件目录
+            StringBuffer fileStr = this.getFileDir();
+            if (hasChunk) {
+                List<FileChunk> chunks = documentService.getFileChunkByOriginDocId(docId);
+                if (CollectionUtils.isNotEmpty(chunks)) {
+                    for (FileChunk chunk : chunks) {
+                        byte[] data;
+                        try {
+                            File file = FileUtils.getFile(fileStr + chunk.getDocId());
+                            if (file.exists()) {
+                                data = FileUtils.readFileToByteArray(file);
+                                out.write(data, 0, data.length);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } else {
+                    LogUtil.error("{} 文件的分块不存在.", docId);
+                }
+            } else {
+                try {
+                    File file = FileUtils.getFile(fileStr + docId);
+                    if (file.exists()) {
+                        FileInputStream input = new FileInputStream(file);
+                        byte[] b = new byte[1024];
+                        int len;
+                        while ((len = input.read(b)) != -1) {
+                            out.write(b, 0, len);
+                        }
+                    }
+                } catch (IOException e) {
+                    LogUtil.error("[" + docId + "]文件读取异常.", e);
+                }
+            }
+        }
+    }
+
+    /**
+     * 获取一个文档(包含信息和数据)
+     *
      * @param docId 文档Id
      * @return 文档
      */
@@ -235,13 +285,34 @@ public class LocalFileService implements FileService {
 
             // 获取文件目录
             StringBuffer fileStr = this.getFileDir();
-            try {
-                File file = FileUtils.getFile(fileStr + document.getDocId());
-                if (file.exists()) {
-                    response.setData(FileUtils.readFileToByteArray(file));
+            if (document.getHasChunk()) {
+                List<FileChunk> chunks = documentService.getFileChunkByOriginDocId(docId);
+                if (CollectionUtils.isNotEmpty(chunks)) {
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    byte[] data = null;
+                    for (FileChunk chunk : chunks) {
+                        try {
+                            File file = FileUtils.getFile(fileStr + chunk.getDocId());
+                            if (file.exists()) {
+                                data = ArrayUtils.addAll(data, FileUtils.readFileToByteArray(file));
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    response.setData(out.toByteArray());
+                } else {
+                    LogUtil.error("{} 文件的分块不存在.", docId);
                 }
-            } catch (IOException e) {
-                LogUtil.error("[" + docId + "]文件读取异常.", e);
+            } else {
+                try {
+                    File file = FileUtils.getFile(fileStr + document.getDocId());
+                    if (file.exists()) {
+                        response.setData(FileUtils.readFileToByteArray(file));
+                    }
+                } catch (IOException e) {
+                    LogUtil.error("[" + docId + "]文件读取异常.", e);
+                }
             }
         }
 
@@ -303,10 +374,15 @@ public class LocalFileService implements FileService {
      * @return 删除结果
      */
     @Override
-    public ResultData<String> removeByDocIds(Set<String> docIds) {
+    @Transactional
+    public ResultData<String> removeByDocIds(Set<String> docIds, boolean isChunk) {
         if (CollectionUtils.isNotEmpty(docIds)) {
             // 删除文档信息
-            documentService.deleteByDocIds(docIds);
+            if (isChunk) {
+                documentService.deleteChunkByDocIdIn(docIds);
+            } else {
+                documentService.deleteByDocIds(docIds);
+            }
 
             for (String docId : docIds) {
                 // 获取文件目录
@@ -328,17 +404,41 @@ public class LocalFileService implements FileService {
      * 清理所有文档(删除无业务信息的文档)
      */
     @Override
+    @Transactional
     public ResultData<String> removeInvalidDocuments() {
-        ResultData<Set<String>> resultData = documentService.getInvalidDocIds();
+        long count = 0;
+        // 获取未关联业务的分块
+        ResultData<Set<String>> resultData = documentService.getInvalidChunkDocIds();
         if (resultData.successful()) {
             Set<String> docIdSet = resultData.getData();
             if (CollectionUtils.isNotEmpty(docIdSet)) {
                 // 删除文档
-                removeByDocIds(docIdSet);
+                ResultData<String> removeResult = removeByDocIds(docIdSet, true);
+                if (removeResult.failed()) {
+                    LogUtil.error("清理过期无业务信息的文档失败: {}", removeResult.getMessage());
+                }
             }
-            return ResultData.success("成功清理: " + docIdSet.size() + "个");
+            count = docIdSet.size();
+        } else {
+            LogUtil.error("清理过期无业务信息的文档失败: {}", resultData.getMessage());
         }
-        return ResultData.fail(resultData.getMessage());
+
+        // 获取无效文档id(无业务信息的文档)
+        resultData = documentService.getInvalidDocIds();
+        if (resultData.successful()) {
+            Set<String> docIdSet = resultData.getData();
+            if (CollectionUtils.isNotEmpty(docIdSet)) {
+                // 删除文档
+                ResultData<String> removeResult = removeByDocIds(docIdSet, false);
+                if (removeResult.failed()) {
+                    LogUtil.error("清理过期无业务信息的文档失败: {}", removeResult.getMessage());
+                }
+            }
+            count += docIdSet.size();
+        } else {
+            LogUtil.error("清理过期无业务信息的文档失败: {}", resultData.getMessage());
+        }
+        return ResultData.success("成功清理: " + count + "个");
     }
 
     /**

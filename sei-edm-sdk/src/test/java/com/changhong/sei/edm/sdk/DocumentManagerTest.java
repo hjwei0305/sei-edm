@@ -32,8 +32,8 @@ public class DocumentManagerTest {
 
     @Test
     public void uploadChunk() {
-        String fileName = "《大数据之路：阿里巴巴大数据实践》.pdf";
-        File file1 = new File("/Users/chaoma/Downloads/《大数据之路：阿里巴巴大数据实践》.pdf");
+        String fileName = "归档.zip";
+        File file1 = new File("/Users/chaoma/Downloads/归档.zip");
         try (InputStream stream = FileUtils.openInputStream(file1)) {
             ResultData<UploadResponse> resultData = manager.uploadChunk(fileName, stream);
             System.out.println(resultData);

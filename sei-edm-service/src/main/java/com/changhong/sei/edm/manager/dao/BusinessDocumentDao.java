@@ -4,6 +4,7 @@ import com.changhong.sei.core.dao.BaseEntityDao;
 import com.changhong.sei.edm.manager.entity.BusinessDocument;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -29,4 +30,12 @@ public interface BusinessDocumentDao extends BaseEntityDao<BusinessDocument> {
      * @return 业务信息
      */
     BusinessDocument findFirstByDocId(String docId);
+
+    /**
+     * 判断文档Id是否存在业务信息
+     *
+     * @param docIds 文档Ids
+     * @return 业务信息
+     */
+    List<BusinessDocument> findByDocIdIn(Collection<String> docIds);
 }

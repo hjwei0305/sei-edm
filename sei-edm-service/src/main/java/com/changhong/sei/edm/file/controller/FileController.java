@@ -5,6 +5,7 @@ import com.changhong.sei.core.context.SessionUser;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.log.LogUtil;
+import com.changhong.sei.edm.common.util.DocumentTypeUtil;
 import com.changhong.sei.edm.common.util.MD5Utils;
 import com.changhong.sei.edm.dto.*;
 import com.changhong.sei.edm.file.service.FileService;
@@ -32,7 +33,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -146,7 +149,16 @@ public class FileController {
     @ResponseBody
     @RequestMapping(path = "/mergeFile", method = RequestMethod.POST)
     public ResultData<UploadResponse> mergeFile(@RequestParam(name = "fileMd5") String fileMd5, @RequestParam(name = "fileName") String fileName) {
-        return fileService.mergeFile(fileMd5, fileName);
+//        return fileService.mergeFile(fileMd5, fileName);
+        ResultData<String> resultData = documentService.mergeFile(fileMd5, fileName);
+        if (resultData.successful()) {
+            UploadResponse response = new UploadResponse();
+            response.setDocId(resultData.getData());
+            response.setFileName(fileName);
+            response.setDocumentType(DocumentTypeUtil.getDocumentType(fileName));
+            return ResultData.success(response);
+        }
+        return ResultData.fail(resultData.getMessage());
     }
 
     @ApiOperation("单文件上传或识别")
@@ -237,17 +249,18 @@ public class FileController {
         return ResultData.success(uploadResponses);
     }
 
-    @ApiOperation("按附件id清理")
+    @ApiOperation("按附件id清理(该接口无效).默认将无业务关联的文档进行定时清理,因此若要删除只需解除业务关联绑定即可.")
     @ApiImplicitParam(name = "docIds", value = "附件id", required = true)
     @PostMapping(value = "/remove")
     @ResponseBody
     public ResultData<String> remove(@RequestParam(value = "docIds") String docIds) {
-        String[] docIdArr = StringUtils.split(docIds, ",");
-        Set<String> docIdSet = new HashSet<>();
-        for (String docId : docIdArr) {
-            docIdSet.add(docId.trim());
-        }
-        return fileService.removeByDocIds(docIdSet);
+//        String[] docIdArr = StringUtils.split(docIds, ",");
+//        Set<String> docIdSet = new HashSet<>();
+//        for (String docId : docIdArr) {
+//            docIdSet.add(docId.trim());
+//        }
+//        return fileService.removeByDocIds(docIdSet);
+        return ResultData.success("默认将无业务关联的文档进行定时清理,因此若要删除只需解除业务关联绑定即可.");
     }
 
     @ApiOperation("清理所有无效文档(删除无业务信息的文档)")
@@ -275,7 +288,8 @@ public class FileController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } else {
             // 单文件下载
-            return singleDownload(docId, Boolean.TRUE, width, height, request, response);
+            DocumentResponse document = fileService.getDocumentInfo(docId);
+            return singleDownload(document, Boolean.TRUE, width, height, request, response);
         }
     }
 
@@ -298,19 +312,37 @@ public class FileController {
                 String[] docIdArr = StringUtils.split(docIds, ",");
                 if (docIdArr.length == 1) {
                     // 单文件下载
-                    return singleDownload(docIdArr[0].trim(), Boolean.FALSE, 0, 0, request, response);
+                    DocumentResponse document = fileService.getDocumentInfo(docIdArr[0].trim());
+                    return singleDownload(document, Boolean.FALSE, 0, 0, request, response);
                 } else {
                     SearchFilter filter = new SearchFilter(Document.FIELD_DOC_ID, docIdArr, SearchFilter.Operator.IN);
                     List<Document> documents = documentService.findByFilter(filter);
-                    // 多文件下载
-                    return multipleDownload(documents, request, response);
+                    if (Objects.nonNull(documents)) {
+                        if (documents.size() == 1) {
+                            DocumentResponse documentResponse = new ModelMapper().map(documents.get(0), DocumentResponse.class);
+                            return singleDownload(documentResponse, Boolean.FALSE, 0, 0, request, response);
+                        } else {
+                            // 多文件下载
+                            return multipleDownload(documents, request, response);
+                        }
+                    }
                 }
             }
         } else {
             List<Document> documents = documentService.getDocumentsByEntityId(entityId);
-            // 多文件下载
-            return multipleDownload(documents, request, response);
+            if (Objects.nonNull(documents)) {
+                if (documents.size() == 1) {
+                    DocumentResponse documentResponse = new ModelMapper().map(documents.get(0), DocumentResponse.class);
+                    return singleDownload(documentResponse, Boolean.FALSE, 0, 0, request, response);
+                } else {
+                    // 多文件下载
+                    return multipleDownload(documents, request, response);
+                }
+            }
         }
+
+        LogUtil.error("file is not found");
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     private ResultData<UploadResponse> uploadFile(MultipartFile file, String sys, String uploadUser) throws IOException {
@@ -333,17 +365,11 @@ public class FileController {
     /**
      * 单文件下载
      *
-     * @param docId       docId
+     * @param document    文档信息
      * @param isThumbnail 缩略图
      */
-    private ResponseEntity<byte[]> singleDownload(String docId, boolean isThumbnail, int width, int height,
+    private ResponseEntity<byte[]> singleDownload(DocumentResponse document, boolean isThumbnail, int width, int height,
                                                   HttpServletRequest request, HttpServletResponse response) {
-        DocumentResponse document;
-        if (isThumbnail) {
-            document = fileService.getThumbnail(docId, width, height);
-        } else {
-            document = fileService.getDocument(docId);
-        }
         if (Objects.isNull(document)) {
             LogUtil.error("file is not found");
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -352,38 +378,49 @@ public class FileController {
         // 设置下载文件名
         setDownloadFileName(document.getFileName(), request, response);
 
-        byte[] buffer = new byte[2048];
-        InputStream is = null;
-        BufferedInputStream bis = null;
-        try {
-            byte[] bytes = document.getData();
-//            response.getOutputStream().write(bytes);
-            is = new ByteArrayInputStream(bytes);
-            bis = new BufferedInputStream(is);
-            OutputStream os = response.getOutputStream();
-            int i = bis.read(buffer);
-            while (i != -1) {
-                os.write(buffer, 0, i);
-                i = bis.read(buffer);
-            }
-            os.flush();
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (IOException e) {
-            LogUtil.error("Download error: " + e.getMessage(), e);
-        } finally {
-            if (Objects.nonNull(bis)) {
-                try {
-                    bis.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+        if (isThumbnail) {
+            document = fileService.getThumbnail(document.getDocId(), width, height);
+            byte[] buffer = new byte[2048];
+            InputStream is = null;
+            BufferedInputStream bis = null;
+            try {
+                byte[] bytes = document.getData();
+                is = new ByteArrayInputStream(bytes);
+                bis = new BufferedInputStream(is);
+                OutputStream os = response.getOutputStream();
+                int i = bis.read(buffer);
+                while (i != -1) {
+                    os.write(buffer, 0, i);
+                    i = bis.read(buffer);
+                }
+                os.flush();
+                return new ResponseEntity<>(HttpStatus.OK);
+            } catch (IOException e) {
+                LogUtil.error("Download error: " + e.getMessage(), e);
+            } finally {
+                if (Objects.nonNull(bis)) {
+                    try {
+                        bis.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (Objects.nonNull(is)) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
-            if (Objects.nonNull(is)) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        } else {
+            try {
+                OutputStream os = response.getOutputStream();
+                fileService.getDocumentOutputStream(document.getDocId(), document.getHasChunk(), os);
+                os.flush();
+                return new ResponseEntity<>(HttpStatus.OK);
+            } catch (IOException e) {
+                LogUtil.error("Download error: " + e.getMessage(), e);
             }
         }
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
@@ -449,12 +486,17 @@ public class FileController {
 
             for (Document doc : documents) {
                 try {
-                    document = fileService.getDocument(doc.getDocId());
+//                    document = fileService.getDocument(doc.getDocId());
+//                    zipEntry = new ZipEntry(doc.getFileName());
+//                    // 开始编写新的ZIP文件条目并将流定位到条目数据的开头
+//                    zip.putNextEntry(zipEntry);
+//                    byte[] data = document.getData();
+//                    zip.write(data, 0, data.length);
+
                     zipEntry = new ZipEntry(doc.getFileName());
                     // 开始编写新的ZIP文件条目并将流定位到条目数据的开头
                     zip.putNextEntry(zipEntry);
-                    byte[] data = document.getData();
-                    zip.write(data, 0, data.length);
+                    fileService.getDocumentOutputStream(doc.getDocId(), doc.getHasChunk(), zip);
 
                     // 关闭当前的ZIP条目并定位写入下一个条目的流
                     zip.closeEntry();

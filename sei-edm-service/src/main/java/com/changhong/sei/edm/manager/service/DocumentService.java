@@ -4,13 +4,13 @@ import com.changhong.sei.core.dao.BaseEntityDao;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.service.BaseEntityService;
+import com.changhong.sei.edm.common.util.DocumentTypeUtil;
 import com.changhong.sei.edm.manager.dao.BusinessDocumentDao;
 import com.changhong.sei.edm.manager.dao.DocumentDao;
-import com.changhong.sei.edm.manager.dao.ThumbnailDao;
 import com.changhong.sei.edm.manager.entity.BusinessDocument;
 import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.entity.FileChunk;
-import com.changhong.sei.edm.manager.entity.Thumbnail;
+import com.changhong.sei.util.IdGenerator;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 实现功能：
@@ -35,8 +36,6 @@ public class DocumentService extends BaseEntityService<Document> {
 
     @Autowired
     private DocumentDao dao;
-    @Autowired
-    private ThumbnailDao thumbnailDao;
     @Autowired
     private BusinessDocumentDao businessDocumentDao;
     @Autowired
@@ -84,10 +83,12 @@ public class DocumentService extends BaseEntityService<Document> {
         }
         //插入文档信息
         if (CollectionUtils.isNotEmpty(docIds)) {
+            List<BusinessDocument> businessDocuments = new ArrayList<>();
             docIds.stream().filter(Objects::nonNull).forEach(i -> {
                 BusinessDocument bizDoc = new BusinessDocument(entityId, i);
-                businessDocumentDao.save(bizDoc);
+                businessDocuments.add(bizDoc);
             });
+            businessDocumentDao.save(businessDocuments);
         }
         return ResultData.success("ok");
     }
@@ -109,21 +110,26 @@ public class DocumentService extends BaseEntityService<Document> {
      * @return 文档信息清单
      */
     public List<Document> getDocumentsByEntityId(String entityId) {
+        List<Document> result = null;
         List<BusinessDocument> businessInfos = businessDocumentDao.findAllByEntityId(entityId);
-        List<Document> result = new ArrayList<>();
-        businessInfos.forEach((i) -> {
-            if (StringUtils.isNotBlank(i.getDocId())) {
-                Document document = dao.findByProperty(Document.FIELD_DOC_ID, i.getDocId());
-                if (Objects.nonNull(document)) {
-                    result.add(document);
-                }
+        if (Objects.nonNull(businessInfos)) {
+            Set<String> docIds = businessInfos.stream().map(BusinessDocument::getDocId).collect(Collectors.toSet());
+            if (docIds.size() > 0) {
+                result = dao.findByFilter(new SearchFilter(Document.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN));
             }
-        });
+        }
+        if (Objects.isNull(result)) {
+            result = new ArrayList<>();
+        }
         return result;
     }
 
+    // 分组大小
+    private static final int MAX_NUMBER = 500;
+
     /**
      * 获取无效文档id(无业务信息的文档)
+     * 从所有过存储有效期的docId(包含关联业务与未关联业务的)清单中排除有关联业务的docId(有业务关联的docId不能删除)
      */
     public ResultData<Set<String>> getInvalidDocIds() {
         // 当前日期
@@ -134,18 +140,103 @@ public class DocumentService extends BaseEntityService<Document> {
         LocalDateTime endTime = LocalDateTime.of(nowDate.minusDays(tempDays), LocalTime.MAX);
 
         //获取可以删除的文档Id清单
-        Set<String> docIds = new HashSet<>();
+        Set<String> expiredAndNonBizDocIds;
         //获取需要清理的文档Id清单
         List<Document> documents = dao.findAllByUploadedTimeBetween(startTime, endTime);
         if (Objects.nonNull(documents) && !documents.isEmpty()) {
-            documents.forEach((d) -> {
-                BusinessDocument obj = businessDocumentDao.findFirstByDocId(d.getId());
-                if (Objects.isNull(obj)) {
-                    docIds.add(d.getId());
-                }
+            // 所有过存储有效期的docId(包含关联业务与未关联业务的)
+            Set<String> expiredDocIds = documents.stream()
+                    // 没有文件分块的
+                    .filter(d -> !d.getHasChunk())
+                    .map(Document::getDocId).collect(Collectors.toSet());
+            documents.clear();
+
+            // 分组处理,防止数据太多导致异常(in查询限制)
+            // 计算组数
+            int limit = (expiredDocIds.size() + MAX_NUMBER - 1) / MAX_NUMBER;
+            //方法一：使用流遍历操作
+            List<Set<String>> mglist = new ArrayList<>();
+            Stream.iterate(0, n -> n + 1).limit(limit).forEach(i -> {
+                mglist.add(expiredDocIds.stream().skip(i * MAX_NUMBER).limit(MAX_NUMBER).collect(Collectors.toSet()));
             });
+
+            // 存在业务关联的docIds
+            Set<String> bizDocIds = new HashSet<>();
+            List<BusinessDocument> bizDocs;
+            for (Set<String> set : mglist) {
+                bizDocs = businessDocumentDao.findByDocIdIn(set);
+                if (CollectionUtils.isNotEmpty(bizDocs)) {
+                    bizDocIds.addAll(bizDocs.stream().map(BusinessDocument::getDocId).collect(Collectors.toSet()));
+                }
+                bizDocs.clear();
+            }
+
+            // 从所有过存储有效期的docId(包含关联业务与未关联业务的)清单中排除有关联业务的docId(有业务关联的docId不能删除)
+            expiredAndNonBizDocIds = expiredDocIds.stream().filter(i -> !bizDocIds.contains(i)).collect(Collectors.toSet());
+        } else {
+            expiredAndNonBizDocIds = new HashSet<>();
         }
-        return ResultData.success(docIds);
+        return ResultData.success(expiredAndNonBizDocIds);
+    }
+
+    /**
+     * 获取无效分块的文档id(无业务信息的文档)
+     * 从所有过存储有效期的docId(包含关联业务与未关联业务的)清单中排除有关联业务的docId(有业务关联的docId不能删除)
+     */
+    public ResultData<Set<String>> getInvalidChunkDocIds() {
+        // 当前日期
+        LocalDate nowDate = LocalDate.now();
+        // 当前日期 - 文档清理的天数
+        LocalDateTime startTime = LocalDateTime.of(nowDate.minusDays(clearDays), LocalTime.MIN);
+        // 当前日期 - 文档暂存的天数
+        LocalDateTime endTime = LocalDateTime.of(nowDate.minusDays(tempDays), LocalTime.MAX);
+
+        //获取可以删除的文档Id清单
+        Set<String> expiredAndNonBizDocIds;
+        //获取需要清理的分块文档Id清单
+        List<FileChunk> chunkList = fileChunkService.findAllByUploadedTimeBetween(startTime, endTime);
+        if (Objects.nonNull(chunkList) && !chunkList.isEmpty()) {
+
+            // 所有过存储有效期的原大文件docId
+            Set<String> expiredOriginDocIds = chunkList.stream()
+                    // 没有关联原大文件的所有临时分块
+                    .filter(d -> StringUtils.isNotBlank(d.getOriginDocId()))
+                    .map(FileChunk::getOriginDocId).collect(Collectors.toSet());
+
+            // 分组处理,防止数据太多导致异常(in查询限制)
+            // 计算组数
+            int limit = (expiredOriginDocIds.size() + MAX_NUMBER - 1) / MAX_NUMBER;
+            //方法一：使用流遍历操作
+            List<Set<String>> mglist = new ArrayList<>();
+            Stream.iterate(0, n -> n + 1).limit(limit).forEach(i -> {
+                mglist.add(expiredOriginDocIds.stream().skip(i * MAX_NUMBER).limit(MAX_NUMBER).collect(Collectors.toSet()));
+            });
+
+            // 存在业务关联的docIds
+            Set<String> bizDocIds = new HashSet<>();
+            List<BusinessDocument> bizDocs;
+            for (Set<String> set : mglist) {
+                // 每次最大 MAX_NUMBER 个
+                bizDocs = businessDocumentDao.findByDocIdIn(set);
+                if (CollectionUtils.isNotEmpty(bizDocs)) {
+                    bizDocIds.addAll(bizDocs.stream().map(BusinessDocument::getDocId).collect(Collectors.toSet()));
+                }
+                bizDocs.clear();
+            }
+            // 从所有过存储有效期的docId(包含关联业务与未关联业务的)清单中排除有关联业务的docId(有业务关联的docId不能删除)
+            Set<String> expiredAndNonBizOriginDocIds = expiredOriginDocIds.stream().filter(i -> !bizDocIds.contains(i)).collect(Collectors.toSet());
+
+            // 所有过存储有效期的docId(没有关联原大文件的所有临时分块)
+            expiredAndNonBizDocIds = chunkList.stream()
+                    // 没有关联原大文件的所有临时分块 或者 原文件docId未关联业务的
+                    .filter(d -> StringUtils.isBlank(d.getOriginDocId()) || expiredAndNonBizOriginDocIds.contains(d.getOriginDocId()))
+                    .map(FileChunk::getDocId).collect(Collectors.toSet());
+
+            chunkList.clear();
+        } else {
+            expiredAndNonBizDocIds = new HashSet<>();
+        }
+        return ResultData.success(expiredAndNonBizDocIds);
     }
 
     /**
@@ -154,24 +245,29 @@ public class DocumentService extends BaseEntityService<Document> {
      * @param docIds 文档id集合
      * @return 返回操作结果ø
      */
+    @Transactional
     public ResultData<String> deleteByDocIds(Set<String> docIds) {
         if (CollectionUtils.isEmpty(docIds)) {
             return ResultData.fail("文档id集合为空.");
         }
 
-        SearchFilter filter;
-        // 删除缩略图数据
-        filter = new SearchFilter(Thumbnail.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN);
-        List<Thumbnail> thumbnails = thumbnailDao.findByFilter(filter);
-        if (CollectionUtils.isNotEmpty(thumbnails)) {
-            thumbnailDao.deleteInBatch(thumbnails);
-        }
+        // 分组处理,防止数据太多导致异常(in查询限制)
+        // 计算组数
+        int limit = (docIds.size() + MAX_NUMBER - 1) / MAX_NUMBER;
+        //方法一：使用流遍历操作
+        List<Set<String>> mglist = new ArrayList<>();
+        Stream.iterate(0, n -> n + 1).limit(limit).forEach(i -> {
+            mglist.add(docIds.stream().skip(i * MAX_NUMBER).limit(MAX_NUMBER).collect(Collectors.toSet()));
+        });
 
-        // 删除文档信息
-        filter = new SearchFilter(Document.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN);
-        List<Document> documents = dao.findByFilter(filter);
-        if (CollectionUtils.isNotEmpty(documents)) {
-            dao.deleteInBatch(documents);
+        SearchFilter filter;
+        for (Set<String> tempDocIds : mglist) {
+            // 删除文档信息
+            filter = new SearchFilter(Document.FIELD_DOC_ID, tempDocIds, SearchFilter.Operator.IN);
+            List<Document> documents = dao.findByFilter(filter);
+            if (CollectionUtils.isNotEmpty(documents)) {
+                dao.deleteInBatch(documents);
+            }
         }
         return ResultData.success("OK");
     }
@@ -183,7 +279,11 @@ public class DocumentService extends BaseEntityService<Document> {
      * @return 存在返回文档信息
      */
     public Document getDocumentByMd5(String fileMd5) {
-        return dao.findFirstByProperty(Document.FIELD_FILE_MD5, fileMd5);
+        if (StringUtils.isNotBlank(fileMd5)) {
+            return dao.findFirstByProperty(Document.FIELD_FILE_MD5, fileMd5);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -205,10 +305,28 @@ public class DocumentService extends BaseEntityService<Document> {
     }
 
     /**
+     * 根据关联的原大文件docId获取文档分块信息
+     *
+     * @param originDocId 关联的原大文件docId
+     * @return 存在返回顺序的分块清单
+     */
+    public List<FileChunk> getFileChunkByOriginDocId(String originDocId) {
+        List<FileChunk> chunks;
+        if (StringUtils.isNotBlank(originDocId)) {
+            chunks = fileChunkService.findListByProperty(FileChunk.FIELD_ORIGIN_DOC_ID, originDocId);
+            // 按文件块序号排序
+            chunks.sort(Comparator.comparingInt(FileChunk::getChunkNumber));
+        } else {
+            chunks = new ArrayList<>();
+        }
+        return chunks;
+    }
+
+    /**
      * 根据文件md5获取文档信息
      *
      * @param fileMd5 文件MD5
-     * @return 存在返回文档信息
+     * @return 存在返回顺序的分块清单
      */
     public List<FileChunk> getFileChunk(String fileMd5) {
         List<FileChunk> chunks;
@@ -227,10 +345,54 @@ public class DocumentService extends BaseEntityService<Document> {
      *
      * @param ids 分片文件id
      */
+    @Transactional
     public void deleteFileChunk(Set<String> ids) {
         if (CollectionUtils.isNotEmpty(ids)) {
             fileChunkService.delete(ids);
         }
     }
 
+    @Transactional
+    public void deleteChunkByDocIdIn(Set<String> ids) {
+        if (CollectionUtils.isNotEmpty(ids)) {
+            fileChunkService.delete(ids);
+        }
+    }
+
+    /**
+     * 合并文件分片
+     *
+     * @param fileMd5  源整文件md5
+     * @param fileName 文件名
+     * @return 文档docId
+     */
+    @Transactional
+    public ResultData<String> mergeFile(String fileMd5, String fileName) {
+        List<FileChunk> chunks = this.getFileChunk(fileMd5);
+        if (CollectionUtils.isNotEmpty(chunks)) {
+            String docId = IdGenerator.uuid2();
+            long totalSize = 0;
+            for (FileChunk chunk : chunks) {
+                chunk.setOriginDocId(docId);
+                totalSize = chunk.getTotalSize();
+            }
+
+            fileChunkService.save(chunks);
+
+            Document document = new Document(fileName);
+            document.setDocId(docId);
+            document.setFileMd5(fileMd5);
+            // 标示有分块
+            document.setHasChunk(Boolean.TRUE);
+            document.setSize(totalSize);
+            document.setUploadedTime(LocalDateTime.now());
+            document.setDocumentType(DocumentTypeUtil.getDocumentType(fileName));
+
+            this.save(document);
+
+            return ResultData.success(docId);
+        } else {
+            return ResultData.fail("文件分片不存在.");
+        }
+    }
 }

@@ -28,6 +28,11 @@ public class DocumentDto implements Serializable {
     @ApiModelProperty(notes = "文件名（包括后缀）")
     private String fileName;
     /**
+     * 是否有文件分块
+     */
+    @ApiModelProperty(notes = "是否有文件分块")
+    private Boolean hasChunk = Boolean.FALSE;
+    /**
      * 来源应用系统
      */
     @ApiModelProperty(notes = "来源应用系统")
@@ -91,6 +96,14 @@ public class DocumentDto implements Serializable {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public Boolean getHasChunk() {
+        return hasChunk;
+    }
+
+    public void setHasChunk(Boolean hasChunk) {
+        this.hasChunk = hasChunk;
     }
 
     public String getSystem() {

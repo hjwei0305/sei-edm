@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 实现功能：
@@ -25,6 +26,10 @@ public class FileChunkService extends BaseEntityService<FileChunk> {
     @Override
     protected BaseEntityDao<FileChunk> getDao() {
         return dao;
+    }
+
+    public int deleteByDocIdIn(Set<String> docIds) {
+        return dao.deleteByDocIdIn(docIds);
     }
 
     /**

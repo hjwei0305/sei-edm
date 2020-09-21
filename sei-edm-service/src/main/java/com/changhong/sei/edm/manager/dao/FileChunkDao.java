@@ -2,10 +2,12 @@ package com.changhong.sei.edm.manager.dao;
 
 import com.changhong.sei.core.dao.BaseEntityDao;
 import com.changhong.sei.edm.manager.entity.FileChunk;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 实现功能：
@@ -15,6 +17,9 @@ import java.util.List;
  */
 @Repository
 public interface FileChunkDao extends BaseEntityDao<FileChunk> {
+
+    @Modifying
+    int deleteByDocIdIn(Set<String> docIds);
 
     /**
      * 获取一个时间段的文档信息

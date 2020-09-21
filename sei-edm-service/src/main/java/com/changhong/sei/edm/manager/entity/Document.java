@@ -41,6 +41,11 @@ public class Document extends BaseEntity {
     @Column(name = "file_md5")
     private String fileMd5;
     /**
+     * 是否有文件分块
+     */
+    @Column(name = "has_chunk")
+    private Boolean hasChunk = Boolean.FALSE;
+    /**
      * 文件大小
      */
     @Column(name = "size")
@@ -96,6 +101,14 @@ public class Document extends BaseEntity {
 
     public void setFileMd5(String fileMd5) {
         this.fileMd5 = fileMd5;
+    }
+
+    public Boolean getHasChunk() {
+        return hasChunk;
+    }
+
+    public void setHasChunk(Boolean hasChunk) {
+        this.hasChunk = hasChunk;
     }
 
     public Long getSize() {

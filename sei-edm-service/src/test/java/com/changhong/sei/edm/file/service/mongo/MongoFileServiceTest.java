@@ -37,9 +37,9 @@ public class MongoFileServiceTest {
 
     @Test
     public void testMergeFile() {
-        String fileMd5 = "172c82eb224c92e76a328deb788772f6";
+        String fileMd5 = "97d9060cd2dde104ef7aa7cf8e2d716a";
 
-        ResultData<UploadResponse> responseResultData = service.mergeFile(fileMd5, "BaiduNetdisk_mac_3.3.2.dmg");
+        ResultData<UploadResponse> responseResultData = service.mergeFile(fileMd5, "归档.zip");
         System.out.println(responseResultData);
 
         try {
@@ -83,7 +83,6 @@ public class MongoFileServiceTest {
         Set<String> ids = chunkList.stream().map(FileChunk::getId).collect(Collectors.toSet());
         Set<String> docIds = chunkList.stream().map(FileChunk::getDocId).collect(Collectors.toSet());
 
-        service.removeByDocIds(docIds);
-        fileChunkService.delete(ids);
+        service.removeByDocIds(docIds, true);
     }
 }

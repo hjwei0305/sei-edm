@@ -5,6 +5,7 @@ import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.UploadResponse;
 
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -31,6 +32,8 @@ public interface FileService {
      * @param fileName 文件名
      * @return 文档信息
      */
+    @Deprecated
+    // 待删除 大文件合并可能会出现内存溢出
     ResultData<UploadResponse> mergeFile(String fileMd5, String fileName);
 
     /**
@@ -53,6 +56,13 @@ public interface FileService {
      * 获取一个文档(包含信息和数据)
      *
      * @param docId 文档Id
+     */
+    void getDocumentOutputStream(String docId, boolean hasChunk, OutputStream out);
+
+    /**
+     * 获取一个文档(包含信息和数据)
+     *
+     * @param docId 文档Id
      * @return 文档
      */
     DocumentResponse getDocument(String docId);
@@ -70,10 +80,11 @@ public interface FileService {
     /**
      * 删除文档
      *
-     * @param docIds 文档
+     * @param docIds  文档
+     * @param isChunk 是否是分块
      * @return 删除结果
      */
-    ResultData<String> removeByDocIds(Set<String> docIds);
+    ResultData<String> removeByDocIds(Set<String> docIds, boolean isChunk);
 
     ResultData<String> removeInvalidDocuments();
 }
