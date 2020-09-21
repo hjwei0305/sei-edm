@@ -65,6 +65,167 @@ public class DocumentManager implements ApplicationContextAware {
      * step3.合并分块
      *
      * @param fileName 文件名
+     * @param file     文件
+     * @return 返回上传结果
+     */
+    public ResultData<UploadResponse> uploadChunk(final String fileName, File file) throws IOException {
+        // 获取文件md5
+        StopWatch stopWatch = StopWatch.createStarted();
+        String fileMd5 = MD5Utils.md5File(file);
+        stopWatch.stop();
+        LOG.debug("MD5 耗时: {}", stopWatch.getTime());
+
+        // 检查文件分块情况
+        Map<String, String> params = new HashMap<>();
+        params.put("fileMd5", fileMd5);
+        ResultData<FileChunkResponse> resultData = apiTemplate.getByUrl(getServiceUrl() + "/file/checkChunk",
+                new ParameterizedTypeReference<ResultData<FileChunkResponse>>() {
+                }, params);
+        if (resultData.failed()) {
+            return ResultData.fail(resultData.getMessage());
+        }
+
+        // 总大小
+        long totalSize;
+        // 分块大小 50mb
+        int chunkSize;
+        // 总块数
+        int totalChunks;
+
+        Set<Integer> excludeChunks = new HashSet<>();
+        UploadResponse uploadResponse = new UploadResponse();
+        FileChunkResponse chunkResponse = resultData.getData();
+        switch (chunkResponse.getUploadState()) {
+            case completed:
+                // 相当于秒传
+                uploadResponse.setDocId(chunkResponse.getDocId());
+                uploadResponse.setFileName(fileName);
+                uploadResponse.setDocumentType(DocumentTypeUtil.getDocumentType(fileName));
+                return ResultData.success(uploadResponse);
+            case undone:
+                // 未完成,续传
+                chunkSize = Math.toIntExact(chunkResponse.getChunkSize());
+                totalSize = chunkResponse.getTotalSize();
+                totalChunks = chunkResponse.getTotalChunks();
+
+                List<FileChunkDto> chunkDtos = chunkResponse.getChunks();
+                if (totalChunks > 0 && totalChunks == chunkDtos.size()) {
+                    // 分块上传完成,但未合并
+                    return apiTemplate.postByUrl(getServiceUrl() + "/file/mergeFile?fileMd5=" + fileMd5 + "&fileName=" + fileName,
+                            new ParameterizedTypeReference<ResultData<UploadResponse>>() {
+                            });
+                } else {
+                    // 分块上传不完整
+                    for (FileChunkDto chunk : chunkDtos) {
+                        // 文件块从1开始,故需要减1
+                        excludeChunks.add(chunk.getChunkNumber() - 1);
+                    }
+                }
+                break;
+            case none:
+                // 新上传
+                // 总大小
+                totalSize = file.length();
+                // 分块大小 50mb
+                chunkSize = 50 * 1024 * 1024;
+                // 总块数
+                totalChunks = (int) Math.ceil(totalSize / Double.parseDouble(chunkSize + ""));
+                break;
+            default:
+                return ResultData.fail("文件分块上传错误.");
+        }
+
+        try {
+            // 异步上传
+            CompletableFuture<ResultData<UploadResponse>> future = CompletableFuture.supplyAsync(() -> {
+                //已经读取的数据的大小
+                int readSize = 0;
+                int size = totalSize > chunkSize ? chunkSize : Math.toIntExact(totalSize);
+                // 分块序号
+                int index = 0;
+                int len;
+                byte[] buffer = new byte[size];
+                try (InputStream stream = new FileInputStream(file)) {
+                    while ((len = stream.read(buffer, 0, size)) > 0) {
+                        readSize += len;
+                        int chunkNumber = index + 1;
+                        if (excludeChunks.contains(index)) {
+                            index++;
+                            buffer = new byte[size];
+                            continue;
+                        }
+
+                        Resource resource = new ByteArrayResource(buffer) {
+                            /**
+                             * 覆写父类方法
+                             * 如果不重写这个方法，并且文件有一定大小，那么服务端会出现异常
+                             * {@code The multi-part request contained parameter data (excluding uploaded files) that exceeded}
+                             */
+                            @Override
+                            public String getFilename() {
+                                return FileUtils.getWithoutExtension(fileName) + chunkNumber + FileUtils.DOT + FileUtils.getExtension(fileName);
+                            }
+                        };
+
+                        final MultiValueMap<String, Object> request = new LinkedMultiValueMap<>();
+                        // 文件
+                        request.add("file", resource);
+                        // 当前块序号
+                        request.add("chunkNumber", chunkNumber);
+                        // 当前块大小
+                        request.add("currentChunkSize", buffer.length);
+                        // 块大小
+                        request.add("chunkSize", chunkSize);
+                        // 总大小
+                        request.add("totalSize", totalSize);
+                        // 总块数
+                        request.add("totalChunks", totalChunks);
+                        // 文件md5
+                        request.add("fileMd5", fileMd5);
+
+                        ResultData<UploadResponse> uploadResult = apiTemplate.uploadFileByUrl(getServiceUrl() + "/file/uploadChunk",
+                                new ParameterizedTypeReference<ResultData<UploadResponse>>() {
+                                }, request);
+                        if (uploadResult.failed()) {
+                            LOG.error("文件MD5[{}]的分块[{}]上传失败, 错误消息: {}", fileMd5, chunkNumber, uploadResult.getMessage());
+                        } else {
+                            LOG.debug("文件MD5[{}]的分块[{}]上传成功 {}", fileMd5, chunkNumber, uploadResult.getSuccess());
+                        }
+
+                        //如果数据流的总长度减去已经读取的数据流的长度值小于每次读取数据流的设定的大小，那么就重新为buffer字节数组设定大小
+                        if ((totalSize - readSize) < size) {
+                            //这样可以避免最终得到的数据的结尾处多出多余的空值
+                            size = (int) totalSize - readSize;
+                            buffer = new byte[size];
+                        } else {
+                            buffer = new byte[size];
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new ServiceException("数据流分块异常", e);
+                }
+                return ResultData.success();
+            }).handle((objectResultData, throwable) ->
+                    apiTemplate.postByUrl(getServiceUrl() + "/file/mergeFile?fileMd5=" + fileMd5 + "&fileName=" + fileName,
+                            new ParameterizedTypeReference<ResultData<UploadResponse>>() {
+                            })
+            );
+
+            future.join();
+            return future.get();
+        } catch (Exception e) {
+            LOG.error("文件分块上传异常", e);
+        }
+        return ResultData.success(uploadResponse);
+    }
+
+    /**
+     * 文件分块上传
+     * step1.文件分块
+     * step2.分块上传
+     * step3.合并分块
+     *
+     * @param fileName 文件名
      * @param stream   文件流
      * @return 返回上传结果
      */

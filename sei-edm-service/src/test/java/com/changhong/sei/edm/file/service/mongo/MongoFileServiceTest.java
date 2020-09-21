@@ -80,7 +80,6 @@ public class MongoFileServiceTest {
     @Test
     public void delete() {
         List<FileChunk> chunkList = fileChunkService.findAll();
-        Set<String> ids = chunkList.stream().map(FileChunk::getId).collect(Collectors.toSet());
         Set<String> docIds = chunkList.stream().map(FileChunk::getDocId).collect(Collectors.toSet());
 
         service.removeByDocIds(docIds, true);

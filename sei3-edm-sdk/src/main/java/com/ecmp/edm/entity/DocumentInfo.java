@@ -1,5 +1,7 @@
 package com.ecmp.edm.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.util.Date;
 
 /**
@@ -32,6 +34,7 @@ public class DocumentInfo {
     /**
      * 上传时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date uploadedTime;
     /**
      * 上传用户姓名

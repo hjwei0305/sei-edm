@@ -34,8 +34,11 @@ public class DocumentManagerTest {
     public void uploadChunk() {
         String fileName = "归档.zip";
         File file1 = new File("/Users/chaoma/Downloads/归档.zip");
-        try (InputStream stream = FileUtils.openInputStream(file1)) {
-            ResultData<UploadResponse> resultData = manager.uploadChunk(fileName, stream);
+        try {
+//            InputStream stream = FileUtils.openInputStream(file1);
+//            ResultData<UploadResponse> resultData = manager.uploadChunk(fileName, stream);
+//            stream.close();
+            ResultData<UploadResponse> resultData = manager.uploadChunk(fileName, file1);
             System.out.println(resultData);
 
             Thread.sleep(300 * 1000);
