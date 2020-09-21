@@ -61,6 +61,22 @@ dependencies {
 
     implementation 'io.minio:minio:7.0.2'
 
+    // elasticsearch
+    compile(
+            // 官方推荐使用REST Client，Client分为两个Low Level REST Client和High Level REST Client，
+            // Low Level REST Client是早期出的API比较简陋了，还需要自己去拼写Query DSL，
+            // High Level REST Client使用起来更好用，更符合面向对象的感觉
+
+            // Java Low Level REST Client
+//             "org.elasticsearch.client:elasticsearch-rest-client:$elasticsearchVersion",
+            // Java High Level REST Client
+            "org.elasticsearch.client:elasticsearch-rest-high-level-client:$elasticsearchVersion"
+    ) {
+        exclude group: "org.elasticsearc", module: "elasticsearch"
+        exclude group: "org.elasticsearch.clien", module: "elasticsearch-rest-client"
+    }
+    compile("org.elasticsearch:elasticsearch:$elasticsearchVersion")
+
     testImplementation(
             "com.changhong.sei:sei-test-starter:$sei_version"
 //            "org.springframework.boot:spring-boot-starter-test"
