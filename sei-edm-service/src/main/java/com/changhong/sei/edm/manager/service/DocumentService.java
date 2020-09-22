@@ -353,9 +353,9 @@ public class DocumentService extends BaseEntityService<Document> {
     }
 
     @Transactional
-    public void deleteChunkByDocIdIn(Set<String> ids) {
-        if (CollectionUtils.isNotEmpty(ids)) {
-            fileChunkService.delete(ids);
+    public void deleteChunkByDocIdIn(Set<String> docIds) {
+        if (CollectionUtils.isNotEmpty(docIds)) {
+            fileChunkService.deleteByDocIdIn(docIds);
         }
     }
 

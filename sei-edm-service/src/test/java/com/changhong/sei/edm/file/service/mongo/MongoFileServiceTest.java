@@ -82,6 +82,6 @@ public class MongoFileServiceTest {
         List<FileChunk> chunkList = fileChunkService.findAll();
         Set<String> docIds = chunkList.stream().map(FileChunk::getDocId).collect(Collectors.toSet());
 
-        service.removeByDocIds(docIds, true);
+        System.out.println(service.removeByDocIds(docIds, true));
     }
 }

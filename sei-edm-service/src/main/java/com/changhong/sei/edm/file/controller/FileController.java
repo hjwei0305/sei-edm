@@ -293,6 +293,7 @@ public class FileController {
         }
     }
 
+    // http://localhost:8080/file/download?docIds=BEFD5E57FBF011EA9A0E0242C0A84610&fileName=%E6%B5%8B%E8%AF%951.zip
     @ApiOperation("文件下载 docIds和entityId二选一")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "docIds", value = "附件id", paramType = "query"),

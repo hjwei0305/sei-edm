@@ -1,4 +1,4 @@
-package com.changhong.sei.edm.config;
+package com.changhong.sei.search.config;
 
 import com.changhong.sei.core.log.LogUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -53,7 +53,7 @@ public class ElasticsearchRestClient {
     @Bean(name = "highLevelClient", destroyMethod = "close")
     public RestHighLevelClient highLevelClient(@Autowired RestClientBuilder restClientBuilder) {
         // 设置超时时间，多次尝试同一请求时应该遵守的超时。默认值为30秒，与默认套接字超时相同。若自定义套接字超时，则应相应地调整最大重试超时
-        restClientBuilder.setMaxRetryTimeoutMillis(60000);
+        //restClientBuilder.setMaxRetryTimeoutMillis(60000);
 
         /*
             如果ES设置了密码，那这里也提供了一个基本的认证机制，下面设置了ES需要基本身份验证的默认凭据提供程序

@@ -13,6 +13,7 @@ subprojects {
     buildscript {
         repositories {
             mavenLocal()
+            maven { url "https://maven.aliyun.com/repository/public"}
             maven { url REPOSITORY }
             maven { url "https://plugins.gradle.org/m2/" }
         }
@@ -34,6 +35,7 @@ subprojects {
 
     repositories {
         mavenLocal()
+        maven { url "https://maven.aliyun.com/repository/public"}
         maven { url REPOSITORY }
     }
 }
