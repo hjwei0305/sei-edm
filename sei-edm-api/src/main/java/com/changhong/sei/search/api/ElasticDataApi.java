@@ -1,16 +1,18 @@
 package com.changhong.sei.search.api;
 
 import com.changhong.sei.core.dto.ResultData;
+import com.changhong.sei.core.dto.serach.PageResult;
 import com.changhong.sei.search.dto.ElasticDataDto;
-import com.changhong.sei.search.dto.QueryDto;
+import com.changhong.sei.search.dto.ElasticSearch;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -28,30 +30,39 @@ public interface ElasticDataApi {
      */
     @PostMapping(value = "add")
     @ApiOperation(value = "新增数据", notes = "新增数据")
-    ResultData<String> add(@RequestBody ElasticDataDto elasticDataDto);
+    ResultData<String> add(@RequestBody @Valid ElasticDataDto elasticDataDto);
 
     /**
      * 删除
      */
-    @PostMapping(value = "/delete")
+    @PostMapping(value = "delete")
     @ApiOperation(value = "删除", notes = "删除")
-    ResultData<String> delete(@RequestBody ElasticDataDto elasticDataDto);
+    ResultData<String> delete(@RequestBody @Valid ElasticDataDto elasticDataDto);
 
-//    /**
-//     * @param index 初始化Location区域，写入数据。
-//     */
-//    @GetMapping(value = "/addLocation/{index}")
-//    @ApiOperation(value = "创建Elastic索引", notes = "创建Elastic索引")
-//    ResultData<String> addLocation(@PathVariable(value = "index") String index);
-
-//    void addLocationPage(int pageNum, int pageSize, String index, int lv);
-
-//    void insertDatas(String idxName, List<Location> locations);
+    /**
+     * @param idxName    索引名
+     * @param properties 查询字段.多个用英文逗号分隔
+     * @param keyword    查询关键字
+     */
+    @GetMapping(value = "get/{idxName}")
+    @ApiOperation(value = "查询", notes = "查询")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "properties", value = "查询字段.多个用英文逗号分隔 , ", required = true),
+            @ApiImplicitParam(name = "keyword", value = "查询关键字", required = true)
+    })
+    ResultData<List<HashMap<String, Object>>> findByProperty(@PathVariable("idxName") String idxName, @RequestParam("properties") String properties, @RequestParam("keyword") String keyword);
 
     /**
      * @param queryDto 查询实体对象
      */
-    @GetMapping(value = "/get")
+    @PostMapping(value = "findBySearch")
     @ApiOperation(value = "查询实体", notes = "查询实体")
-    ResultData<List<?>> get(@RequestBody QueryDto queryDto);
+    ResultData<List<HashMap<String, Object>>> findBySearch(@RequestBody @Valid ElasticSearch queryDto);
+
+    /**
+     * 分页查询
+     */
+    @PostMapping(value = "findByPage")
+    @ApiOperation(value = "分页查询", notes = "分页查询")
+    ResultData<PageResult<HashMap<String, Object>>> findByPage(@RequestBody @Valid ElasticSearch search);
 }

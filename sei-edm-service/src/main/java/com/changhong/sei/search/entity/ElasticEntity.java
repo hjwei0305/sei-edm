@@ -1,6 +1,7 @@
 package com.changhong.sei.search.entity;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,6 +27,10 @@ public class ElasticEntity implements Serializable {
     public ElasticEntity() {
     }
 
+    public ElasticEntity(String id) {
+        this.id = id;
+    }
+
     public ElasticEntity(String id, Map<String, Object> data) {
         this.id = id;
         this.data = data;
@@ -40,6 +45,10 @@ public class ElasticEntity implements Serializable {
     }
 
     public Map<String, Object> getData() {
+        if (data == null) {
+            data = new HashMap<>();
+        }
+        data.put("id", getId());
         return data;
     }
 

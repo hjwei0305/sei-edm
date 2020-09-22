@@ -1,5 +1,10 @@
 package com.changhong.sei.search.dto;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -9,6 +14,7 @@ import java.util.Map;
  * @author 马超(Vision.Mac)
  * @version 1.0.00  2020-09-22 00:17
  */
+@ApiModel(description = "创建索引模板，用于解析为JSON 格式")
 public class IndexDto implements Serializable {
     private static final long serialVersionUID = 4822413768914555331L;
 
@@ -16,7 +22,12 @@ public class IndexDto implements Serializable {
      * idxName : idx_location
      * idxSql : {"dynamic":false,"properties":{"id":{"type":"long"},"code":{"type":"text","index":true},"name":{"type":"text","index":true,"analyzer":"ik_max_word"},"url":{"type":"text","index":true}}}
      */
+    @NotBlank
+    @ApiModelProperty(notes = "索引名", required = true)
     private String idxName;
+
+    @NotNull
+    @ApiModelProperty(notes = "索引模板", example = "{\"dynamic\":false,\"properties\":{\"id\":{\"type\":\"long\"},\"code\":{\"type\":\"text\",\"index\":true},\"name\":{\"type\":\"text\",\"index\":true,\"analyzer\":\"ik_max_word\"},\"url\":{\"type\":\"text\",\"index\":true}}}")
     private IdxSql idxSql;
 
     public String getIdxName() {
