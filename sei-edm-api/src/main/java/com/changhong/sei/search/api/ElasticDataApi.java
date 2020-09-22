@@ -2,6 +2,7 @@ package com.changhong.sei.search.api;
 
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.dto.serach.PageResult;
+import com.changhong.sei.search.dto.DocumentElasticDataDto;
 import com.changhong.sei.search.dto.ElasticDataDto;
 import com.changhong.sei.search.dto.ElasticSearch;
 import io.swagger.annotations.ApiImplicitParam;
@@ -24,6 +25,13 @@ import java.util.List;
 @Validated
 @RequestMapping(path = "elasticData", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public interface ElasticDataApi {
+
+    /**
+     * 新增业务文档数据
+     */
+    @PostMapping(value = "addDoc")
+    @ApiOperation(value = "新增业务文档数据", notes = "新增业务文档数据")
+    ResultData<String> addDoc(@RequestBody @Valid DocumentElasticDataDto elasticDataDto);
 
     /**
      * 新增数据

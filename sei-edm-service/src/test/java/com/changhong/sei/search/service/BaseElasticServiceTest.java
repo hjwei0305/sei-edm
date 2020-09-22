@@ -3,6 +3,7 @@ package com.changhong.sei.search.service;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.dto.serach.PageResult;
 import com.changhong.sei.core.util.JsonUtils;
+import com.changhong.sei.search.dto.DocumentElasticDataDto;
 import com.changhong.sei.search.dto.ElasticDataDto;
 import com.changhong.sei.search.dto.ElasticSearch;
 import com.changhong.sei.search.dto.IndexDto;
@@ -29,9 +30,11 @@ import java.util.Map;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class BaseElasticServiceTest {
-    private static final String INDEX_NAME = "test";
+    private static final String INDEX_NAME = "test123";
     @Autowired
     private BaseElasticService service;
+    @Autowired
+    private AsyncDocumentContextService asyncDocumentContextService;
 
     @Test
     public void createIndex() {
@@ -160,9 +163,28 @@ public class BaseElasticServiceTest {
 
     @Test
     public void deleteIndex() {
+        service.deleteIndex("doc");
+        service.deleteIndex("doctest");
+        service.deleteIndex("doc_test");
     }
 
     @Test
     public void deleteByQuery() {
+    }
+
+    @Test
+    public void recognizeAndSaveElastic() {
+        String docId = "5f69b1b2cadad20001d73b47";
+        DocumentElasticDataDto dto = new DocumentElasticDataDto();
+        dto.setDocIds(new String[]{docId});
+        dto.setId("" + IdGenerator.nextId());
+        dto.setIdxName("testdoc123");
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("code", "测试code" + RandomUtils.getString(10));
+        data.put("name", "测试name" + RandomUtils.getString(15));
+        data.put("desc", "测试url" + RandomUtils.getString(16));
+        dto.setData(data);
+        asyncDocumentContextService.recognizeAndSaveElastic(dto);
     }
 }

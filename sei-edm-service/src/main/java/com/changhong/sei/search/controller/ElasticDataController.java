@@ -3,9 +3,11 @@ package com.changhong.sei.search.controller;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.dto.serach.PageResult;
 import com.changhong.sei.search.api.ElasticDataApi;
+import com.changhong.sei.search.dto.DocumentElasticDataDto;
 import com.changhong.sei.search.dto.ElasticDataDto;
 import com.changhong.sei.search.dto.ElasticSearch;
 import com.changhong.sei.search.entity.ElasticEntity;
+import com.changhong.sei.search.service.AsyncDocumentContextService;
 import com.changhong.sei.search.service.BaseElasticService;
 import io.swagger.annotations.Api;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 
@@ -31,6 +34,17 @@ public class ElasticDataController implements ElasticDataApi {
 
     @Autowired
     private BaseElasticService baseElasticService;
+    @Autowired
+    private AsyncDocumentContextService asyncDocumentContextService;
+
+    /**
+     * 新增业务文档数据
+     */
+    @Override
+    public ResultData<String> addDoc(@Valid DocumentElasticDataDto elasticDataDto) {
+        asyncDocumentContextService.recognizeAndSaveElastic(elasticDataDto);
+        return ResultData.success();
+    }
 
     /**
      * 新增数据

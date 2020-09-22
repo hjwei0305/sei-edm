@@ -45,14 +45,22 @@ public class ElasticEntity implements Serializable {
     }
 
     public Map<String, Object> getData() {
-        if (data == null) {
-            data = new HashMap<>();
-        }
-        data.put("id", getId());
+//        if (data == null) {
+//            data = new HashMap<>();
+//        }
+//        data.put("id", getId());
         return data;
     }
 
     public void setData(Map<String, Object> data) {
         this.data = data;
+    }
+
+    public Map<String, Object> addData(String key, Object value) {
+        if (data == null) {
+            data = new HashMap<>();
+        }
+        data.put(key, value);
+        return data;
     }
 }

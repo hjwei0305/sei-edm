@@ -153,7 +153,7 @@ public class BaseElasticService {
             IndexResponse response = restHighLevelClient.index(request, RequestOptions.DEFAULT);
             DocWriteResponse.Result result = response.getResult();
             if (DocWriteResponse.Result.CREATED == result || DocWriteResponse.Result.UPDATED == result) {
-                return ResultData.success();
+                return ResultData.success(result.getLowercase());
             }
             return ResultData.fail(result.getLowercase());
         } catch (Exception e) {

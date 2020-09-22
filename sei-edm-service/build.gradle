@@ -57,6 +57,12 @@ dependencies {
             "net.java.dev.jna:jna:5.4.0"
     )
 
+    implementation(
+            "org.apache.poi:poi:3.17",
+            'org.apache.poi:poi-scratchpad:3.17',
+            "org.apache.poi:poi-ooxml:3.17"
+    )
+
     implementation("com.tencentcloudapi:tencentcloud-sdk-java:$tencentCloudApiVersion")
 
     implementation 'io.minio:minio:7.0.2'
