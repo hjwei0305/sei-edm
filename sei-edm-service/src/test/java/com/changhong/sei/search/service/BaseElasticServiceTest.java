@@ -163,9 +163,7 @@ public class BaseElasticServiceTest {
 
     @Test
     public void deleteIndex() {
-        service.deleteIndex("doc");
-        service.deleteIndex("doctest");
-        service.deleteIndex("doc_test");
+        System.out.println(service.deleteIndex("test*"));
     }
 
     @Test

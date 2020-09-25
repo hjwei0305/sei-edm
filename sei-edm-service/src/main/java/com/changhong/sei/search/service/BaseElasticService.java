@@ -69,6 +69,11 @@ public class BaseElasticService {
      * @param idxSQL  索引描述
      */
     public ResultData<String> createIndex(String idxName, String idxSQL) {
+        if (StringUtils.isBlank(idxName)) {
+            return ResultData.fail("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
         try {
             if (!this.indexExist(idxName)) {
                 LOG.error(" idxName={} 已经存在,idxSql={}", idxName, idxSQL);
@@ -93,6 +98,11 @@ public class BaseElasticService {
      * 删除index
      */
     public ResultData<String> deleteIndex(String idxName) {
+        if (StringUtils.isBlank(idxName)) {
+            return ResultData.fail("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
         try {
             if (!this.indexExist(idxName)) {
                 LOG.error(" idxName={} 已经存在", idxName);
@@ -116,6 +126,11 @@ public class BaseElasticService {
      * @param idxName index名
      */
     public boolean indexExist(String idxName) throws Exception {
+        if (StringUtils.isBlank(idxName)) {
+            throw new IllegalArgumentException("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
         GetIndexRequest request = new GetIndexRequest(idxName);
         //TRUE-返回本地信息检索状态，FALSE-还是从主节点检索状态
         request.local(false);
@@ -134,6 +149,11 @@ public class BaseElasticService {
      * @param idxName index名
      */
     public boolean isExistsIndex(String idxName) throws Exception {
+        if (StringUtils.isBlank(idxName)) {
+            throw new IllegalArgumentException("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
         return restHighLevelClient.indices().exists(new GetIndexRequest(idxName), RequestOptions.DEFAULT);
     }
 
@@ -142,6 +162,11 @@ public class BaseElasticService {
      * @param entity  对象
      */
     public ResultData<String> save(String idxName, ElasticEntity entity) {
+        if (StringUtils.isBlank(idxName)) {
+            return ResultData.fail("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
         IndexRequest request = new IndexRequest(idxName);
         String id = entity.getId();
         String data = JsonUtils.toJson(entity.getData());
@@ -169,8 +194,14 @@ public class BaseElasticService {
      * @param list    带插入列表
      */
     public ResultData<String> batchSave(String idxName, Collection<ElasticEntity> list) {
+        if (StringUtils.isBlank(idxName)) {
+            return ResultData.fail("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
         BulkRequest request = new BulkRequest();
-        list.forEach(item -> request.add(new IndexRequest(idxName).id(item.getId())
+        final String indexName = idxName;
+        list.forEach(item -> request.add(new IndexRequest(indexName).id(item.getId())
                 .source(JsonUtils.toJson(item.getData()), XContentType.JSON)));
         try {
             BulkResponse response = restHighLevelClient.bulk(request, RequestOptions.DEFAULT);
@@ -191,8 +222,14 @@ public class BaseElasticService {
      * @param list    带插入列表
      */
     public ResultData<String> batchSaveObj(String idxName, Collection<ElasticEntity> list) {
+        if (StringUtils.isBlank(idxName)) {
+            return ResultData.fail("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
+        final String indexName = idxName;
         BulkRequest request = new BulkRequest();
-        list.forEach(item -> request.add(new IndexRequest(idxName).id(item.getId())
+        list.forEach(item -> request.add(new IndexRequest(indexName).id(item.getId())
                 .source(item.getData(), XContentType.JSON)));
         try {
             BulkResponse response = restHighLevelClient.bulk(request, RequestOptions.DEFAULT);
@@ -211,6 +248,11 @@ public class BaseElasticService {
      * @param entity  对象
      */
     public ResultData<String> deleteOne(String idxName, ElasticEntity entity) {
+        if (StringUtils.isBlank(idxName)) {
+            return ResultData.fail("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
         DeleteRequest request = new DeleteRequest(idxName);
         request.id(entity.getId());
         try {
@@ -235,8 +277,14 @@ public class BaseElasticService {
      * @param idList  待删除列表
      */
     public <T> ResultData<String> deleteBatch(String idxName, Collection<T> idList) {
+        if (StringUtils.isBlank(idxName)) {
+            return ResultData.fail("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
+        final String indexName = idxName;
         BulkRequest request = new BulkRequest();
-        idList.forEach(item -> request.add(new DeleteRequest(idxName, item.toString())));
+        idList.forEach(item -> request.add(new DeleteRequest(indexName, item.toString())));
         try {
             BulkResponse response = restHighLevelClient.bulk(request, RequestOptions.DEFAULT);
             if (!response.hasFailures()) {
@@ -256,6 +304,11 @@ public class BaseElasticService {
      * 最大操作量为10000个
      */
     public ResultData<String> deleteByQuery(String idxName, QueryBuilder builder) {
+        if (StringUtils.isBlank(idxName)) {
+            return ResultData.fail("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
         DeleteByQueryRequest request = new DeleteByQueryRequest(idxName);
         request.setQuery(builder);
         //设置批量操作数量,最大为10000
@@ -310,6 +363,12 @@ public class BaseElasticService {
      */
     @SuppressWarnings("unchecked")
     public ResultData<PageResult<HashMap<String, Object>>> findByPage(ElasticSearch search) {
+        String idxName = search.getIdxName();
+        if (StringUtils.isBlank(idxName)) {
+            return ResultData.fail("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
         PageInfo pageInfo = search.getPageInfo();
         if (Objects.isNull(pageInfo)) {
             pageInfo = new PageInfo();
@@ -321,7 +380,7 @@ public class BaseElasticService {
             // 初始化高亮设置
             initHighlightBuilder(search.getHighlightFields(), searchSourceBuilder);
 
-            SearchRequest request = new SearchRequest(search.getIdxName());
+            SearchRequest request = new SearchRequest(idxName);
 
             request.source(searchSourceBuilder);
 
@@ -329,7 +388,6 @@ public class BaseElasticService {
             SearchHits searchHits = response.getHits();
             // 获取总数
             long total = searchHits.getTotalHits().value;
-
 
             // 计算总页数
             int totalPage = total % pageInfo.getRows() == 0 ? (int) (total / pageInfo.getRows()) : ((int) (total / pageInfo.getRows()) + 1);
@@ -340,11 +398,6 @@ public class BaseElasticService {
             pageResult.setTotal(totalPage);
 
             SearchHit[] hits = searchHits.getHits();
-            List<HashMap<String, Object>> res = new ArrayList<>(hits.length);
-//            for (SearchHit hit : hits) {
-//                // 查询的结果 Map的形式
-//                res.add((HashMap) hit.getSourceAsMap());
-//            }
             pageResult.setRows(processData(hits));
 
             return ResultData.success(pageResult);
@@ -362,6 +415,11 @@ public class BaseElasticService {
      * @return java.util.List<T>
      */
     public ResultData<List<HashMap<String, Object>>> search(String idxName, SearchSourceBuilder builder) {
+        if (StringUtils.isBlank(idxName)) {
+            return ResultData.fail("索引名不能为空.");
+        } else {
+            idxName = idxName.toLowerCase();
+        }
         SearchRequest request = new SearchRequest(idxName);
         request.source(builder);
         try {
@@ -511,13 +569,13 @@ public class BaseElasticService {
             // 文档的主键
             String id = hit.getId();
             // 源文档内容
-            sourceAsMap = (HashMap)hit.getSourceAsMap();
+            sourceAsMap = (HashMap) hit.getSourceAsMap();
             // 追加文档的主键
             sourceAsMap.put("_id", id);
 
             // 获取高亮查询的内容。如果存在，则替换原来的name
             Map<String, HighlightField> highlightFields = hit.getHighlightFields();
-            if (highlightFields != null&& highlightFields.size()>0) {
+            if (highlightFields != null && highlightFields.size() > 0) {
                 for (Map.Entry<String, HighlightField> entry : highlightFields.entrySet()) {
                     HighlightField nameField = entry.getValue();
                     if (nameField != null) {
