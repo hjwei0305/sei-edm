@@ -76,7 +76,7 @@ public interface DocumentApi {
      */
     @PostMapping("bindBusinessDocuments")
     @ApiOperation(value = "提交业务实体的文档信息", notes = "提交业务实体的文档信息")
-    ResultData<String> bindBusinessDocuments(@RequestBody BindRequest request);
+    ResultData<String> bindBusinessDocuments(@RequestBody @Valid BindRequest request);
 
     /**
      * 删除业务实体的文档信息
@@ -105,7 +105,7 @@ public interface DocumentApi {
      */
     @PostMapping(path = "getEntityDocumentInfoList", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ApiOperation(value = "获取文档清单(只包含文档信息,不含文档数据)", notes = "获取文档清单(只包含文档信息,不含文档数据)")
-    ResultData<List<DocumentResponse>> getEntityDocumentInfoList(@RequestBody @NotEmpty List<String> docIds);
+    ResultData<List<DocumentResponse>> getEntityDocumentInfoList(@RequestBody @Valid @NotEmpty List<String> docIds);
 
     /**
      * 获取业务实体的文档信息清单

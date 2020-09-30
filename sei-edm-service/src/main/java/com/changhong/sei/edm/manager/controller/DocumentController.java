@@ -12,12 +12,11 @@ import com.changhong.sei.edm.manager.service.DocumentService;
 import io.swagger.annotations.Api;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -51,17 +50,19 @@ public class DocumentController implements DocumentApi {
      * @return 文档
      */
     @Override
-    public ResultData<DocumentResponse> getDocument(@NotBlank String docId, boolean isThumbnail) {
-        DocumentResponse response;
-        if (isThumbnail) {
-            response = fileService.getThumbnail(docId, 150, 100);
-        } else {
-            response = fileService.getDocument(docId);
-        }
-        if (Objects.nonNull(response)) {
-            // 返回Base64编码过的字节数组字符串
-            response.setBase64Data(Base64.encodeBase64String(response.getData()));
-            return ResultData.success(response);
+    public ResultData<DocumentResponse> getDocument(String docId, boolean isThumbnail) {
+        if (StringUtils.isNotBlank(docId)) {
+            DocumentResponse response;
+            if (isThumbnail) {
+                response = fileService.getThumbnail(docId, 150, 100);
+            } else {
+                response = fileService.getDocument(docId);
+            }
+            if (Objects.nonNull(response)) {
+                // 返回Base64编码过的字节数组字符串
+                response.setBase64Data(Base64.encodeBase64String(response.getData()));
+                return ResultData.success(response);
+            }
         }
         return ResultData.fail("没有找到对应的文档信息清单");
     }
@@ -72,12 +73,14 @@ public class DocumentController implements DocumentApi {
      * @param docId 文档Id
      * @return 文档
      */
-    public ResultData<DocumentResponse> getDocument(@NotBlank String docId) {
-        Document document = service.findByProperty(Document.FIELD_DOC_ID, docId);
-        if (Objects.nonNull(document)) {
-            DocumentResponse response = new DocumentResponse();
-            modelMapper.map(document, response);
-            return ResultData.success(response);
+    public ResultData<DocumentResponse> getDocument(String docId) {
+        if (StringUtils.isNotBlank(docId)) {
+            Document document = service.findByProperty(Document.FIELD_DOC_ID, docId);
+            if (Objects.nonNull(document)) {
+                DocumentResponse response = new DocumentResponse();
+                modelMapper.map(document, response);
+                return ResultData.success(response);
+            }
         }
         return ResultData.fail("没有找到对应的文档信息清单");
     }
@@ -100,7 +103,7 @@ public class DocumentController implements DocumentApi {
      * @param entityId 业务实体Id
      */
     @Override
-    public ResultData<String> deleteBusinessInfos(@NotBlank String entityId) {
+    public ResultData<String> deleteBusinessInfos(String entityId) {
         return service.unbindBusinessDocuments(entityId);
     }
 
@@ -111,11 +114,13 @@ public class DocumentController implements DocumentApi {
      * @return 文档
      */
     @Override
-    public ResultData<DocumentResponse> getEntityDocumentInfo(@NotBlank String docId) {
+    public ResultData<DocumentResponse> getEntityDocumentInfo(String docId) {
         DocumentResponse response = new DocumentResponse();
-        Document document = service.findByProperty(Document.FIELD_DOC_ID, docId);
-        if (Objects.nonNull(document)) {
-            modelMapper.map(document, response);
+        if (StringUtils.isNotBlank(docId)) {
+            Document document = service.findByProperty(Document.FIELD_DOC_ID, docId);
+            if (Objects.nonNull(document)) {
+                modelMapper.map(document, response);
+            }
         }
         return ResultData.success(response);
 //        return ResultData.fail("没有找到对应的文档信息清单");
@@ -130,15 +135,17 @@ public class DocumentController implements DocumentApi {
     @Override
     public ResultData<List<DocumentResponse>> getEntityDocumentInfoList(List<String> docIds) {
         List<DocumentResponse> responseList = new ArrayList<>();
-        List<Document> documentList = service.findByFilter(new SearchFilter(Document.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN));
-        if (CollectionUtils.isNotEmpty(documentList)) {
-            responseList = documentList.parallelStream().map(document -> {
-                DocumentResponse response = new DocumentResponse();
-                if (Objects.nonNull(document)) {
-                    modelMapper.map(document, response);
-                }
-                return response;
-            }).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(docIds)) {
+            List<Document> documentList = service.findByFilter(new SearchFilter(Document.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN));
+            if (CollectionUtils.isNotEmpty(documentList)) {
+                responseList = documentList.parallelStream().map(document -> {
+                    DocumentResponse response = new DocumentResponse();
+                    if (Objects.nonNull(document)) {
+                        modelMapper.map(document, response);
+                    }
+                    return response;
+                }).collect(Collectors.toList());
+            }
         }
         return ResultData.success(responseList);
     }
@@ -150,15 +157,17 @@ public class DocumentController implements DocumentApi {
      * @return 文档信息清单
      */
     @Override
-    public ResultData<List<DocumentResponse>> getEntityDocumentInfos(@NotBlank String entityId) {
+    public ResultData<List<DocumentResponse>> getEntityDocumentInfos(String entityId) {
         List<DocumentResponse> result = new ArrayList<>();
-        List<Document> documents = service.getDocumentsByEntityId(entityId);
-        if (CollectionUtils.isNotEmpty(documents)) {
-            DocumentResponse response;
-            for (Document document : documents) {
-                response = new DocumentResponse();
-                modelMapper.map(document, response);
-                result.add(response);
+        if (StringUtils.isNotBlank(entityId)) {
+            List<Document> documents = service.getDocumentsByEntityId(entityId);
+            if (CollectionUtils.isNotEmpty(documents)) {
+                DocumentResponse response;
+                for (Document document : documents) {
+                    response = new DocumentResponse();
+                    modelMapper.map(document, response);
+                    result.add(response);
+                }
             }
         }
         return ResultData.success(result);
@@ -175,6 +184,10 @@ public class DocumentController implements DocumentApi {
      */
     @Override
     public ResultData<String> convert2PdfAndSave(String docId, String markText) {
-        return fileConverterService.convert2PdfAndSave(docId, markText);
+        if (StringUtils.isNotBlank(docId)) {
+            return fileConverterService.convert2PdfAndSave(docId, markText);
+        } else {
+            return ResultData.fail("doocId 不能为空.");
+        }
     }
 }

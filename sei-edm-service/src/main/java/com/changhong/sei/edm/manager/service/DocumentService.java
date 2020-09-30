@@ -66,6 +66,10 @@ public class DocumentService extends BaseEntityService<Document> {
      */
     @Transactional
     public ResultData<String> bindBusinessDocuments(String entityId, Collection<String> docIds) {
+        //如果entityId为空，不执行操作
+        if (StringUtils.isBlank(entityId)) {
+            return ResultData.fail("entityId为空");
+        }
         //如果文档Id清单为空，不执行操作
         if (Objects.isNull(docIds)) {
             return ResultData.fail("文档Id清单为空");
