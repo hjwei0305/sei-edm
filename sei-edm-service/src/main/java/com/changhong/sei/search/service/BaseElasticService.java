@@ -562,6 +562,9 @@ public class BaseElasticService {
     @SuppressWarnings("unchecked")
     private List<HashMap<String, Object>> processData(SearchHit[] hits) {
         List<HashMap<String, Object>> results = new ArrayList<>();
+        if (Objects.isNull(hits) || hits.length == 0) {
+            return results;
+        }
         // 源文档内容
         HashMap<String, Object> sourceAsMap;
         StringBuilder stringBuffer = new StringBuilder();
@@ -588,7 +591,6 @@ public class BaseElasticService {
                     }
                 }
             }
-
             results.add(sourceAsMap);
         }
 

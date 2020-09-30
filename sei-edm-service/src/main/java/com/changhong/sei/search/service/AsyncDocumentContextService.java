@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
@@ -109,7 +110,13 @@ public class AsyncDocumentContextService {
         field = new HashMap<>();
         field.put("type", "text");
         field.put("index", Boolean.TRUE);
-        field.put("analyzer", "ik_max_word");
+        /*
+            索引时为了提供索引的覆盖范围，通常会采用ik_max_word分析器，会以最细粒度分词索引;
+            搜索时为了提高搜索准确度，会采用ik_smart分析器，会以粗粒度分词
+         */
+        field.put("analyzer", "ik");
+//        field.put("search_analyzer", "ik_smart");
+        field.put("search_analyzer", "ik_max_word");
         properties.put(ELASTIC_FIELD_DOC_CONTENT, field);
         // 追加docId
         if (!properties.containsKey(ELASTIC_FIELD_DOC_ID)) {
