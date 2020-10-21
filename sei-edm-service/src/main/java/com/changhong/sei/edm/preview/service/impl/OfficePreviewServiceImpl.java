@@ -38,13 +38,12 @@ public class OfficePreviewServiceImpl implements PreviewService {
         if (Objects.isNull(document)) {
             return ResultData.fail("document不能为空.");
         }
-        InputStream inputStream = new ByteArrayInputStream(document.getData());
-        ResultData<DocumentResponse> result =
-                fileConvertService.convertInputStream(inputStream, document.getFileName(), document.getMarkText());
-        try {
-            inputStream.close();
+        ResultData<DocumentResponse> result;
+        try (InputStream inputStream = new ByteArrayInputStream(document.getData())) {
+            result = fileConvertService.convertInputStream(inputStream, document.getFileName(), document.getMarkText());
         } catch (Exception e) {
             LOGGER.error("office文档转为预览文档异常", e);
+            result = ResultData.fail(document.getFileName() + "-转为预览文档异常");
         }
         return result;
     }

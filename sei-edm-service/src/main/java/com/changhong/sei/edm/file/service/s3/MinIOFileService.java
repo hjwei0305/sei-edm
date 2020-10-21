@@ -66,12 +66,11 @@ public class MinIOFileService implements FileService {
             return ResultData.fail("文件流为空.");
         }
 
-        String objectId = IdGenerator.uuid2();
-        String fileName = dto.getFileName();
-
         UploadResponse response = new UploadResponse();
         Document document = documentService.getDocumentByMd5(dto.getFileMd5());
         if (Objects.isNull(document)) {
+            String objectId = IdGenerator.uuid2();
+            String fileName = dto.getFileName();
             uploadDocument(objectId, new ByteArrayInputStream(data), fileName, dto.getFileMd5(), data.length);
 
             response.setDocId(objectId);
@@ -98,7 +97,6 @@ public class MinIOFileService implements FileService {
         if (CollectionUtils.isNotEmpty(chunks)) {
             Set<String> chunkIds = new HashSet<>();
             Set<String> docIds = new HashSet<>();
-            ByteArrayOutputStream out;
             List<InputStream> inputStreamList = new ArrayList<>(chunks.size());
             for (FileChunk chunk : chunks) {
                 chunkIds.add(chunk.getId());
@@ -246,15 +244,18 @@ public class MinIOFileService implements FileService {
             if (document.getHasChunk()) {
                 List<FileChunk> chunks = documentService.getFileChunkByOriginDocId(docId);
                 if (CollectionUtils.isNotEmpty(chunks)) {
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    for (FileChunk chunk : chunks) {
-                        try (InputStream in = minioClient.getObject(bucketName, chunk.getDocId())) {
-                            inStream2OutStream(in, out);
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                        for (FileChunk chunk : chunks) {
+                            try (InputStream in = minioClient.getObject(bucketName, chunk.getDocId())) {
+                                inStream2OutStream(in, out);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
+                        response.setData(out.toByteArray());
+                    } catch (Exception e) {
+                        LogUtil.error("读取文件分块异常.", e);
                     }
-                    response.setData(out.toByteArray());
                 } else {
                     LogUtil.error("{} 文件的分块不存在.", docId);
                 }
@@ -262,7 +263,7 @@ public class MinIOFileService implements FileService {
                 try (InputStream in = minioClient.getObject(bucketName, docId)) {
                     response.setData(IOUtils.toByteArray(in));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LogUtil.error("读取文件异常.", e);
                 }
             }
         }

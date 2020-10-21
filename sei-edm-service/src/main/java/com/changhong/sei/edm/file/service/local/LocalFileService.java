@@ -1,5 +1,6 @@
 package com.changhong.sei.edm.file.service.local;
 
+import com.changhong.sei.core.context.ContextUtil;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.common.util.DocumentTypeUtil;
@@ -19,7 +20,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
@@ -36,7 +36,6 @@ import java.util.concurrent.CompletableFuture;
 public class LocalFileService implements FileService {
     public static final String DOT = ".";
 
-    @Value("${sei.edm.store-path}")
     private String storePath;
     @Autowired
     private DocumentService documentService;
@@ -47,6 +46,12 @@ public class LocalFileService implements FileService {
      * 获取本地存储目录
      */
     public StringBuffer getFileDir() {
+        if (StringUtils.isBlank(storePath)) {
+            storePath = ContextUtil.getProperty("sei.edm.store-path");
+            if (StringUtils.isBlank(storePath)) {
+                storePath = System.getProperty("java.io.tmpdir");
+            }
+        }
         StringBuffer dir = new StringBuffer(32);
         dir.append(storePath);
         if (!StringUtils.endsWithAny(storePath, FileUtils.SLASH_ONE, FileUtils.SLASH_TWO)) {
@@ -99,7 +104,6 @@ public class LocalFileService implements FileService {
         if (CollectionUtils.isNotEmpty(chunks)) {
             Set<String> chunkIds = new HashSet<>();
             Set<String> docIds = new HashSet<>();
-            ByteArrayOutputStream out;
             List<FileInputStream> inputStreamList = new ArrayList<>(chunks.size());
 
             // 获取文件目录

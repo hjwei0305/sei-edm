@@ -133,14 +133,7 @@ public class FileConverterServiceImpl implements FileConverterService {
      */
     @Override
     public ResultData<DocumentResponse> convertByteArray(byte[] source, String fileName) {
-        InputStream inputStream = new ByteArrayInputStream(source);
-        ResultData<DocumentResponse> result = convertInputStream(inputStream, fileName, StringUtils.EMPTY);
-        try {
-            inputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return result;
+        return convertByteArray(source, fileName, StringUtils.EMPTY);
     }
 
     /**
@@ -149,12 +142,12 @@ public class FileConverterServiceImpl implements FileConverterService {
      */
     @Override
     public ResultData<DocumentResponse> convertByteArray(byte[] source, String fileName, String markText) {
-        InputStream inputStream = new ByteArrayInputStream(source);
-        ResultData<DocumentResponse> result = convertInputStream(inputStream, fileName, markText);
-        try {
-            inputStream.close();
+        ResultData<DocumentResponse> result;
+        try (InputStream inputStream = new ByteArrayInputStream(source)) {
+            result = convertInputStream(inputStream, fileName, markText);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("转换的文件数据异常", e);
+            result = ResultData.fail(e.getMessage());
         }
         return result;
     }
@@ -188,15 +181,12 @@ public class FileConverterServiceImpl implements FileConverterService {
             response.setSize((long) out.size());
 
             if (StringUtils.isNotBlank(markText) && StringUtils.equalsIgnoreCase(FileUtils.PDF, targetFileExt)) {
-                try {
-                    // 水印
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                // 水印
+                try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
                     PdfUtils.watermarkPDF(response.getData(), markText, outputStream);
 
                     response.setData(outputStream.toByteArray());
                     response.setSize((long) outputStream.size());
-
-                    outputStream.close();
                 } catch (Exception e) {
                     LOGGER.error("添加水印错误", e);
                 }

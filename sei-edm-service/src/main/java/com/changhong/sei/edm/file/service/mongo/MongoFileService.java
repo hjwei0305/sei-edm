@@ -72,12 +72,11 @@ public class MongoFileService implements FileService {
             return ResultData.fail("文件流为空.");
         }
 
-        ObjectId objectId = new ObjectId();
-        String fileName = dto.getFileName();
-
         UploadResponse response = new UploadResponse();
         Document document = documentService.getDocumentByMd5(dto.getFileMd5());
         if (Objects.isNull(document)) {
+            ObjectId objectId = new ObjectId();
+            String fileName = dto.getFileName();
             // 异步上传持久化
             uploadDocument(objectId, new ByteArrayInputStream(data), fileName, dto.getFileMd5(), data.length);
 
@@ -320,32 +319,19 @@ public class MongoFileService implements FileService {
                     return null;
                 }
                 GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bucket.downloadToStream(fsdbFile.getId(), baos);
+                try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                    bucket.downloadToStream(fsdbFile.getId(), baos);
+                    try (InputStream imageStream = new ByteArrayInputStream(baos.toByteArray());) {
+                        String ext = FileUtils.getExtension(document.getFileName());
+                        byte[] thumbData = ImageUtils.scale2(imageStream, ext, height, width, true);
 
-                InputStream imageStream = null;
-                try {
-                    imageStream = new ByteArrayInputStream(baos.toByteArray());
-                    String ext = FileUtils.getExtension(document.getFileName());
-                    byte[] thumbData = ImageUtils.scale2(imageStream, ext, height, width, true);
-
-                    response.setData(thumbData);
-                    return response;
+                        response.setData(thumbData);
+                        return response;
+                    } catch (IOException e) {
+                        return null;
+                    }
                 } catch (Exception e) {
                     return null;
-                } finally {
-                    if (Objects.nonNull(imageStream)) {
-                        try {
-                            imageStream.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    try {
-                        baos.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
                 }
             }
         }
@@ -370,10 +356,11 @@ public class MongoFileService implements FileService {
                 documentService.deleteByDocIds(docIds);
             }
 
+            Query query;
             for (String docId : docIds) {
                 try {
                     //删除文档数据
-                    Query query = new Query().addCriteria(Criteria.where("_id").is(docId));
+                    query = new Query().addCriteria(Criteria.where("_id").is(docId));
                     seiGridFsTemplate.delete(query);
                 } catch (Exception e) {
                     LogUtil.error("[" + docId + "]文件删除异常.", e);
@@ -447,18 +434,16 @@ public class MongoFileService implements FileService {
      * 获取文档
      *
      * @param docId 文档id
-     * @return 返回输出流
      */
-    private OutputStream getByteArray(String docId, OutputStream out) {
+    private void getByteArray(String docId, OutputStream out) {
         //获取原图
         GridFSFile fsdbFile = seiGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
         if (Objects.isNull(fsdbFile)) {
             LogUtil.error("[{}]文件不存在.", docId);
-            return null;
+            return;
         }
         GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
         bucket.downloadToStream(fsdbFile.getId(), out);
-        return out;
     }
 
     /**
