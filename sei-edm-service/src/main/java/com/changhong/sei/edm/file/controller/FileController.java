@@ -465,7 +465,12 @@ public class FileController {
             } else {
                 fileName = new String(fileName.getBytes("UTF-8"), "ISO8859-1");
             }
-            response.addHeader("Content-Disposition", "attachment;fileName=" + fileName);
+            /*
+                ERR_RESPONSE_HEADERS_MULTIPLE_CONTENT_DISPOSITION：下载报错，浏览器network error错误
+                https://blog.csdn.net/qq_37837134/article/details/84644097
+                浏览器中filename中包含特殊的标点符号，浏览器误认为是HTTP响应拆分攻击。所以在filename中加引号包裹，以告诉浏览器是一个文件名。
+             */
+            response.addHeader("Content-Disposition", "attachment;fileName='" + fileName + "'");
         } catch (UnsupportedEncodingException e) {
             LogUtil.error("文件名编码错误", e);
         }
