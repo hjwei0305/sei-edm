@@ -8,6 +8,7 @@ import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.util.JsonUtils;
 import com.changhong.sei.search.dto.ElasticSearch;
 import com.changhong.sei.search.entity.ElasticEntity;
+import com.changhong.sei.util.ConverterUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.DocWriteResponse;
@@ -45,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -472,43 +474,106 @@ public class BaseElasticService {
             if (CollectionUtils.isNotEmpty(list)) {
                 String[] fields = list.toArray(new String[0]);
 
-                queryBuilder.filter(QueryBuilders.multiMatchQuery(keyword, fields));
+                queryBuilder.must(QueryBuilders.multiMatchQuery(keyword, fields));
             }
         }
 
+        /*
+        关键词	        keyword类型	text类型	                                                                    是否支持分词
+        term	        完全匹配	    查询条件必须都是text分词中的，且不能多余，多个分词时必须连续，顺序不能颠倒。	            否
+        match	        完全匹配	    match分词结果和text的分词结果有相同的即可，不考虑顺序	                            是
+        match_phrase	完全匹配	    match_phrase的分词结果必须在text字段分词中都包含，而且顺序必须相同，而且必须都是连续的。	是
+        query_string	完全匹配	    query_string中的分词结果至少有一个在text字段的分词结果中，不考虑顺序	                是
+         */
+        Object matchValue;
         List<SearchFilter> filters = search.getFilters();
         if (Objects.nonNull(filters)) {
             for (SearchFilter filter : filters) {
+                matchValue = filter.getValue();
                 switch (filter.getOperator()) {
                     case EQ:
                         // 精准查询
-                        queryBuilder.filter(QueryBuilders.termQuery(filter.getFieldName(), filter.getValue()));
+                        queryBuilder.must(QueryBuilders.matchPhraseQuery(filter.getFieldName(), matchValue));
                         break;
-//                case NE:
-//                    queryBuilder.mustNot(QueryBuilders.matchQuery(filter.getFieldName(), filter.getValue()));
-//                    break;
+                    case NE:
+                        queryBuilder.mustNot(QueryBuilders.matchQuery(filter.getFieldName(), matchValue));
+                        break;
                     case LK:
                     case LLK:
                     case RLK:
                         // 模糊查询
-                        queryBuilder.filter(QueryBuilders.matchQuery(filter.getFieldName(), filter.getValue()));
+//                        queryBuilder.must(QueryBuilders.queryStringQuery(String.valueOf(matchValue)));
+                        queryBuilder.must(QueryBuilders.matchQuery(filter.getFieldName(), matchValue));
                         break;
                     case GE:
-                        queryBuilder.filter(QueryBuilders.rangeQuery(filter.getFieldName()).gte(filter.getValue()));
+                        if (StringUtils.equalsIgnoreCase("timestamp", filter.getFieldName())) {
+                            try {
+                                Date date = ConverterUtils.getAsDate(matchValue);
+                                queryBuilder.must(QueryBuilders.rangeQuery(filter.getFieldName()).gte(date.getTime()));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            queryBuilder.must(QueryBuilders.rangeQuery(filter.getFieldName()).gte(matchValue));
+                        }
                         break;
                     case GT:
-                        queryBuilder.filter(QueryBuilders.rangeQuery(filter.getFieldName()).gt(filter.getValue()));
+                        if (StringUtils.equalsIgnoreCase("timestamp", filter.getFieldName())) {
+                            try {
+                                Date date = ConverterUtils.getAsDate(matchValue);
+                                queryBuilder.must(QueryBuilders.rangeQuery(filter.getFieldName()).gt(date.getTime()));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            queryBuilder.must(QueryBuilders.rangeQuery(filter.getFieldName()).gt(matchValue));
+                        }
                         break;
                     case LE:
-                        queryBuilder.filter(QueryBuilders.rangeQuery(filter.getFieldName()).lte(filter.getValue()));
+                        if (StringUtils.equalsIgnoreCase("timestamp", filter.getFieldName())) {
+                            try {
+                                Date date = ConverterUtils.getAsDate(matchValue);
+                                queryBuilder.must(QueryBuilders.rangeQuery(filter.getFieldName()).lte(date.getTime()));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            queryBuilder.must(QueryBuilders.rangeQuery(filter.getFieldName()).lte(matchValue));
+                        }
                         break;
                     case LT:
-                        queryBuilder.filter(QueryBuilders.rangeQuery(filter.getFieldName()).lt(filter.getValue()));
+                        if (StringUtils.equalsIgnoreCase("timestamp", filter.getFieldName())) {
+                            try {
+                                Date date = ConverterUtils.getAsDate(matchValue);
+                                queryBuilder.must(QueryBuilders.rangeQuery(filter.getFieldName()).lt(date.getTime()));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            queryBuilder.must(QueryBuilders.rangeQuery(filter.getFieldName()).lt(matchValue));
+                        }
                         break;
                     case BT:
-                        queryBuilder.filter(QueryBuilders.rangeQuery(filter.getFieldName()).gte(filter.getValue()).lte(filter.getValue()));
+                        Assert.notNull(matchValue, "Match value must be not null");
+                        Assert.isTrue(matchValue.getClass().isArray(), "Match value must be array");
+                        Object[] matchValues = (Object[]) matchValue;
+                        Assert.isTrue(matchValues.length == 2, "Match value must have two value");
+                        // 对日期特殊处理：一般用于区间日期的结束时间查询,如查询2012-01-01之前,一般需要显示2010-01-01当天及以前的数据,
+                        // 而数据库一般存有时分秒,因此需要特殊处理把当前日期+1天,转换为<2012-01-02进行查询
+                        if (StringUtils.equalsIgnoreCase("timestamp", filter.getFieldName())) {
+                            try {
+                                Date date0 = ConverterUtils.getAsDate(matchValues[0]);
+                                Date date1 = ConverterUtils.getAsDate(matchValues[1]);
+                                queryBuilder.must(QueryBuilders.rangeQuery(filter.getFieldName()).from(date0.getTime()).to(date1.getTime()));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            queryBuilder.must(QueryBuilders.rangeQuery(filter.getFieldName()).gte(matchValues[0]).lte(matchValues[1]));
+                        }
                         break;
                     default:
+                        queryBuilder.must(QueryBuilders.queryStringQuery(String.valueOf(matchValue)));
                 }
             }
         }
