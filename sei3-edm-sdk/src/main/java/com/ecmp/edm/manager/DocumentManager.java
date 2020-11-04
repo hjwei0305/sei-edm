@@ -221,12 +221,9 @@ public class DocumentManager implements IDocumentManager, ApplicationContextAwar
      */
     @Override
     public void deleteBusinessInfos(String entityId) {
-        String url = getServiceUrl() + "/document/deleteBusinessInfos";
-        Map<String, String> params = new HashMap<>();
-        // 添加文件源
-        params.put("entityId", entityId);
+        String url = getServiceUrl() + "/document/deleteBusinessInfos?entityId="+entityId;
         try {
-            HttpClientResult result = HttpClientUtils.doPost(url, params);
+            HttpClientResult result = HttpClientUtils.doPost(url, null);
             if (200 == result.getCode()) {
                 LOG.info("删除业务实体的文档信息成功");
             } else {

@@ -506,11 +506,9 @@ public class DocumentManager implements ApplicationContextAware {
      */
     public ResultData<String> deleteBusinessInfos(@NotBlank String entityId) {
         try {
-            Map<String, String> params = new HashMap<>();
-            params.put("entityId", entityId);
-            apiTemplate.postByUrl(getServiceUrl() + "/document/deleteBusinessInfos",
+            apiTemplate.postByUrl(getServiceUrl() + "/document/deleteBusinessInfos?entityId="+entityId,
                     new ParameterizedTypeReference<ResultData<String>>() {
-                    }, params);
+                    }, null);
             return ResultData.success("OK");
         } catch (Exception e) {
             LogUtil.error("删除业务实体的文档信息失败", e);

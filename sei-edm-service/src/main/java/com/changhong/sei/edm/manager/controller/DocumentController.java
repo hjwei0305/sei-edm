@@ -98,6 +98,16 @@ public class DocumentController implements DocumentApi {
     }
 
     /**
+     * 解除业务实体的文档信息绑定关系
+     *
+     * @param entityId 业务实体Id
+     */
+    @Override
+    public ResultData<String> unbindBusinessDocument(String entityId) {
+        return service.unbindBusinessDocuments(entityId);
+    }
+
+    /**
      * 删除业务实体的文档信息
      *
      * @param entityId 业务实体Id

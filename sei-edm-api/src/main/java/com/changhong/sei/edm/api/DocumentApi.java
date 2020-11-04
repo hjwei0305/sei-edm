@@ -79,12 +79,21 @@ public interface DocumentApi {
     ResultData<String> bindBusinessDocuments(@RequestBody @Valid BindRequest request);
 
     /**
+     * 解除业务实体的文档信息绑定关系
+     *
+     * @param entityId 业务实体Id
+     */
+    @DeleteMapping("unbindBusinessDocument/{entityId}")
+    @ApiOperation(value = "解除业务实体的文档信息绑定关系", notes = "解除业务实体的文档信息绑定关系.同deleteBusinessInfos接口")
+    ResultData<String> unbindBusinessDocument(@PathVariable("entityId") String entityId);
+
+    /**
      * 删除业务实体的文档信息
      *
      * @param entityId 业务实体Id
      */
     @PostMapping("deleteBusinessInfos")
-    @ApiOperation(value = "删除业务实体的文档信息", notes = "删除业务实体的文档信息")
+    @ApiOperation(value = "删除业务实体的文档信息", notes = "删除业务实体的文档信息.同unbindBusinessDocument接口")
     ResultData<String> deleteBusinessInfos(@RequestParam("entityId") @NotBlank String entityId);
 
     /**
