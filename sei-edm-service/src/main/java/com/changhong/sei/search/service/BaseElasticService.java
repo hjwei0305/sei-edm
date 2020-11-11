@@ -614,9 +614,9 @@ public class BaseElasticService {
             // 高亮查询
             HighlightBuilder highlightBuilder = new HighlightBuilder();
             // 高亮前缀
-            highlightBuilder.preTags("<em>");
+            highlightBuilder.preTags("<mark>");
             // 高亮后缀
-            highlightBuilder.postTags("</em>");
+            highlightBuilder.postTags("</mark>");
             // 高亮字段
             highlightBuilder.fields().addAll(highlightFields);
             // 添加高亮查询条件到搜索源
