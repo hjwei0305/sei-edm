@@ -14,12 +14,14 @@ import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.edm.ocr.service.CharacterReaderService;
 import com.changhong.sei.util.EnumUtils;
+import com.changhong.sei.util.FileUtils;
 import com.changhong.sei.util.IdGenerator;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -160,6 +163,72 @@ public class FileController {
             return ResultData.success(response);
         }
         return ResultData.fail(resultData.getMessage());
+    }
+
+    @ApiOperation("URL文件上传或识别")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "sys", value = "来源系统"),
+            @ApiImplicitParam(name = "uploadUser", value = "上传人"),
+            @ApiImplicitParam(name = "ocr", dataTypeClass = OcrType.class, value = "ocr识别类型: None, Barcode, InvoiceQr, Qr "),
+            @ApiImplicitParam(name = "fileUrl", value = "文件URL", required = true),
+            @ApiImplicitParam(name = "fileName", value = "文件名", required = true)
+    })
+    @PostMapping(value = "/uploadByUrl")
+    @ResponseBody
+    public ResultData<UploadResponse> uploadByUrl(
+            @RequestParam("fileUrl") String fileUrl,
+            @RequestParam("fileName") String fileName,
+            @RequestParam(value = "uploadUser", required = false) String uploadUser,
+            @RequestParam(value = "ocr", required = false) String ocr,
+            @RequestParam(value = "sys", required = false) String sys) throws IOException {
+        if (StringUtils.isBlank(sys)) {
+            sys = ContextUtil.getAppCode();
+        }
+
+        byte[] fileBytes = null;
+        InputStream inputStream = null;
+        DocumentDto dto = new DocumentDto();
+        try {
+            URL url = new URL(fileUrl);
+            inputStream = new BufferedInputStream(url.openStream());
+            fileBytes = IOUtils.toByteArray(inputStream);
+            dto.setData(fileBytes);
+            // 计算文件MD5
+            dto.setFileMd5(MD5Utils.md5Stream(inputStream));
+            dto.setFileName(fileName);
+            dto.setSystem(sys);
+            if (StringUtils.isBlank(uploadUser)) {
+                SessionUser user = ContextUtil.getSessionUser();
+                uploadUser = user.getAccount();
+            }
+            dto.setUploadUser(uploadUser);
+        } catch (Exception e) {
+            LogUtil.error("通过URL[" + fileUrl + "]获取文件异常", e);
+            return ResultData.fail("通过URL[" + fileUrl + "]获取文件异常");
+        } finally {
+            if (Objects.nonNull(inputStream)) {
+                try {
+                    inputStream.close();
+                }catch (IOException ignored) {
+                }
+            }
+        }
+
+        ResultData<UploadResponse> resultData = fileService.uploadDocument(dto);;
+        if (resultData.successful() && StringUtils.isNotBlank(ocr)) {
+            UploadResponse uploadResponse = resultData.getData();
+            OcrType ocrType = EnumUtils.getEnum(OcrType.class, ocr);
+            if (Objects.nonNull(uploadResponse) &&
+                    Objects.nonNull(ocrType) && OcrType.None != ocrType) {
+                // 字符识别
+                ResultData<String> readerResult = characterReaderService.read(uploadResponse.getDocumentType(), ocrType, fileBytes);
+                if (readerResult.successful()) {
+                    // 设置识别的结果
+                    uploadResponse.setOcrData(readerResult.getData());
+                }
+            }
+        }
+        return resultData;
     }
 
     @ApiOperation("单文件上传或识别")
