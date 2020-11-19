@@ -194,7 +194,7 @@ public class FileController {
             fileBytes = IOUtils.toByteArray(inputStream);
             dto.setData(fileBytes);
             // 计算文件MD5
-            dto.setFileMd5(MD5Utils.md5Stream(inputStream));
+            dto.setFileMd5(MD5Utils.md5(fileUrl));
             dto.setFileName(fileName);
             dto.setSystem(sys);
             if (StringUtils.isBlank(uploadUser)) {
