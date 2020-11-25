@@ -33,7 +33,7 @@ public class Document extends BaseEntity {
     /**
      * 文件名（包括后缀,不含路径）
      */
-    @Column(name = "file_name", length = 200)
+    @Column(name = "file_name", length = 300)
     private String fileName;
     /**
      * 文件MD5

@@ -61,7 +61,7 @@ public class FileChunk extends BaseEntity {
     /**
      * 文件名
      */
-    @Column(name = "file_name", length = 200)
+    @Column(name = "file_name", length = 300)
     private String filename;
     /**
      * 合并时关联整体文件的docId
