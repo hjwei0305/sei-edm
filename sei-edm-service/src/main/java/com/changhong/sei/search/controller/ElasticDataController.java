@@ -51,6 +51,7 @@ public class ElasticDataController implements ElasticDataApi {
      */
     @Override
     public ResultData<String> add(ElasticDataDto elasticDataDto) {
+        LOG.info("插入数据，metadataVo = {}", elasticDataDto);
         try {
             if (StringUtils.isEmpty(elasticDataDto.getIdxName())) {
                 LOG.warn("索引为空");
@@ -59,7 +60,7 @@ public class ElasticDataController implements ElasticDataApi {
             baseElasticService.save(elasticDataDto.getIdxName(),
                     new ElasticEntity(elasticDataDto.getId(), elasticDataDto.getData()));
         } catch (Exception e) {
-            LOG.error("插入数据异常，metadataVo={},异常信息={}", elasticDataDto.toString(), e.getMessage());
+            LOG.error("插入数据异常", e);
             return ResultData.fail("插入数据异常");
         }
         return ResultData.success();
@@ -80,8 +81,8 @@ public class ElasticDataController implements ElasticDataApi {
             elasticEntity.setData(elasticDataDto.getData());
             baseElasticService.deleteOne(elasticDataDto.getIdxName(), elasticEntity);
         } catch (Exception e) {
-            LOG.error("删除数据失败");
-            return ResultData.fail("删除数据失败");
+            LOG.error("删除数据异常", e);
+            return ResultData.fail("删除数据异常");
         }
         return ResultData.success();
     }

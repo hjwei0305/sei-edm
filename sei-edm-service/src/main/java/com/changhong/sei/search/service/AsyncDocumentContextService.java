@@ -45,7 +45,7 @@ public class AsyncDocumentContextService {
     /**
      * 异步识别并持久化es文档内容
      */
-//    @Async
+    @Async
     public void recognizeAndSaveElastic(DocumentElasticDataDto dataDto) {
         String[] docIds = dataDto.getDocIds();
         if (docIds == null || docIds.length == 0) {
@@ -90,7 +90,11 @@ public class AsyncDocumentContextService {
             }
 
             ResultData<String> resultData = elasticService.batchSave(idxName, entities);
-            LOG.info("异步识别并持久化es文档内容结果: {}", resultData);
+            if (resultData.successful()) {
+                LOG.info("异步识别并持久化es文档内容结果: {}", resultData);
+            } else {
+                LOG.error("异步识别并持久化es文档内容异常: {}", resultData.getMessage());
+            }
         }
     }
 

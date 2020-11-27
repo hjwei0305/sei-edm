@@ -6,6 +6,7 @@ import com.changhong.sei.search.api.ElasticIndexApi;
 import com.changhong.sei.search.dto.IndexDto;
 import com.changhong.sei.search.service.BaseElasticService;
 import io.swagger.annotations.Api;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,14 +36,17 @@ public class ElasticIndexController implements ElasticIndexApi {
             //索引不存在，再创建，否则不允许创建
             if (!baseElasticService.isExistsIndex(indexDto.getIdxName())) {
                 String idxSql = JsonUtils.toJson(indexDto.getIdxSql());
-                LOG.warn(" idxName={}, idxSql={}", indexDto.getIdxName(), idxSql);
+                if (LOG.isInfoEnabled()) {
+                    LOG.info(" idxName={}, idxSql={}", indexDto.getIdxName(), idxSql);
+                }
                 baseElasticService.createIndex(indexDto.getIdxName(), idxSql);
                 return ResultData.success();
             } else {
                 errMsg = "索引已经存在，不允许创建";
             }
         } catch (Exception e) {
-            errMsg = e.getMessage();
+            LOG.error("创建ElasticSearch索引异常！", e);
+            errMsg = "创建ElasticSearch索引异常: " + ExceptionUtils.getRootCauseMessage(e);
         }
         return ResultData.fail(errMsg);
     }
