@@ -4,7 +4,6 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.util.Collection;
 
@@ -28,7 +27,6 @@ public class BindRequest implements Serializable {
      * 文档id集合
      */
     @ApiModelProperty(notes = "文档id集合", required = true)
-    @NotEmpty
     private Collection<String> documentIds;
 
     public String getEntityId() {
