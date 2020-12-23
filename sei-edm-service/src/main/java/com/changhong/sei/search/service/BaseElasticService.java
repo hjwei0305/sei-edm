@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  * @version 1.0.00  2020-09-22 00:03
  */
 @Service
-public class BaseElasticService {
+public class BaseElasticService implements SearchService {
     private static final Logger LOG = LoggerFactory.getLogger(BaseElasticService.class);
 
     @Autowired
@@ -70,6 +70,7 @@ public class BaseElasticService {
      * @param idxName 索引名称(indexName必须是小写，如果是大写在创建过程中会有错误)
      * @param idxSQL  索引描述
      */
+    @Override
     public ResultData<String> createIndex(String idxName, String idxSQL) {
         if (StringUtils.isBlank(idxName)) {
             return ResultData.fail("索引名不能为空.");
@@ -99,6 +100,7 @@ public class BaseElasticService {
     /**
      * 删除index
      */
+    @Override
     public ResultData<String> deleteIndex(String idxName) {
         if (StringUtils.isBlank(idxName)) {
             return ResultData.fail("索引名不能为空.");
@@ -127,6 +129,7 @@ public class BaseElasticService {
      *
      * @param idxName index名
      */
+    @Override
     public boolean indexExist(String idxName) throws Exception {
         if (StringUtils.isBlank(idxName)) {
             throw new IllegalArgumentException("索引名不能为空.");
@@ -150,6 +153,7 @@ public class BaseElasticService {
      *
      * @param idxName index名
      */
+    @Override
     public boolean isExistsIndex(String idxName) throws Exception {
         if (StringUtils.isBlank(idxName)) {
             throw new IllegalArgumentException("索引名不能为空.");
@@ -163,6 +167,7 @@ public class BaseElasticService {
      * @param idxName index
      * @param entity  对象
      */
+    @Override
     public ResultData<String> save(String idxName, ElasticEntity entity) {
         if (StringUtils.isBlank(idxName)) {
             return ResultData.fail("索引名不能为空.");
@@ -195,6 +200,7 @@ public class BaseElasticService {
      * @param idxName index
      * @param list    带插入列表
      */
+    @Override
     public ResultData<String> batchSave(String idxName, Collection<ElasticEntity> list) {
         if (StringUtils.isBlank(idxName)) {
             return ResultData.fail("索引名不能为空.");
@@ -223,6 +229,7 @@ public class BaseElasticService {
      * @param idxName index
      * @param list    带插入列表
      */
+    @Override
     public ResultData<String> batchSaveObj(String idxName, Collection<ElasticEntity> list) {
         if (StringUtils.isBlank(idxName)) {
             return ResultData.fail("索引名不能为空.");
@@ -249,6 +256,7 @@ public class BaseElasticService {
      * @param idxName index
      * @param entity  对象
      */
+    @Override
     public ResultData<String> deleteOne(String idxName, ElasticEntity entity) {
         if (StringUtils.isBlank(idxName)) {
             return ResultData.fail("索引名不能为空.");
@@ -278,6 +286,7 @@ public class BaseElasticService {
      * @param idxName index
      * @param idList  待删除列表
      */
+    @Override
     public <T> ResultData<String> deleteBatch(String idxName, Collection<T> idList) {
         if (StringUtils.isBlank(idxName)) {
             return ResultData.fail("索引名不能为空.");
@@ -305,6 +314,7 @@ public class BaseElasticService {
      * 按条件删除
      * 最大操作量为10000个
      */
+    @Override
     public ResultData<String> deleteByQuery(String idxName, QueryBuilder builder) {
         if (StringUtils.isBlank(idxName)) {
             return ResultData.fail("索引名不能为空.");
@@ -333,6 +343,7 @@ public class BaseElasticService {
      * @param keyword    关键字
      * @return java.util.List<T>
      */
+    @Override
     public ResultData<List<HashMap<String, Object>>> search(String idxName, String[] properties, String keyword) {
         MultiMatchQueryBuilder queryBuilder = QueryBuilders.multiMatchQuery(keyword, properties);
         SearchSourceBuilder searchSourceBuilder = this.initSearchSourceBuilder(queryBuilder);
@@ -347,6 +358,7 @@ public class BaseElasticService {
      * @param search 查询参数
      * @return java.util.List<T>
      */
+    @Override
     public ResultData<List<HashMap<String, Object>>> search(ElasticSearch search) {
         SearchSourceBuilder searchSourceBuilder = this.initSearchSourceBuilder(buildBoolQueryBuilder(search));
         // 初始化高亮设置
@@ -363,6 +375,7 @@ public class BaseElasticService {
      * @param search 查询参数
      * @return java.util.List<T>
      */
+    @Override
     @SuppressWarnings("unchecked")
     public ResultData<PageResult<HashMap<String, Object>>> findByPage(ElasticSearch search) {
         String idxName = search.getIdxName();
@@ -416,6 +429,7 @@ public class BaseElasticService {
      * @param builder 查询参数
      * @return java.util.List<T>
      */
+    @Override
     public ResultData<List<HashMap<String, Object>>> search(String idxName, SearchSourceBuilder builder) {
         if (StringUtils.isBlank(idxName)) {
             return ResultData.fail("索引名不能为空.");

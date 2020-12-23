@@ -12,6 +12,7 @@ import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,6 +26,7 @@ import java.util.Objects;
  * @version 1.0.00  2020-09-21 13:46
  */
 @Configuration
+@ConditionalOnProperty(prefix = "sei.edm.elasticsearch", name = "enable", havingValue = "true", matchIfMissing = true)
 public class ElasticsearchRestClient {
     private static final int ADDRESS_LENGTH = 2;
 

@@ -557,7 +557,6 @@ public class FileController {
         }
 
         try (ZipOutputStream zip = new ZipOutputStream(outputStream)) {
-            DocumentResponse document;
             ZipEntry zipEntry;
 
             for (Document doc : documents) {

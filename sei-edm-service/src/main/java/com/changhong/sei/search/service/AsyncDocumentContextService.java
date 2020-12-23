@@ -39,14 +39,17 @@ public class AsyncDocumentContextService {
 
     @Autowired
     private FileService fileService;
-    @Autowired
-    private BaseElasticService elasticService;
+    @Autowired(required = false)
+    private SearchService searchService;
 
     /**
      * 异步识别并持久化es文档内容
      */
     @Async
     public void recognizeAndSaveElastic(DocumentElasticDataDto dataDto) {
+        // 检查搜索服务是否可用
+        checkSearchService();
+
         String[] docIds = dataDto.getDocIds();
         if (docIds == null || docIds.length == 0) {
             LOG.error("文档id不能为空.");
@@ -63,11 +66,11 @@ public class AsyncDocumentContextService {
         if (CollectionUtils.isNotEmpty(documents)) {
             try {
                 // 检查索引是否存在
-                boolean indexExist = elasticService.indexExist(idxName);
+                boolean indexExist = searchService.indexExist(idxName);
                 if (!indexExist) {
                     String idxSql = JsonUtils.toJson(buildIndex(dataDto));
                     // 不存在创建所以
-                    elasticService.createIndex(idxName, idxSql);
+                    searchService.createIndex(idxName, idxSql);
                 }
             } catch (Exception e) {
                 LOG.error("初始化文档解析异常", e);
@@ -89,12 +92,21 @@ public class AsyncDocumentContextService {
                 entities.add(entity);
             }
 
-            ResultData<String> resultData = elasticService.batchSave(idxName, entities);
+            ResultData<String> resultData = searchService.batchSave(idxName, entities);
             if (resultData.successful()) {
                 LOG.info("异步识别并持久化es文档内容结果: {}", resultData);
             } else {
                 LOG.error("异步识别并持久化es文档内容异常: {}", resultData.getMessage());
             }
+        }
+    }
+
+    /**
+     * 检查搜索服务是否可用
+     */
+    private void checkSearchService() {
+        if (Objects.isNull(searchService)) {
+            throw new RuntimeException("搜索服务不可用.请检查配置sei.edm.elasticsearch.enable=true");
         }
     }
 

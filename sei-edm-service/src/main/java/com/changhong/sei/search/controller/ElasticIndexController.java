@@ -4,13 +4,15 @@ import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.util.JsonUtils;
 import com.changhong.sei.search.api.ElasticIndexApi;
 import com.changhong.sei.search.dto.IndexDto;
-import com.changhong.sei.search.service.BaseElasticService;
+import com.changhong.sei.search.service.SearchService;
 import io.swagger.annotations.Api;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Objects;
 
 /**
  * 实现功能：
@@ -23,23 +25,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class ElasticIndexController implements ElasticIndexApi {
     private static final Logger LOG = LoggerFactory.getLogger(ElasticIndexController.class);
 
-    @Autowired
-    private BaseElasticService baseElasticService;
+    @Autowired(required = false)
+    private SearchService searchService;
 
     /**
      * 创建Elastic索引
      */
     @Override
     public ResultData<String> createIndex(IndexDto indexDto) {
+        // 检查搜索服务是否可用
+        checkSearchService();
+
         String errMsg;
         try {
             //索引不存在，再创建，否则不允许创建
-            if (!baseElasticService.isExistsIndex(indexDto.getIdxName())) {
+            if (!searchService.isExistsIndex(indexDto.getIdxName())) {
                 String idxSql = JsonUtils.toJson(indexDto.getIdxSql());
                 if (LOG.isInfoEnabled()) {
                     LOG.info(" idxName={}, idxSql={}", indexDto.getIdxName(), idxSql);
                 }
-                baseElasticService.createIndex(indexDto.getIdxName(), idxSql);
+                searchService.createIndex(indexDto.getIdxName(), idxSql);
                 return ResultData.success();
             } else {
                 errMsg = "索引已经存在，不允许创建";
@@ -56,8 +61,11 @@ public class ElasticIndexController implements ElasticIndexApi {
      */
     @Override
     public ResultData<Boolean> indexExist(String index) {
+        // 检查搜索服务是否可用
+        checkSearchService();
+
         try {
-            boolean existed = baseElasticService.isExistsIndex(index);
+            boolean existed = searchService.isExistsIndex(index);
             if (!existed) {
                 LOG.error("index={},不存在", index);
             } else {
@@ -75,12 +83,24 @@ public class ElasticIndexController implements ElasticIndexApi {
      */
     @Override
     public ResultData<Boolean> indexDel(String index) {
+        // 检查搜索服务是否可用
+        checkSearchService();
+
         try {
-            baseElasticService.deleteIndex(index);
+            searchService.deleteIndex(index);
         } catch (Exception e) {
             LOG.error("调用ElasticSearch 失败！", e);
             return ResultData.fail("调用ElasticSearch 失败！");
         }
         return ResultData.success();
+    }
+
+    /**
+     * 检查搜索服务是否可用
+     */
+    private void checkSearchService() {
+        if (Objects.isNull(searchService)) {
+            throw new RuntimeException("搜索服务不可用.请检查配置sei.edm.elasticsearch.enable=true");
+        }
     }
 }

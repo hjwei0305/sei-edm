@@ -13,19 +13,19 @@ import java.util.Objects;
  * @version 1.0.00
  */
 public class BytesEncodingDetectUtil extends Encoding {
-    int GBFreq[][];
+    int[][] GBFreq;
 
-    int GBKFreq[][];
+    int[][] GBKFreq;
 
-    int Big5Freq[][];
+    int[][] Big5Freq;
 
-    int Big5PFreq[][];
+    int[][] Big5PFreq;
 
-    int EUC_TWFreq[][];
+    int[][] EUC_TWFreq;
 
-    int KRFreq[][];
+    int[][] KRFreq;
 
-    int JPFreq[][];
+    int[][] JPFreq;
     public boolean debug;
 
     public BytesEncodingDetectUtil() {
@@ -85,13 +85,10 @@ public class BytesEncodingDetectUtil extends Encoding {
     }*/
 
     public int detectEncoding(File testfile) {
-        FileInputStream chinesefile;
         byte[] rawtext;
         rawtext = new byte[(int) testfile.length()];
-        try {
-            chinesefile = new FileInputStream(testfile);
+        try (FileInputStream chinesefile = new FileInputStream(testfile)) {
             chinesefile.read(rawtext);
-            chinesefile.close();
         } catch (Exception e) {
             System.err.println("Error: " + e);
         }
@@ -100,19 +97,19 @@ public class BytesEncodingDetectUtil extends Encoding {
 
     public byte[] getBytes(InputStream is) {
         byte[] rawtext = new byte[0];
-        try {
-            byte[] temp = new byte[1024];
-            rawtext = new byte[0];
-            int size = 0;
-            while ((size = is.read(temp)) != -1) {
-                byte[] readBytes = new byte[size];
-                System.arraycopy(temp, 0, readBytes, 0, size);
-                rawtext = BytesEncodingDetectUtil.mergeArray(rawtext, readBytes);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (Objects.nonNull(is)) {
+        if (Objects.nonNull(is)) {
+            try {
+                byte[] temp = new byte[1024];
+                rawtext = new byte[0];
+                int size = 0;
+                while ((size = is.read(temp)) != -1) {
+                    byte[] readBytes = new byte[size];
+                    System.arraycopy(temp, 0, readBytes, 0, size);
+                    rawtext = BytesEncodingDetectUtil.mergeArray(rawtext, readBytes);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
                 try {
                     is.close();
                 } catch (IOException e) {
@@ -133,17 +130,17 @@ public class BytesEncodingDetectUtil extends Encoding {
         // 合并完之后数组的总长度
         int index = 0;
         int sum = 0;
-        for (int i = 0; i < a.length; i++) {
-            sum = sum + a[i].length;
+        for (byte[] bytes : a) {
+            sum = sum + bytes.length;
         }
         byte[] result = new byte[sum];
-        for (int i = 0; i < a.length; i++) {
-            int lengthOne = a[i].length;
+        for (byte[] bytes : a) {
+            int lengthOne = bytes.length;
             if (lengthOne == 0) {
                 continue;
             }
             // 拷贝数组
-            System.arraycopy(a[i], 0, result, index, lengthOne);
+            System.arraycopy(bytes, 0, result, index, lengthOne);
             index = index + lengthOne;
         }
         return result;

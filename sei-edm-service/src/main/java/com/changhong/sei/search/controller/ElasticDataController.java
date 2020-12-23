@@ -8,7 +8,7 @@ import com.changhong.sei.search.dto.ElasticDataDto;
 import com.changhong.sei.search.dto.ElasticSearch;
 import com.changhong.sei.search.entity.ElasticEntity;
 import com.changhong.sei.search.service.AsyncDocumentContextService;
-import com.changhong.sei.search.service.BaseElasticService;
+import com.changhong.sei.search.service.SearchService;
 import io.swagger.annotations.Api;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 实现功能：
@@ -32,8 +33,8 @@ public class ElasticDataController implements ElasticDataApi {
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticDataController.class);
 
-    @Autowired
-    private BaseElasticService baseElasticService;
+    @Autowired(required = false)
+    private SearchService searchService;
     @Autowired
     private AsyncDocumentContextService asyncDocumentContextService;
 
@@ -41,7 +42,10 @@ public class ElasticDataController implements ElasticDataApi {
      * 新增业务文档数据
      */
     @Override
-    public ResultData<String> addDoc(@Valid DocumentElasticDataDto elasticDataDto) {
+    public ResultData<String> addDoc(DocumentElasticDataDto elasticDataDto) {
+        // 检查搜索服务是否可用
+        checkSearchService();
+
         asyncDocumentContextService.recognizeAndSaveElastic(elasticDataDto);
         return ResultData.success();
     }
@@ -51,13 +55,16 @@ public class ElasticDataController implements ElasticDataApi {
      */
     @Override
     public ResultData<String> add(ElasticDataDto elasticDataDto) {
+        // 检查搜索服务是否可用
+        checkSearchService();
+
         LOG.info("插入数据，metadataVo = {}", elasticDataDto);
         try {
             if (StringUtils.isEmpty(elasticDataDto.getIdxName())) {
                 LOG.warn("索引为空");
                 return ResultData.fail("索引为空，不允许提交");
             }
-            baseElasticService.save(elasticDataDto.getIdxName(),
+            searchService.save(elasticDataDto.getIdxName(),
                     new ElasticEntity(elasticDataDto.getId(), elasticDataDto.getData()));
         } catch (Exception e) {
             LOG.error("插入数据异常", e);
@@ -71,6 +78,9 @@ public class ElasticDataController implements ElasticDataApi {
      */
     @Override
     public ResultData<String> delete(ElasticDataDto elasticDataDto) {
+        // 检查搜索服务是否可用
+        checkSearchService();
+
         try {
             if (!StringUtils.isNotEmpty(elasticDataDto.getIdxName())) {
                 LOG.warn("索引为空");
@@ -79,7 +89,7 @@ public class ElasticDataController implements ElasticDataApi {
             ElasticEntity elasticEntity = new ElasticEntity();
             elasticEntity.setId(elasticDataDto.getId());
             elasticEntity.setData(elasticDataDto.getData());
-            baseElasticService.deleteOne(elasticDataDto.getIdxName(), elasticEntity);
+            searchService.deleteOne(elasticDataDto.getIdxName(), elasticEntity);
         } catch (Exception e) {
             LOG.error("删除数据异常", e);
             return ResultData.fail("删除数据异常");
@@ -94,7 +104,10 @@ public class ElasticDataController implements ElasticDataApi {
      */
     @Override
     public ResultData<List<HashMap<String, Object>>> findByProperty(String idxName, String properties, String keyword) {
-        ResultData<List<HashMap<String, Object>>> data = baseElasticService.search(idxName, properties.split("[,]"), keyword);
+        // 检查搜索服务是否可用
+        checkSearchService();
+
+        ResultData<List<HashMap<String, Object>>> data = searchService.search(idxName, properties.split("[,]"), keyword);
         return data;
     }
 
@@ -103,11 +116,14 @@ public class ElasticDataController implements ElasticDataApi {
      */
     @Override
     public ResultData<List<HashMap<String, Object>>> findBySearch(ElasticSearch search) {
+        // 检查搜索服务是否可用
+        checkSearchService();
+
         if (StringUtils.isEmpty(search.getIdxName())) {
             LOG.warn("索引为空");
             return ResultData.fail("索引为空，不允许提交");
         }
-        return baseElasticService.search(search);
+        return searchService.search(search);
     }
 
     /**
@@ -115,10 +131,22 @@ public class ElasticDataController implements ElasticDataApi {
      */
     @Override
     public ResultData<PageResult<HashMap<String, Object>>> findByPage(ElasticSearch search) {
+        // 检查搜索服务是否可用
+        checkSearchService();
+
         if (StringUtils.isEmpty(search.getIdxName())) {
             LOG.warn("索引为空");
             return ResultData.fail("索引为空，不允许提交");
         }
-        return baseElasticService.findByPage(search);
+        return searchService.findByPage(search);
+    }
+
+    /**
+     * 检查搜索服务是否可用
+     */
+    private void checkSearchService() {
+        if (Objects.isNull(searchService)) {
+            throw new RuntimeException("搜索服务不可用.请检查配置sei.edm.elasticsearch.enable=true");
+        }
     }
 }

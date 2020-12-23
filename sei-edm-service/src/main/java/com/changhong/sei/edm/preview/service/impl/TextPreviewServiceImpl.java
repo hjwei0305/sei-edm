@@ -5,12 +5,10 @@ import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.preview.service.PreviewService;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 @Service
@@ -35,7 +33,7 @@ public class TextPreviewServiceImpl implements PreviewService {
                 response.setData(data);
                 response.setSize((long) data.length);
             } else {
-                response.setData(document.getData());
+                response.setData(data);
                 response.setSize(document.getSize());
             }
         } catch (Exception e) {
@@ -100,7 +98,7 @@ public class TextPreviewServiceImpl implements PreviewService {
                         }
                     }
                     // 也有可能出错，但是几率较小
-                    else if (0xE0 <= read && read <= 0xEF) {
+                    else if (0xE0 <= read) {
                         read = bis.read();
                         if (0x80 <= read && read <= 0xBF) {
                             read = bis.read();
@@ -137,59 +135,32 @@ public class TextPreviewServiceImpl implements PreviewService {
             throw new IllegalArgumentException("srcCharset is empty.");
         }
 
-        InputStream fis = null;
-        InputStreamReader isr;
-        BufferedReader br;
-
-        ByteArrayOutputStream baos = null;
-        OutputStreamWriter osw;
-        try {
-            fis = new ByteArrayInputStream(srcData);
-            isr = new InputStreamReader(fis, srcCharset);
-
+        try (
+                InputStream fis = new ByteArrayInputStream(srcData);
+                InputStreamReader isr = new InputStreamReader(fis, srcCharset);
+                BufferedReader br = new BufferedReader(isr);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                OutputStreamWriter osw = new OutputStreamWriter(baos, StandardCharsets.UTF_8)
+        ) {
             // BufferedReader中defaultCharBufferSize = 8192.
             // 即：8192 × 2 byte = 16k
             // 若是utf-8,中文占3个字节，16K / 3  = 5461，即只要每行中文字符数 < 5461,读取的行数就是准确的，
             // 否则，可能会截断一行，多写入'\n',但这种情况一般不存在。
             // 如果源文件中最后一行没有换行符，转码后的文件最后会多写入一个换行符
-            br = new BufferedReader(isr);
 
-            baos = new ByteArrayOutputStream();
-            osw = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
-
-            String str = null;
-
+            String str;
             // 创建StringBuffer字符串缓存区
             StringBuilder sb = new StringBuilder();
 
             // 通过readLine()方法遍历读取文件
             while ((str = br.readLine()) != null) {
                 // 使用readLine()方法无法进行换行,需要手动在原本输出的字符串后面加"\n"或"\r"
-                sb.append(str).append('\n');
+                sb.append(str).append("\n\r");
             }
             osw.write(sb.toString());
             osw.flush();
 
             return baos.toByteArray();
-        } finally {
-            // 与同一个文件关联的所有输出流(输入流)，只需关闭一个即可
-            if (null != fis) {
-                try {
-                    fis.close();
-                    fis = null;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            if (null != baos) {
-                try {
-                    baos.close();
-                    baos = null;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 }
