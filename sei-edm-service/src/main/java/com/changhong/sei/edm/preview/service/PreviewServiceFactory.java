@@ -31,6 +31,7 @@ public final class PreviewServiceFactory {
         PreviewService previewService;
         switch (document.getDocumentType()) {
             case Pdf:
+            case OFD:
                 previewService = map.get(getPreviewServiceName(PdfPreviewServiceImpl.class));
                 break;
             case Word:

@@ -91,10 +91,18 @@ dependencies {
     )
 }
 
-// 默认application文件中的配置从配置中心获取
-//processResources {
-//    excludes = ["**/application.yaml", "**/application.properties"]
-//}
+// 处理资源配置文件
+processResources {
+    // 替换bootstrap.yaml文件中@project_version@占位符的值
+    filesMatching('bootstrap.yaml') {
+        filter org.apache.tools.ant.filters.ReplaceTokens, tokens: [
+                project_name   : project.property('name'),
+                project_version: project.property('version')
+        ]
+    }
+    // 默认application文件中的配置从配置中心获取
+    //excludes = ["**/application.yaml", "**/application.properties"]
+}
 
 //打ar包
 bootJar  {

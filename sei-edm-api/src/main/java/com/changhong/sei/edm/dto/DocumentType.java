@@ -21,5 +21,7 @@ public enum DocumentType {
     //文本文件
     Text,
     //多媒体文件
-    Media
+    Media,
+    //OFD文件
+    OFD
 }

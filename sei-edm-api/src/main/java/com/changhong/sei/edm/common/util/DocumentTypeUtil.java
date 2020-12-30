@@ -24,6 +24,8 @@ public final class DocumentTypeUtil {
         DOC_TYPE_MAP.put(DocumentType.Image, "jpg|bmp|gif|png|jpeg");
         // pdf
         DOC_TYPE_MAP.put(DocumentType.Pdf, "pdf");
+        // ofd
+        DOC_TYPE_MAP.put(DocumentType.OFD, "ofd");
         // word
         DOC_TYPE_MAP.put(DocumentType.Word, "doc|docx");
         // excel
