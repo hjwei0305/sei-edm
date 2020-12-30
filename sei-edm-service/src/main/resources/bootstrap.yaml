@@ -16,6 +16,12 @@ sei: # 应用全局配置
       tenant-code: 10044
       account: admin
 
+# 禁用es监控检查
+management:
+  health:
+    elasticsearch:
+      enabled: false
+
 spring:
   application:
     name: ${sei.application.code}

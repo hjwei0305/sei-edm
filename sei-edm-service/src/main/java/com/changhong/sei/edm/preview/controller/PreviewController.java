@@ -81,6 +81,10 @@ public class PreviewController {
             case Excel:
                 view = "preview/html.html";
                 break;
+            case OFD:
+                view = "preview/ofd.html";
+                fileName = fileName.substring(0, fileName.lastIndexOf(".")).concat(".ofd");
+                break;
             case Image:
                 view = "preview/image.html";
                 break;
