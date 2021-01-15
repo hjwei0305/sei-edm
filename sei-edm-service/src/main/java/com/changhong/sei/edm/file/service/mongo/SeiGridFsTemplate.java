@@ -7,6 +7,7 @@ import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import org.bson.BsonObjectId;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
@@ -25,7 +26,7 @@ public class SeiGridFsTemplate extends GridFsTemplate implements SeiGridFsOperat
 
     static final String CONTENT_TYPE_FIELD = "_contentType";
 
-    private final MongoDbFactory dbFactory;
+    private final MongoDatabaseFactory dbFactory;
     private final MongoConverter converter;
     private final String bucket;
 
@@ -36,7 +37,7 @@ public class SeiGridFsTemplate extends GridFsTemplate implements SeiGridFsOperat
      * @param converter must not be {@literal null}.
      * @param bucket
      */
-    public SeiGridFsTemplate(MongoDbFactory dbFactory, MongoConverter converter, String bucket) {
+    public SeiGridFsTemplate(MongoDatabaseFactory dbFactory, MongoConverter converter, String bucket) {
         super(dbFactory, converter, bucket);
 
         this.dbFactory = dbFactory;
@@ -68,7 +69,7 @@ public class SeiGridFsTemplate extends GridFsTemplate implements SeiGridFsOperat
     }
 
     private GridFSBucket getGridFs() {
-        MongoDatabase db = dbFactory.getDb();
+        MongoDatabase db = dbFactory.getMongoDatabase();
         return bucket == null ? GridFSBuckets.create(db) : GridFSBuckets.create(db, bucket);
     }
 }

@@ -17,6 +17,7 @@ jar {
         attributes("Implementation-Title": "$project.name")
         attributes("Implementation-Version": "$project.version")
         attributes("Implementation-Vendor": "rcsit.cn")
+        attributes("Description": "$project.description")
         attributes("Build-Time": new Date().format("yyyy-MM-dd HH:mm:ss"))
     }
 }

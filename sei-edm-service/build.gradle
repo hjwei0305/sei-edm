@@ -96,12 +96,13 @@ processResources {
     // 替换bootstrap.yaml文件中@project_version@占位符的值
     filesMatching('bootstrap.yaml') {
         filter org.apache.tools.ant.filters.ReplaceTokens, tokens: [
-                project_name   : project.property('name'),
-                project_version: project.property('version')
+                project_name       : project.property('name'),
+                project_version    : project.property('version'),
+                project_description: project.property('description')
         ]
     }
     // 默认application文件中的配置从配置中心获取
-    //excludes = ["**/application.yaml", "**/application.properties"]
+    excludes = ["**/application.yaml", "**/application.properties"]
 }
 
 //打ar包
@@ -112,9 +113,10 @@ bootJar  {
     manifest {
         attributes("Manifest-Version": "6.0")
         attributes("Created-By": "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})".toString())
-        attributes("Implementation-Title": "$project.name")
+        attributes("Implementation-Title": "$project.rootProject.name")
         attributes("Implementation-Version": "$project.version")
         attributes("Implementation-Vendor": "rcsit.cn")
+        attributes("Description": "$project.description")
         attributes("Build-Time": new Date().format("yyyy-MM-dd HH:mm:ss"))
     }
 }

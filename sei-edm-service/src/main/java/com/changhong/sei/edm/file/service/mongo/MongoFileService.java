@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +43,7 @@ import java.util.concurrent.CompletableFuture;
 public class MongoFileService implements FileService {
 
     @Autowired
-    private MongoDbFactory mongoDbFactory;
+    private MongoDatabaseFactory mongoDbFactory;
     //    @Autowired
 //    private GridFsOperations edmGridFsTemplate;
     @Autowired
@@ -318,7 +318,7 @@ public class MongoFileService implements FileService {
                     LogUtil.error("[{}]缩略图不存在.", docId);
                     return null;
                 }
-                GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
+                GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getMongoDatabase());
                 try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                     bucket.downloadToStream(fsdbFile.getId(), baos);
                     try (InputStream imageStream = new ByteArrayInputStream(baos.toByteArray());) {
@@ -424,7 +424,7 @@ public class MongoFileService implements FileService {
             LogUtil.error("[{}]文件不存在.", docId);
             return null;
         }
-        GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
+        GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getMongoDatabase());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bucket.downloadToStream(fsdbFile.getId(), baos);
         return baos;
@@ -442,7 +442,7 @@ public class MongoFileService implements FileService {
             LogUtil.error("[{}]文件不存在.", docId);
             return;
         }
-        GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getDb());
+        GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getMongoDatabase());
         bucket.downloadToStream(fsdbFile.getId(), out);
     }
 

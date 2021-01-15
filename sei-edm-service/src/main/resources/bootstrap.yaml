@@ -1,13 +1,9 @@
 sei: # 应用全局配置
   application:
-    code: edm-service
-    name: 平台附件管理服务
     env: DEV
+    code: edm-service
     version: '@project_version@'
-    swagger:
-      title: "${sei.application.name} API"
-      description: "${sei.application.name} 的API文档，运行环境: ${sei.application.env}"
-      version: ${sei.application.version}
+    description: '@project_description@'
   http:
     filter:
       enable: false

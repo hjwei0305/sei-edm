@@ -2,6 +2,7 @@
 allprojects {
     group GROUP
     version VERSION
+    description DESCRIPTION
     apply plugin: 'idea'
 }
 

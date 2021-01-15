@@ -15,7 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 /**
@@ -60,7 +60,7 @@ public class DefaultAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "sei.edm", name = "model", havingValue = "mongo")
-    public SeiGridFsOperations seiGridFsTemplate(MongoDbFactory mongoDbFactory, MongoTemplate mongoTemplate) {
+    public SeiGridFsOperations seiGridFsTemplate(MongoDatabaseFactory mongoDbFactory, MongoTemplate mongoTemplate) {
         return new SeiGridFsTemplate(mongoDbFactory, mongoTemplate.getConverter(), "fs");
     }
 
