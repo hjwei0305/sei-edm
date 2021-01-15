@@ -27,7 +27,7 @@ import java.util.Objects;
  */
 @Configuration
 @ConditionalOnProperty(prefix = "sei.edm.elasticsearch", name = "enable", havingValue = "true", matchIfMissing = true)
-public class ElasticsearchRestClient {
+public class ElasticsearchRestConfig {
     private static final int ADDRESS_LENGTH = 2;
 
     /**
