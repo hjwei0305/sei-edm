@@ -49,12 +49,12 @@ public class DocumentService extends BaseEntityService<Document> {
     /**
      * 文档清理的天数
      */
-    @Value("${sei.edm.days.clear:180}")
-    private int clearDays = 180;
+//    @Value("${sei.edm.days.clear:180}")
+//    private int clearDays = 180;
     /**
      * 文档暂存的天数
      */
-    @Value("${sei.edm.days.temp:1}")
+    @Value("${sei.edm.days.temp:5}")
     private int tempDays = 1;
 
 
@@ -139,14 +139,14 @@ public class DocumentService extends BaseEntityService<Document> {
         // 当前日期
         LocalDate nowDate = LocalDate.now();
         // 当前日期 - 文档清理的天数
-        LocalDateTime startTime = LocalDateTime.of(nowDate.minusDays(clearDays), LocalTime.MIN);
+//        LocalDateTime startTime = LocalDateTime.of(nowDate.minusDays(clearDays), LocalTime.MIN);
         // 当前日期 - 文档暂存的天数
         LocalDateTime endTime = LocalDateTime.of(nowDate.minusDays(tempDays), LocalTime.MAX);
 
         //获取可以删除的文档Id清单
         Set<String> expiredAndNonBizDocIds;
         //获取需要清理的文档Id清单
-        List<Document> documents = dao.findAllByUploadedTimeBetween(startTime, endTime);
+        List<Document> documents = dao.findAllByUploadedTimeLessThanEqual(endTime);
         if (Objects.nonNull(documents) && !documents.isEmpty()) {
             // 所有过存储有效期的docId(包含关联业务与未关联业务的)
             Set<String> expiredDocIds = documents.stream()
@@ -191,14 +191,14 @@ public class DocumentService extends BaseEntityService<Document> {
         // 当前日期
         LocalDate nowDate = LocalDate.now();
         // 当前日期 - 文档清理的天数
-        LocalDateTime startTime = LocalDateTime.of(nowDate.minusDays(clearDays), LocalTime.MIN);
+//        LocalDateTime startTime = LocalDateTime.of(nowDate.minusDays(clearDays), LocalTime.MIN);
         // 当前日期 - 文档暂存的天数
-        LocalDateTime endTime = LocalDateTime.of(nowDate.minusDays(tempDays), LocalTime.MAX);
+        LocalDateTime endTime = LocalDateTime.of(nowDate.minusDays(tempDays), LocalTime.MIN);
 
         //获取可以删除的文档Id清单
         Set<String> expiredAndNonBizDocIds;
         //获取需要清理的分块文档Id清单
-        List<FileChunk> chunkList = fileChunkService.findAllByUploadedTimeBetween(startTime, endTime);
+        List<FileChunk> chunkList = fileChunkService.findAllByUploadedTimeLessThanEqual(endTime);
         if (Objects.nonNull(chunkList) && !chunkList.isEmpty()) {
 
             // 所有过存储有效期的原大文件docId

@@ -43,4 +43,8 @@ public class FileChunkService extends BaseEntityService<FileChunk> {
         return dao.findAllByUploadedTimeBetween(startTime, endTime);
     }
 
+    public List<FileChunk> findAllByUploadedTimeLessThanEqual(LocalDateTime endTime) {
+        return dao.findAllByUploadedTimeLessThanEqual(endTime);
+    }
+
 }

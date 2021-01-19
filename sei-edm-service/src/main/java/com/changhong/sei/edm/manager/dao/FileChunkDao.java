@@ -29,4 +29,6 @@ public interface FileChunkDao extends BaseEntityDao<FileChunk> {
      * @return 文档信息清单
      */
     List<FileChunk> findAllByUploadedTimeBetween(LocalDateTime startTime, LocalDateTime endTime);
+
+    List<FileChunk> findAllByUploadedTimeLessThanEqual(LocalDateTime time);
 }

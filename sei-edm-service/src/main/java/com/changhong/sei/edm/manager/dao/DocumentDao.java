@@ -24,4 +24,6 @@ public interface DocumentDao extends BaseEntityDao<Document> {
      * @return 文档信息清单
      */
     List<Document> findAllByUploadedTimeBetween(LocalDateTime startTime, LocalDateTime endTime);
+
+    List<Document> findAllByUploadedTimeLessThanEqual(LocalDateTime endTime);
 }

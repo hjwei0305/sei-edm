@@ -1,6 +1,7 @@
 package com.changhong.sei.edm.file.service.s3;
 
 import com.changhong.sei.core.dto.ResultData;
+import com.changhong.sei.core.limiter.support.lock.SeiLock;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.common.util.DocumentTypeUtil;
 import com.changhong.sei.edm.common.util.ImageUtils;
@@ -334,6 +335,7 @@ public class MinIOFileService implements FileService {
      */
     @Override
     @Transactional
+    @SeiLock(key = "'sei:edm:removeInvalidDocument'", fallback = "removeInvalidDocumentsFallback")
     public ResultData<String> removeInvalidDocuments() {
         long count = 0;
         // 获取未关联业务的分块
@@ -368,6 +370,10 @@ public class MinIOFileService implements FileService {
             LogUtil.error("清理过期无业务信息的文档失败: {}", resultData.getMessage());
         }
         return ResultData.success("成功清理: " + count + "个");
+    }
+
+    public ResultData<String> removeInvalidDocumentsFallback() {
+        return ResultData.fail("临时文件清理正在清理中");
     }
 
     /**
