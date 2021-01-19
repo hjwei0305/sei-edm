@@ -1,6 +1,6 @@
 package com.changhong.sei.edm.config;
 
-import org.jodconverter.document.DocumentFormatProperties;
+import org.jodconverter.core.document.DocumentFormatProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.Map;
