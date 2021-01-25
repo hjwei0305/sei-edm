@@ -117,7 +117,7 @@ public class AsyncDocumentContextService {
         Map<String, Object> field;
         for (String key : keySet) {
             field = new HashMap<>();
-            field.put("type", "text");
+            field.put("type", "keyword");
             field.put("index", Boolean.TRUE);
             properties.put(key, field);
         }
@@ -131,13 +131,13 @@ public class AsyncDocumentContextService {
             搜索时为了提高搜索准确度，会采用ik_smart分析器，会以粗粒度分词
          */
         field.put("analyzer", "ik");
-//        field.put("search_analyzer", "ik_smart");
-        field.put("search_analyzer", "ik_max_word");
+        field.put("search_analyzer", "ik_smart");
+//        field.put("search_analyzer", "ik_max_word");
         properties.put(ELASTIC_FIELD_DOC_CONTENT, field);
         // 追加docId
         if (!properties.containsKey(ELASTIC_FIELD_DOC_ID)) {
             field = new HashMap<>();
-            field.put("type", "text");
+            field.put("type", "keyword");
             field.put("index", Boolean.TRUE);
             properties.put(ELASTIC_FIELD_DOC_ID, field);
         }
