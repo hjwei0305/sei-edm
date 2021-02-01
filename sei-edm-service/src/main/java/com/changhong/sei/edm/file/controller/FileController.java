@@ -3,7 +3,6 @@ package com.changhong.sei.edm.file.controller;
 import com.changhong.sei.core.context.ContextUtil;
 import com.changhong.sei.core.context.SessionUser;
 import com.changhong.sei.core.dto.ResultData;
-import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.common.util.DocumentTypeUtil;
 import com.changhong.sei.edm.common.util.MD5Utils;
@@ -14,7 +13,6 @@ import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.edm.ocr.service.CharacterReaderService;
 import com.changhong.sei.util.EnumUtils;
-import com.changhong.sei.util.FileUtils;
 import com.changhong.sei.util.IdGenerator;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -37,9 +35,7 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -209,12 +205,13 @@ public class FileController {
             if (Objects.nonNull(inputStream)) {
                 try {
                     inputStream.close();
-                }catch (IOException ignored) {
+                } catch (IOException ignored) {
                 }
             }
         }
 
-        ResultData<UploadResponse> resultData = fileService.uploadDocument(dto);;
+        ResultData<UploadResponse> resultData = fileService.uploadDocument(dto);
+        ;
         if (resultData.successful() && StringUtils.isNotBlank(ocr)) {
             UploadResponse uploadResponse = resultData.getData();
             OcrType ocrType = EnumUtils.getEnum(OcrType.class, ocr);
@@ -364,13 +361,13 @@ public class FileController {
     }
 
     // http://localhost:8080/file/download?docIds=BEFD5E57FBF011EA9A0E0242C0A84610&fileName=%E6%B5%8B%E8%AF%951.zip
-    @ApiOperation("文件下载 docIds和entityId二选一")
+    @ApiOperation("文件下载 docIds和entityId二选一. 当docIds存在多个时用post")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "docIds", value = "附件id", paramType = "query"),
             @ApiImplicitParam(name = "entityId", value = "业务实体id", paramType = "query"),
             @ApiImplicitParam(name = "fileName", value = "下载文件名", paramType = "query")
     })
-    @GetMapping(value = "/download")
+    @RequestMapping(value = "/download", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> download(@RequestParam(value = "docIds", required = false) String docIds,
                                            @RequestParam(value = "entityId", required = false) String entityId,
                                            HttpServletRequest request,
@@ -386,8 +383,9 @@ public class FileController {
                     DocumentResponse document = fileService.getDocumentInfo(docIdArr[0].trim());
                     return singleDownload(document, Boolean.FALSE, 0, 0, request, response);
                 } else {
-                    SearchFilter filter = new SearchFilter(Document.FIELD_DOC_ID, docIdArr, SearchFilter.Operator.IN);
-                    List<Document> documents = documentService.findByFilter(filter);
+                    Set<String> idSet = new HashSet<>();
+                    Collections.addAll(idSet, docIdArr);
+                    List<Document> documents = documentService.getDocs(idSet);
                     if (Objects.nonNull(documents)) {
                         if (documents.size() == 1) {
                             DocumentResponse documentResponse = new ModelMapper().map(documents.get(0), DocumentResponse.class);

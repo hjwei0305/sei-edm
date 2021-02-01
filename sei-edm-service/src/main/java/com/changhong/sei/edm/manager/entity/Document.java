@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @DynamicUpdate
 public class Document extends BaseEntity {
     private static final long serialVersionUID = 1189243298194997374L;
-    public static final String FIELD_DOC_ID = "docId";
+//    public static final String FIELD_DOC_ID = "docId";
     public static final String FIELD_FILE_MD5 = "fileMd5";
 
     /**
@@ -28,7 +28,7 @@ public class Document extends BaseEntity {
      * local: 当本地存储时,为真实文件名(不含路径)
      * mongo: 当mongo存储时,为mongo返回的id
      */
-    @Column(name = "doc_id", length = 200, unique = true)
+    @Column(name = "doc_id", length = 200)
     private String docId;
     /**
      * 文件名（包括后缀,不含路径）

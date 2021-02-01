@@ -1,7 +1,6 @@
 package com.changhong.sei.edm.manager.controller;
 
 import com.changhong.sei.core.dto.ResultData;
-import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.edm.api.DocumentApi;
 import com.changhong.sei.edm.dto.BindRequest;
 import com.changhong.sei.edm.dto.DocumentResponse;
@@ -75,7 +74,7 @@ public class DocumentController implements DocumentApi {
      */
     public ResultData<DocumentResponse> getDocument(String docId) {
         if (StringUtils.isNotBlank(docId)) {
-            Document document = service.findByProperty(Document.FIELD_DOC_ID, docId);
+            Document document = service.getByDocId(docId);
             if (Objects.nonNull(document)) {
                 DocumentResponse response = new DocumentResponse();
                 modelMapper.map(document, response);
@@ -127,7 +126,7 @@ public class DocumentController implements DocumentApi {
     public ResultData<DocumentResponse> getEntityDocumentInfo(String docId) {
         DocumentResponse response = new DocumentResponse();
         if (StringUtils.isNotBlank(docId)) {
-            Document document = service.findByProperty(Document.FIELD_DOC_ID, docId);
+            Document document = service.getByDocId(docId);
             if (Objects.nonNull(document)) {
                 modelMapper.map(document, response);
             }
@@ -146,7 +145,7 @@ public class DocumentController implements DocumentApi {
     public ResultData<List<DocumentResponse>> getEntityDocumentInfoList(List<String> docIds) {
         List<DocumentResponse> responseList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(docIds)) {
-            List<Document> documentList = service.findByFilter(new SearchFilter(Document.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN));
+            List<Document> documentList = service.getDocs(docIds);
             if (CollectionUtils.isNotEmpty(documentList)) {
                 responseList = documentList.parallelStream().map(document -> {
                     DocumentResponse response = new DocumentResponse();

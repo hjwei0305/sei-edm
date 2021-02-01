@@ -2,10 +2,14 @@ package com.changhong.sei.edm.manager.dao;
 
 import com.changhong.sei.core.dao.BaseEntityDao;
 import com.changhong.sei.edm.manager.entity.Document;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 实现功能：
@@ -15,6 +19,12 @@ import java.util.List;
  */
 @Repository
 public interface DocumentDao extends BaseEntityDao<Document> {
+
+    @Query(value = "select d from Document d where d.id in :ids or d.docId in :docIds")
+    List<Document> findDocs(@Param("ids") Collection<String> ids,
+                           @Param("docIds") Collection<String> docIds);
+
+    Document findFirstByIdOrDocId(String id, String docId);
 
     /**
      * 获取一个时间段的文档信息

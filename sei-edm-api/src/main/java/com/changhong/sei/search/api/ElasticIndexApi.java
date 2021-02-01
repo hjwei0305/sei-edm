@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
  * @version 1.0.00  2020-09-21 23:35
  */
 @Validated
-@RequestMapping(path = "elastic", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(path = "elastic", produces = MediaType.APPLICATION_JSON_VALUE)
 public interface ElasticIndexApi {
     /**
      * 创建Elastic索引

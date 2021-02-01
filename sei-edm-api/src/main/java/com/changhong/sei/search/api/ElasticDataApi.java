@@ -23,7 +23,7 @@ import java.util.List;
  * @version 1.0.00  2020-09-22 00:37
  */
 @Validated
-@RequestMapping(path = "elasticData", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(path = "elasticData", produces = MediaType.APPLICATION_JSON_VALUE)
 public interface ElasticDataApi {
 
     /**

@@ -151,6 +151,8 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                             invoiceVO.setCategory("增值税普通发票");
                         } else if ("10".equals(arr[1])) {
                             invoiceVO.setCategory("增值税电子普通发票");
+                        } else if ("20".equals(arr[1])) {
+                            invoiceVO.setCategory("增值税电子专用发票");
                         } else {
                             invoiceVO.setCategory("通用机打发票(电子)");
                         }

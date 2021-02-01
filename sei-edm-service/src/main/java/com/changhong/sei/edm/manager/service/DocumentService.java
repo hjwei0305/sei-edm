@@ -119,7 +119,7 @@ public class DocumentService extends BaseEntityService<Document> {
         if (Objects.nonNull(businessInfos)) {
             Set<String> docIds = businessInfos.stream().map(BusinessDocument::getDocId).collect(Collectors.toSet());
             if (docIds.size() > 0) {
-                result = dao.findByFilter(new SearchFilter(Document.FIELD_DOC_ID, docIds, SearchFilter.Operator.IN));
+                result = this.getDocs(docIds);
             }
         }
         if (Objects.isNull(result)) {
@@ -265,10 +265,10 @@ public class DocumentService extends BaseEntityService<Document> {
         });
 
         SearchFilter filter;
+        List<Document> documents;
         for (Set<String> tempDocIds : mglist) {
             // 删除文档信息
-            filter = new SearchFilter(Document.FIELD_DOC_ID, tempDocIds, SearchFilter.Operator.IN);
-            List<Document> documents = dao.findByFilter(filter);
+            documents = this.getDocs(tempDocIds);
             if (CollectionUtils.isNotEmpty(documents)) {
                 dao.deleteInBatch(documents);
             }
@@ -285,6 +285,34 @@ public class DocumentService extends BaseEntityService<Document> {
     public Document getDocumentByMd5(String fileMd5) {
         if (StringUtils.isNotBlank(fileMd5)) {
             return dao.findFirstByProperty(Document.FIELD_FILE_MD5, fileMd5);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 按docId获取文档
+     *
+     * @param docId
+     * @return
+     */
+    public Document getByDocId(String docId) {
+        if (StringUtils.isNotBlank(docId)) {
+            return dao.findFirstByIdOrDocId(docId, docId);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 按docId获取文档
+     *
+     * @param docIds
+     * @return
+     */
+    public List<Document> getDocs(Collection<String> docIds) {
+        if (CollectionUtils.isNotEmpty(docIds)) {
+            return dao.findDocs(docIds, docIds);
         } else {
             return null;
         }

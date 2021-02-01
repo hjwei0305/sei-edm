@@ -21,7 +21,7 @@ import java.util.List;
  * @version 1.0.00  2020-02-05 16:16
  */
 @Validated
-@RequestMapping(path = "document", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(path = "document", produces = MediaType.APPLICATION_JSON_VALUE)
 public interface DocumentApi {
 //    /**
 //     * 上传一个文档(如果是图像生成缩略图)
@@ -67,7 +67,8 @@ public interface DocumentApi {
      */
     @GetMapping("getDocument")
     @ApiOperation(value = "获取一个文档(包含信息和数据)", notes = "获取一个文档(包含信息和数据)")
-    ResultData<DocumentResponse> getDocument(@RequestParam("docId") @NotBlank String docId, @RequestParam(name = "isThumbnail", defaultValue = "false", required = false) boolean isThumbnail);
+    ResultData<DocumentResponse> getDocument(@RequestParam("docId") @NotBlank String docId,
+                                             @RequestParam(name = "isThumbnail", defaultValue = "false", required = false) boolean isThumbnail);
 
     /**
      * 提交业务实体的文档信息
@@ -112,7 +113,7 @@ public interface DocumentApi {
      * @param docIds 文档Id清单
      * @return 文档
      */
-    @PostMapping(path = "getEntityDocumentInfoList", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(path = "getEntityDocumentInfoList", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "获取文档清单(只包含文档信息,不含文档数据)", notes = "获取文档清单(只包含文档信息,不含文档数据)")
     ResultData<List<DocumentResponse>> getEntityDocumentInfoList(@RequestBody @Valid @NotEmpty List<String> docIds);
 

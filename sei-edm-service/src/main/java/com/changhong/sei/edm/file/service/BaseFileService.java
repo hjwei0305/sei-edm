@@ -1,6 +1,5 @@
-package com.changhong.sei.edm.file.service.local;
+package com.changhong.sei.edm.file.service;
 
-import com.changhong.sei.core.context.ContextUtil;
 import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.limiter.support.lock.SeiLock;
 import com.changhong.sei.core.log.LogUtil;
@@ -10,15 +9,14 @@ import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.UploadResponse;
-import com.changhong.sei.edm.file.service.FileService;
 import com.changhong.sei.edm.manager.entity.Document;
 import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.util.FileUtils;
-import com.changhong.sei.util.IdGenerator;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,34 +30,14 @@ import java.util.concurrent.CompletableFuture;
  * 实现功能：
  *
  * @author 马超(Vision.Mac)
- * @version 1.0.00  2020-02-03 14:07
+ * @version 1.0.00  2020-02-03 00:32
  */
-public class LocalFileService implements FileService {
-    public static final String DOT = ".";
+public abstract class BaseFileService implements FileService {
 
-    private String storePath;
     @Autowired
-    private DocumentService documentService;
+    protected DocumentService documentService;
     @Autowired
-    private ModelMapper modelMapper;
-
-    /**
-     * 获取本地存储目录
-     */
-    public StringBuffer getFileDir() {
-        if (StringUtils.isBlank(storePath)) {
-            storePath = ContextUtil.getProperty("sei.edm.store-path");
-            if (StringUtils.isBlank(storePath)) {
-                storePath = System.getProperty("java.io.tmpdir");
-            }
-        }
-        StringBuffer dir = new StringBuffer(32);
-        dir.append(storePath);
-        if (!StringUtils.endsWithAny(storePath, FileUtils.SLASH_ONE, FileUtils.SLASH_TWO)) {
-            dir.append(File.pathSeparator);
-        }
-        return dir;
-    }
+    protected ModelMapper modelMapper;
 
     /**
      * 上传一个文档(如果是图像生成缩略图)
@@ -68,28 +46,45 @@ public class LocalFileService implements FileService {
      * @return 文档信息
      */
     @Override
+    @Transactional
     public ResultData<UploadResponse> uploadDocument(DocumentDto dto) {
         if (Objects.isNull(dto)) {
             return ResultData.fail("文件对象为空.");
         }
-        if (Objects.isNull(dto.getData())) {
+
+        final byte[] data = dto.getData();
+        if (Objects.isNull(data)) {
             return ResultData.fail("文件流为空.");
         }
 
-        // 获取文件目录
-        StringBuffer fileStr = this.getFileDir();
-        // uuid生成新的文件名
-        fileStr.append(IdGenerator.uuid2()).append(DOT).append(FileUtils.getExtension(dto.getFileName()));
+        String fileName = dto.getFileName();
+        Document document = new Document(fileName);
+        UploadResponse response = new UploadResponse();
+        Document docFile = documentService.getDocumentByMd5(dto.getFileMd5());
+        if (Objects.isNull(docFile)) {
+            ObjectId objectId = new ObjectId();
+            // 异步上传持久化
+            ResultData<Void> resultData = storeDocument(objectId.toString(), new ByteArrayInputStream(data), fileName, dto.getFileMd5(), data.length);
+            if (resultData.failed()) {
+                return ResultData.fail(resultData.getMessage());
+            }
 
-        File file = FileUtils.getFile(fileStr.toString());
-        try {
-            FileUtils.writeByteArrayToFile(file, dto.getData());
-        } catch (IOException e) {
-            LogUtil.error("文件上传读取异常.", e);
-            return ResultData.fail("文件上传读取异常.");
+            document.setDocId(objectId.toString());
+        } else {
+            document.setDocId(docFile.getDocId());
         }
+        document.setFileMd5(dto.getFileMd5());
+        document.setSize((long) data.length);
+        document.setUploadedTime(LocalDateTime.now());
+        document.setDocumentType(DocumentTypeUtil.getDocumentType(fileName));
+        documentService.save(document);
 
-        return uploadDocument(dto.getFileMd5(), dto.getFileName(), dto.getSystem(), dto.getUploadUser(), file);
+        //response.setDocId(document.getDocId());
+        response.setDocId(document.getId());
+        response.setFileName(document.getFileName());
+        response.setDocumentType(document.getDocumentType());
+
+        return ResultData.success(response);
     }
 
     /**
@@ -100,25 +95,21 @@ public class LocalFileService implements FileService {
      * @return 文档信息
      */
     @Override
+    @Transactional
     public ResultData<UploadResponse> mergeFile(String fileMd5, String fileName) {
         List<FileChunk> chunks = documentService.getFileChunk(fileMd5);
         if (CollectionUtils.isNotEmpty(chunks)) {
             Set<String> chunkIds = new HashSet<>();
             Set<String> docIds = new HashSet<>();
-            List<FileInputStream> inputStreamList = new ArrayList<>(chunks.size());
-
-            // 获取文件目录
-            StringBuffer fileStr = this.getFileDir();
+            List<ByteArrayInputStream> inputStreamList = new ArrayList<>(chunks.size());
             for (FileChunk chunk : chunks) {
                 chunkIds.add(chunk.getId());
                 docIds.add(chunk.getDocId());
-                try {
-                    File file = FileUtils.getFile(fileStr + chunk.getDocId());
-                    if (file.exists()) {
-                        inputStreamList.add(new FileInputStream(file));
-                    }
+
+                try (ByteArrayOutputStream out = getByteArray(chunk.getDocId())) {
+                    inputStreamList.add(new ByteArrayInputStream(out.toByteArray()));
                 } catch (IOException e) {
-                    LogUtil.error("[" + chunk.getDocId() + "]分片文件读取异常.", e);
+                    e.printStackTrace();
                 }
             }
 
@@ -127,38 +118,30 @@ public class LocalFileService implements FileService {
                 return ResultData.fail("分片错误");
             }
 
-            // uuid生成新的文件名
-            final String docId = IdGenerator.uuid2() + DOT + FileUtils.getExtension(fileName);
-
+            final long size = chunks.get(0).getTotalSize();
+            ObjectId objectId = new ObjectId();
+            DocumentType documentType = DocumentTypeUtil.getDocumentType(fileName);
             // 异步上传持久化
             CompletableFuture.runAsync(() -> {
                 //将集合中的枚举 赋值给 en
-                Enumeration<FileInputStream> en = Collections.enumeration(inputStreamList);
+                Enumeration<ByteArrayInputStream> en = Collections.enumeration(inputStreamList);
                 //en中的 多个流合并成一个
                 InputStream sis = new SequenceInputStream(en);
 
-                FileOutputStream fos = null;
-                byte[] buf = new byte[1024];
-                int len = 0;
-                try {
-                    File originFile = new File(fileStr + docId);
-                    fos = new FileOutputStream(originFile);
-                    while ((len = sis.read(buf)) != -1) {
-                        fos.write(buf, 0, len);
-                    }
-
-                    uploadDocument(fileMd5, fileName, "", "", originFile);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    try {
-                        if (fos != null) {
-                            fos.close();
-                        }
-                        sis.close();
-                    } catch (IOException ignored) {
-                    }
+                ResultData<Void> resultData = storeDocument(objectId.toString(), sis, fileName, fileMd5, size);
+                inputStreamList.clear();
+                if (resultData.failed()) {
+                    LogUtil.debug("合并文件分片错误: " + resultData.getMessage());
+                    return;
                 }
+
+                Document document = new Document(fileName);
+                document.setDocId(objectId.toString());
+                document.setFileMd5(fileMd5);
+                document.setSize(size);
+                document.setUploadedTime(LocalDateTime.now());
+                document.setDocumentType(documentType);
+                documentService.save(document);
 
                 // 删除分片文件
                 removeByDocIds(docIds, true);
@@ -169,9 +152,9 @@ public class LocalFileService implements FileService {
             });
 
             UploadResponse response = new UploadResponse();
-            response.setDocId(docId);
+            response.setDocId(objectId.toString());
             response.setFileName(fileName);
-            response.setDocumentType(DocumentTypeUtil.getDocumentType(fileName));
+            response.setDocumentType(documentType);
 
             return ResultData.success(response);
         } else {
@@ -180,7 +163,7 @@ public class LocalFileService implements FileService {
     }
 
     /**
-     * 获取一个文档(不含文件内容数据)
+     * 获取一个文档(不包含信息和数据)
      *
      * @param docId 文档Id
      * @return 文档
@@ -229,27 +212,19 @@ public class LocalFileService implements FileService {
     /**
      * 获取一个文档(包含信息和数据)
      *
-     * @param docId    文档Id
-     * @param hasChunk
-     * @param out
+     * @param docId 文档Id
      */
     @Override
     public void getDocumentOutputStream(String docId, boolean hasChunk, OutputStream out) {
         if (StringUtils.isNotBlank(docId)) {
-            // 获取文件目录
-            StringBuffer fileStr = this.getFileDir();
             if (hasChunk) {
                 List<FileChunk> chunks = documentService.getFileChunkByOriginDocId(docId);
                 if (CollectionUtils.isNotEmpty(chunks)) {
                     for (FileChunk chunk : chunks) {
-                        byte[] data;
-                        try {
-                            File file = FileUtils.getFile(fileStr + chunk.getDocId());
-                            if (file.exists()) {
-                                data = FileUtils.readFileToByteArray(file);
-                                out.write(data, 0, data.length);
-                            }
-                        } catch (Exception e) {
+                        try (ByteArrayOutputStream byteArrayOut = getByteArray(chunk.getDocId())) {
+                            byte[] data = byteArrayOut.toByteArray();
+                            out.write(data, 0, data.length);
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -257,19 +232,7 @@ public class LocalFileService implements FileService {
                     LogUtil.error("{} 文件的分块不存在.", docId);
                 }
             } else {
-                try {
-                    File file = FileUtils.getFile(fileStr + docId);
-                    if (file.exists()) {
-                        FileInputStream input = new FileInputStream(file);
-                        byte[] b = new byte[1024];
-                        int len;
-                        while ((len = input.read(b)) != -1) {
-                            out.write(b, 0, len);
-                        }
-                    }
-                } catch (IOException e) {
-                    LogUtil.error("[" + docId + "]文件读取异常.", e);
-                }
+                getDocByteArray(docId, out);
             }
         }
     }
@@ -288,39 +251,29 @@ public class LocalFileService implements FileService {
         if (Objects.nonNull(document)) {
             modelMapper.map(document, response);
 
-            // 获取文件目录
-            StringBuffer fileStr = this.getFileDir();
             if (document.getHasChunk()) {
                 List<FileChunk> chunks = documentService.getFileChunkByOriginDocId(docId);
                 if (CollectionUtils.isNotEmpty(chunks)) {
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
                     byte[] data = null;
                     for (FileChunk chunk : chunks) {
-                        try {
-                            File file = FileUtils.getFile(fileStr + chunk.getDocId());
-                            if (file.exists()) {
-                                data = ArrayUtils.addAll(data, FileUtils.readFileToByteArray(file));
-                            }
-                        } catch (Exception e) {
+                        try (ByteArrayOutputStream out = getByteArray(chunk.getDocId())) {
+                            data = ArrayUtils.addAll(data, out.toByteArray());
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
-                    response.setData(out.toByteArray());
+                    response.setData(data);
                 } else {
                     LogUtil.error("{} 文件的分块不存在.", docId);
                 }
             } else {
-                try {
-                    File file = FileUtils.getFile(fileStr + document.getDocId());
-                    if (file.exists()) {
-                        response.setData(FileUtils.readFileToByteArray(file));
-                    }
+                try (ByteArrayOutputStream baos = getByteArray(document.getDocId())) {
+                    response.setData(baos.toByteArray());
                 } catch (IOException e) {
-                    LogUtil.error("[" + docId + "]文件读取异常.", e);
+                    e.printStackTrace();
                 }
             }
         }
-
         return response;
     }
 
@@ -341,30 +294,15 @@ public class LocalFileService implements FileService {
                 DocumentResponse response = new DocumentResponse();
                 modelMapper.map(document, response);
 
-                //复制数据流
-                FileInputStream imageStream = null;
-                // 获取文件目录
-                StringBuffer fileStr = this.getFileDir();
-                try {
-                    File file = FileUtils.getFile(fileStr + document.getDocId());
-                    if (file.exists()) {
-                        imageStream = FileUtils.openInputStream(file);
+                //获取原图
+                try (ByteArrayOutputStream baos = getByteArray(document.getDocId()); InputStream imageStream = new ByteArrayInputStream(baos.toByteArray())) {
+                    String ext = FileUtils.getExtension(document.getFileName());
+                    byte[] thumbData = ImageUtils.scale2(imageStream, ext, height, width, true);
 
-                        String ext = FileUtils.getExtension(document.getFileName());
-                        byte[] thumbData = ImageUtils.scale2(imageStream, ext, height, width, true);
-                        response.setData(thumbData);
-                        return response;
-                    }
+                    response.setData(thumbData);
+                    return response;
                 } catch (IOException e) {
-                    LogUtil.error("生成缩略图异常.", e);
-                } finally {
-                    if (Objects.nonNull(imageStream)) {
-                        try {
-                            imageStream.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    return null;
                 }
             }
         }
@@ -389,18 +327,7 @@ public class LocalFileService implements FileService {
                 documentService.deleteByDocIds(docIds);
             }
 
-            for (String docId : docIds) {
-                // 获取文件目录
-                StringBuffer fileStr = this.getFileDir();
-                try {
-                    File file = FileUtils.getFile(fileStr + docId);
-                    if (file.exists()) {
-                        file.delete();
-                    }
-                } catch (Exception e) {
-                    LogUtil.error("[" + docId + "]文件删除异常.", e);
-                }
-            }
+            deleteDocuments(docIds);
         }
         return ResultData.success("删除成功.");
     }
@@ -447,37 +374,38 @@ public class LocalFileService implements FileService {
         return ResultData.success("成功清理: " + count + "个");
     }
 
-    public ResultData<String> removeInvalidDocumentsFallback() {
+    public final ResultData<String> removeInvalidDocumentsFallback() {
         return ResultData.fail("临时文件清理正在清理中");
     }
 
     /**
-     * 上传一个文档
+     * 获取文档
      *
-     * @param file 文档
-     * @return 文档信息
+     * @param docId 文档id
+     * @return 返回输出流
      */
-    private ResultData<UploadResponse> uploadDocument(String md5, String originName, String sys, String uploadUser, File file) {
-        if (Objects.isNull(file)) {
-            return ResultData.fail("文件不存在.");
-        }
-
-        Document document = new Document(originName);
-        document.setFileMd5(md5);
-        document.setDocId(FileUtils.getFileName(file.getName()));
-        document.setSize(file.length());
-        document.setSystem(sys);
-        document.setUploadUser(uploadUser);
-        document.setUploadedTime(LocalDateTime.now());
-        document.setDocumentType(DocumentTypeUtil.getDocumentType(document.getFileName()));
-
-        documentService.save(document);
-
-        UploadResponse response = new UploadResponse();
-        response.setDocId(document.getDocId());
-        response.setFileName(document.getFileName());
-        response.setDocumentType(document.getDocumentType());
-
-        return ResultData.success(response);
+    private ByteArrayOutputStream getByteArray(String docId) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        this.getDocByteArray(docId, baos);
+        return baos;
     }
+
+    /**
+     * 获取文档
+     *
+     * @param docId 文档id
+     */
+    public abstract void getDocByteArray(String docId, OutputStream out);
+
+    /**
+     * 删除文件
+     *
+     * @param docIds 文档id清单
+     */
+    public abstract void deleteDocuments(Collection<String> docIds);
+
+    /**
+     * 上传一个文档
+     */
+    public abstract ResultData<Void> storeDocument(String objectId, InputStream inputStream, String fileName, String fileMd5, long size);
 }
