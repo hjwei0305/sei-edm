@@ -367,7 +367,7 @@ public class FileController {
             @ApiImplicitParam(name = "entityId", value = "业务实体id", paramType = "query"),
             @ApiImplicitParam(name = "fileName", value = "下载文件名", paramType = "query")
     })
-    @RequestMapping(value = "/download", method = {RequestMethod.GET, RequestMethod.POST})
+    @GetMapping(value = "/download")
     public ResponseEntity<byte[]> download(@RequestParam(value = "docIds", required = false) String docIds,
                                            @RequestParam(value = "entityId", required = false) String entityId,
                                            HttpServletRequest request,
@@ -399,6 +399,39 @@ public class FileController {
             }
         } else {
             List<Document> documents = documentService.getDocumentsByEntityId(entityId);
+            if (Objects.nonNull(documents)) {
+                if (documents.size() == 1) {
+                    DocumentResponse documentResponse = new ModelMapper().map(documents.get(0), DocumentResponse.class);
+                    return singleDownload(documentResponse, Boolean.FALSE, 0, 0, request, response);
+                } else {
+                    // 多文件下载
+                    return multipleDownload(documents, request, response);
+                }
+            }
+        }
+
+        LogUtil.error("file is not found");
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @ApiOperation("文件下载 docIds和entityId二选一. 当docIds存在多个时用post")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "docIds", value = "附件id"),
+            @ApiImplicitParam(name = "fileName", value = "下载文件名", paramType = "query")
+    })
+    @PostMapping(value = "/download")
+    public ResponseEntity<byte[]> download(@RequestParam(value = "docIds") Set<String> docIds,
+                                           HttpServletRequest request,
+                                           HttpServletResponse response) throws Exception {
+        if (docIds.size() == 1) {
+            Optional<String> optional = docIds.stream().findFirst();
+            if (optional.isPresent()) {
+                // 单文件下载
+                DocumentResponse document = fileService.getDocumentInfo(optional.get());
+                return singleDownload(document, Boolean.FALSE, 0, 0, request, response);
+            }
+        } else {
+            List<Document> documents = documentService.getDocs(docIds);
             if (Objects.nonNull(documents)) {
                 if (documents.size() == 1) {
                     DocumentResponse documentResponse = new ModelMapper().map(documents.get(0), DocumentResponse.class);
