@@ -356,43 +356,82 @@ public class FileController {
         } else {
             // 单文件下载
             DocumentResponse document = fileService.getDocumentInfo(docId);
-            return singleDownload(document, Boolean.TRUE, width, height, request, response);
+            if (Objects.nonNull(document) && StringUtils.isNotBlank(document.getFileName())) {
+                return singleDownload(document, Boolean.TRUE, width, height, request, response);
+            } else {
+                LogUtil.error("file is not found");
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
         }
     }
 
     // http://localhost:8080/file/download?docIds=BEFD5E57FBF011EA9A0E0242C0A84610&fileName=%E6%B5%8B%E8%AF%951.zip
     @ApiOperation("文件下载 docIds和entityId二选一. 当docIds存在多个时用post")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "docIds", value = "附件id", paramType = "query"),
-            @ApiImplicitParam(name = "entityId", value = "业务实体id", paramType = "query"),
-            @ApiImplicitParam(name = "fileName", value = "下载文件名", paramType = "query")
+            @ApiImplicitParam(name = "docIds", value = "附件id"),
+            @ApiImplicitParam(name = "entityId", value = "业务实体id"),
+            @ApiImplicitParam(name = "fileName", value = "下载文件名")
     })
-    @GetMapping(value = "/download")
+    @RequestMapping(value = "/download", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> download(@RequestParam(value = "docIds", required = false) String docIds,
                                            @RequestParam(value = "entityId", required = false) String entityId,
+                                           @RequestParam(value = "fileName", required = false) String fileName,
+                                           @RequestBody(required = false) DownloadRequest downloadRequest,
                                            HttpServletRequest request,
                                            HttpServletResponse response) throws Exception {
+        Set<String> docIdSet = null;
+        if (Objects.nonNull(downloadRequest)) {
+            fileName = downloadRequest.getFileName();
+            docIdSet = downloadRequest.getDocIds();
+        }
+
         if (StringUtils.isBlank(entityId)) {
             if (StringUtils.isBlank(docIds)) {
-                LogUtil.warn("下载参数错误.");
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                if (CollectionUtils.isEmpty(docIdSet)) {
+                    LogUtil.warn("下载参数错误.");
+                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                } else {
+                    if (docIdSet.size() == 1) {
+                        Optional<String> optional = docIdSet.stream().filter(StringUtils::isNotBlank).findFirst();
+                        if (optional.isPresent()) {
+                            // 单文件下载
+                            DocumentResponse document = fileService.getDocumentInfo(optional.get());
+                            if (Objects.nonNull(document) && StringUtils.isNotBlank(document.getFileName())) {
+                                return singleDownload(document, Boolean.FALSE, 0, 0, request, response);
+                            }
+                        }
+                    } else {
+                        List<Document> documents = documentService.getDocs(docIdSet);
+                        if (Objects.nonNull(documents)) {
+                            if (documents.size() == 1) {
+                                DocumentResponse documentResponse = new ModelMapper().map(documents.get(0), DocumentResponse.class);
+                                return singleDownload(documentResponse, Boolean.FALSE, 0, 0, request, response);
+                            } else {
+                                // 多文件下载
+                                return multipleDownload(fileName, documents, request, response);
+                            }
+                        }
+                    }
+                }
             } else {
                 String[] docIdArr = StringUtils.split(docIds, ",");
                 if (docIdArr.length == 1) {
                     // 单文件下载
                     DocumentResponse document = fileService.getDocumentInfo(docIdArr[0].trim());
-                    return singleDownload(document, Boolean.FALSE, 0, 0, request, response);
+                    if (Objects.nonNull(document) && StringUtils.isNotBlank(document.getFileName())) {
+                        return singleDownload(document, Boolean.FALSE, 0, 0, request, response);
+                    }
                 } else {
-                    Set<String> idSet = new HashSet<>();
-                    Collections.addAll(idSet, docIdArr);
-                    List<Document> documents = documentService.getDocs(idSet);
+                    docIdSet = new HashSet<>();
+                    Collections.addAll(docIdSet, docIdArr);
+                    List<Document> documents = documentService.getDocs(docIdSet);
                     if (Objects.nonNull(documents)) {
                         if (documents.size() == 1) {
                             DocumentResponse documentResponse = new ModelMapper().map(documents.get(0), DocumentResponse.class);
                             return singleDownload(documentResponse, Boolean.FALSE, 0, 0, request, response);
                         } else {
                             // 多文件下载
-                            return multipleDownload(documents, request, response);
+                            return multipleDownload(fileName, documents, request, response);
                         }
                     }
                 }
@@ -405,40 +444,7 @@ public class FileController {
                     return singleDownload(documentResponse, Boolean.FALSE, 0, 0, request, response);
                 } else {
                     // 多文件下载
-                    return multipleDownload(documents, request, response);
-                }
-            }
-        }
-
-        LogUtil.error("file is not found");
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
-
-    @ApiOperation("文件下载 docIds和entityId二选一. 当docIds存在多个时用post")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "docIds", value = "附件id"),
-            @ApiImplicitParam(name = "fileName", value = "下载文件名", paramType = "query")
-    })
-    @PostMapping(value = "/download")
-    public ResponseEntity<byte[]> download(@RequestParam(value = "docIds") Set<String> docIds,
-                                           HttpServletRequest request,
-                                           HttpServletResponse response) throws Exception {
-        if (docIds.size() == 1) {
-            Optional<String> optional = docIds.stream().findFirst();
-            if (optional.isPresent()) {
-                // 单文件下载
-                DocumentResponse document = fileService.getDocumentInfo(optional.get());
-                return singleDownload(document, Boolean.FALSE, 0, 0, request, response);
-            }
-        } else {
-            List<Document> documents = documentService.getDocs(docIds);
-            if (Objects.nonNull(documents)) {
-                if (documents.size() == 1) {
-                    DocumentResponse documentResponse = new ModelMapper().map(documents.get(0), DocumentResponse.class);
-                    return singleDownload(documentResponse, Boolean.FALSE, 0, 0, request, response);
-                } else {
-                    // 多文件下载
-                    return multipleDownload(documents, request, response);
+                    return multipleDownload(fileName, documents, request, response);
                 }
             }
         }
@@ -528,9 +534,8 @@ public class FileController {
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
-    private ResponseEntity<byte[]> multipleDownload(List<Document> documents, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    private ResponseEntity<byte[]> multipleDownload(String zipFileName, List<Document> documents, HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (CollectionUtils.isNotEmpty(documents)) {
-            String zipFileName = request.getParameter("fileName");
             if (StringUtils.isBlank(zipFileName)) {
                 zipFileName = IdGenerator.uuid2() + ".zip";
             }
