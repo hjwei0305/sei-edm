@@ -317,8 +317,8 @@ public class DocumentService extends BaseEntityService<Document> {
                 int index = 0;
                 int size = docIds.size();
                 List<Document> result = new ArrayList<>(docIds.size());
-                for (Document document: documents) {
-                    if (docIds.contains(document.getDocId()) && size > index) {
+                for (Document document : documents) {
+                    if ((docIds.contains(document.getDocId()) || docIds.contains(document.getId())) && size > index) {
                         index++;
                         result.add(document);
                     }
