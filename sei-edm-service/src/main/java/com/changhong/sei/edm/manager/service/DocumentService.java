@@ -264,7 +264,6 @@ public class DocumentService extends BaseEntityService<Document> {
             mglist.add(docIds.stream().skip(i * MAX_NUMBER).limit(MAX_NUMBER).collect(Collectors.toSet()));
         });
 
-        SearchFilter filter;
         List<Document> documents;
         for (Set<String> tempDocIds : mglist) {
             // 删除文档信息
@@ -312,10 +311,23 @@ public class DocumentService extends BaseEntityService<Document> {
      */
     public List<Document> getDocs(Collection<String> docIds) {
         if (CollectionUtils.isNotEmpty(docIds)) {
-            return dao.findDocs(docIds, docIds);
-        } else {
-            return null;
+            List<Document> documents = dao.findDocs(docIds, docIds);
+            // 历史数据原因,增加过渡阶段补充代码 start    计划在2021-06-30移除该部分过渡代码
+            if (CollectionUtils.isNotEmpty(documents)) {
+                int index = 0;
+                int size = docIds.size();
+                List<Document> result = new ArrayList<>(docIds.size());
+                for (Document document: documents) {
+                    if (docIds.contains(document.getDocId()) && size > index) {
+                        index++;
+                        result.add(document);
+                    }
+                }
+                return result;
+            }
+            // 历史数据原因,增加过渡阶段补充代码 end
         }
+        return null;
     }
 
     /**
