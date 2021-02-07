@@ -2,7 +2,6 @@ package com.changhong.sei.edm.manager.service;
 
 import com.changhong.sei.core.dao.BaseEntityDao;
 import com.changhong.sei.core.dto.ResultData;
-import com.changhong.sei.core.dto.serach.SearchFilter;
 import com.changhong.sei.core.service.BaseEntityService;
 import com.changhong.sei.edm.common.util.DocumentTypeUtil;
 import com.changhong.sei.edm.manager.dao.BusinessDocumentDao;
@@ -314,15 +313,17 @@ public class DocumentService extends BaseEntityService<Document> {
             List<Document> documents = dao.findDocs(docIds, docIds);
             // 历史数据原因,增加过渡阶段补充代码 start    计划在2021-06-30移除该部分过渡代码
             if (CollectionUtils.isNotEmpty(documents)) {
-                int index = 0;
-                int size = docIds.size();
-                List<Document> result = new ArrayList<>(docIds.size());
+                Map<String, Document> docMap = new HashMap<>();
                 for (Document document : documents) {
-                    if ((docIds.contains(document.getDocId()) || docIds.contains(document.getId())) && size > index) {
-                        index++;
-                        result.add(document);
-                    }
+                    docMap.put(document.getId(), document);
+                    docMap.put(document.getDocId(), document);
                 }
+                documents.clear();
+                List<Document> result = new ArrayList<>();
+                for (String docId : docIds) {
+                    result.add(docMap.get(docId));
+                }
+                docMap.clear();
                 return result;
             }
             // 历史数据原因,增加过渡阶段补充代码 end
