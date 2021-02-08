@@ -313,10 +313,13 @@ public class DocumentService extends BaseEntityService<Document> {
             List<Document> documents = dao.findDocs(docIds, docIds);
             // 历史数据原因,增加过渡阶段补充代码 start    计划在2021-06-30移除该部分过渡代码
             if (CollectionUtils.isNotEmpty(documents)) {
+                documents = documents.parallelStream().sorted(Comparator.comparing(Document::getUploadedTime).reversed()).collect(Collectors.toList());
                 Map<String, Document> docMap = new HashMap<>();
                 for (Document document : documents) {
-                    docMap.put(document.getId(), document);
-                    docMap.put(document.getDocId(), document);
+                    if (docMap.isEmpty() || !docMap.containsKey(document.getId())) {
+                        docMap.put(document.getId(), document);
+                        docMap.put(document.getDocId(), document);
+                    }
                 }
                 documents.clear();
                 List<Document> result = new ArrayList<>();
