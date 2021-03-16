@@ -39,6 +39,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
@@ -391,6 +392,8 @@ public class BaseElasticService implements SearchService {
         try {
             SearchSourceBuilder searchSourceBuilder = this.initSearchSourceBuilder(buildBoolQueryBuilder(search),
                     pageInfo.getPage() - 1, pageInfo.getRows(), 120);
+            // 分组聚合
+            //searchSourceBuilder.aggregation(AggregationBuilders.terms("order_count").field("orderNo.keyword"));
 
             // 初始化高亮设置
             initHighlightBuilder(search.getHighlightFields(), searchSourceBuilder);
@@ -488,7 +491,8 @@ public class BaseElasticService implements SearchService {
             if (CollectionUtils.isNotEmpty(list)) {
                 String[] fields = list.toArray(new String[0]);
 
-                queryBuilder.must(QueryBuilders.multiMatchQuery(keyword, fields));
+//                queryBuilder.must(QueryBuilders.multiMatchQuery(keyword, fields));
+                queryBuilder.must(QueryBuilders.multiMatchQuery(keyword, fields).type(MultiMatchQueryBuilder.Type.PHRASE_PREFIX));
             }
         }
 
