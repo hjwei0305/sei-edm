@@ -36,7 +36,7 @@ public class FileConverterServiceImpl implements FileConverterService {
 
     private final List<String> FILE_TYPE2_HTMLS = Arrays.asList("xls", "xlsx");
 
-    @Autowired
+    @Autowired(required = false)
     private DocumentConverter documentConverter;
     @Autowired
     private FileService fileService;

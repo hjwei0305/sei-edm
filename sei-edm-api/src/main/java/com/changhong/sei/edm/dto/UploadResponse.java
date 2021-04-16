@@ -25,6 +25,11 @@ public class UploadResponse implements Serializable {
     @ApiModelProperty(notes = "文件名（包括后缀）")
     private String fileName;
     /**
+     * 文件MD5
+     */
+    @ApiModelProperty(notes = "文件MD5")
+    private String fileMd5;
+    /**
      * 文件类型
      */
     @ApiModelProperty(notes = "文件类型")
@@ -49,6 +54,14 @@ public class UploadResponse implements Serializable {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public String getFileMd5() {
+        return fileMd5;
+    }
+
+    public void setFileMd5(String fileMd5) {
+        this.fileMd5 = fileMd5;
     }
 
     public DocumentType getDocumentType() {

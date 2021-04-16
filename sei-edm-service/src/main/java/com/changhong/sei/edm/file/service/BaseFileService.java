@@ -83,6 +83,7 @@ public abstract class BaseFileService implements FileService {
         response.setDocId(document.getId());
         response.setFileName(document.getFileName());
         response.setDocumentType(document.getDocumentType());
+        response.setFileMd5(document.getFileMd5());
 
         return ResultData.success(response);
     }
@@ -155,6 +156,7 @@ public abstract class BaseFileService implements FileService {
             response.setDocId(objectId.toString());
             response.setFileName(fileName);
             response.setDocumentType(documentType);
+            response.setFileMd5(fileMd5);
 
             return ResultData.success(response);
         } else {
@@ -374,7 +376,7 @@ public abstract class BaseFileService implements FileService {
         return ResultData.success("成功清理: " + count + "个");
     }
 
-    public final ResultData<String> removeInvalidDocumentsFallback() {
+    public ResultData<String> removeInvalidDocumentsFallback() {
         return ResultData.fail("临时文件清理正在清理中");
     }
 

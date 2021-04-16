@@ -45,7 +45,7 @@ public class DocumentDto implements Serializable {
     /**
      * 上传时间
      */
-    @ApiModelProperty(notes = "上传时间")
+    @ApiModelProperty(notes = "上传时间", example = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime uploadedTime;
     /**

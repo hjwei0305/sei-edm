@@ -498,7 +498,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
 
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
             Map<String, String> postParameters = new HashMap<>();
             postParameters.put("bill_num", paraMap.get("bill_num"));
