@@ -16,10 +16,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -179,7 +176,7 @@ public class DocumentController implements DocumentApi {
                 }
             }
         }
-        return ResultData.success(result);
+        return ResultData.success(result.stream().sorted(Comparator.comparing(DocumentResponse::getUploadedTime)).collect(Collectors.toList()));
 //        return ResultData.fail("没有找到对应的文档信息清单");
     }
 
