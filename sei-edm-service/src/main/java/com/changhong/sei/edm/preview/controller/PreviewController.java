@@ -46,10 +46,6 @@ public class PreviewController {
     @Value("${sei.edm.base-url:none}")
     private String baseUrl;
 
-    static {
-        LogUtil.bizLog("文件临时目录: {}", FileConstants.FILE_PATH);
-    }
-
     @GetMapping(value = "/pdf2Img/{docId}")
     @ApiOperation("在线预览")
     public String pdf2Img(@PathVariable("docId") String docId,

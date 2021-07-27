@@ -1,5 +1,7 @@
 package com.changhong.sei.edm.common;
 
+import com.changhong.sei.core.log.LogUtil;
+
 import java.io.File;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +22,8 @@ public class FileConstants {
     static {
         MAP_ = new ConcurrentHashMap<>();
         FILE_PATH = System.getProperty("user.dir").concat(File.separator).concat("file").concat(File.separator);
+
+        LogUtil.bizLog("文件临时目录: {}", FILE_PATH);
     }
 
     public static void add(File file) {
