@@ -38,9 +38,11 @@
     &nbsp;&nbsp;&nbsp;&nbsp;
     <label class="btn btn-info  mb-2" style="cursor:pointer;" onclick="preview();">预览</label>
     &nbsp;&nbsp;&nbsp;&nbsp;
+    <label class="btn btn-danger  mb-2" style="cursor:pointer;" onclick="pdf2Img();">PDF转图片预览</label>
+    &nbsp;&nbsp;&nbsp;&nbsp;
     <label class="btn btn-warning  mb-2" style="cursor:pointer;" onclick="ocr('Barcode');">识别Barcode</label>
     &nbsp;&nbsp;&nbsp;&nbsp;
-    <label class="btn btn-warning  mb-2" style="cursor:pointer;" onclick="ocr('InvoiceQr');">识别Qr</label>
+    <label class="btn btn-block  mb-2" style="cursor:pointer;" onclick="ocr('InvoiceQr');">识别Qr</label>
 </div>
 <div style="height: 720px">
     <iframe src="" height="100%" width="100%"
@@ -93,6 +95,14 @@
             return;
         }
         document.getElementsByTagName('iframe')[0].src = _ctxPath + "/preview?markText=SEI业务协同平台6.0&docId=" + docId;
+    }
+
+    function pdf2Img() {
+        if (docId == "") {
+            $("#msg").html("请先上传文件.");
+            return;
+        }
+        document.getElementsByTagName('iframe')[0].src = _ctxPath + "/pdf2Img/" + docId;
     }
 
     function ocr(type) {
