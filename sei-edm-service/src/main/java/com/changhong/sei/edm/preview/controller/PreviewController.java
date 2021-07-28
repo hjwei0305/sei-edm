@@ -186,6 +186,7 @@ public class PreviewController {
             @ApiImplicitParam(name = "markText", value = "水印内容", paramType = "query", example = "SEI6.0")
     })
     public String preview(@RequestParam("docId") String docId,
+                          @RequestParam(name = "previewType", required = false) String previewType,
                           @RequestParam(name = "markText", required = false) String markText,
                           Model model, HttpServletRequest request) {
         StringBuffer url = request.getRequestURL();
@@ -212,8 +213,12 @@ public class PreviewController {
             case Pdf:
             case Word:
             case Powerpoint:
-                view = "preview/pdf.html";
-                fileName = fileName.substring(0, fileName.lastIndexOf(".")).concat(".pdf");
+                if (StringUtils.equalsIgnoreCase("image", previewType)) {
+                    view = this.pdf2Img(docId, model, request);
+                } else {
+                    view = "preview/pdf.html";
+                    fileName = fileName.substring(0, fileName.lastIndexOf(".")).concat(".pdf");
+                }
                 break;
             case Excel:
                 view = "preview/html.html";
