@@ -160,9 +160,9 @@ public class PreviewController {
             }
 
             PDFRenderer pdfRenderer = new PDFRenderer(pdfDoc);
-            BufferedImage image = pdfRenderer.renderImageWithDPI(page, 105, ImageType.RGB);
+            BufferedImage image = pdfRenderer.renderImageWithDPI(page, 2*72, ImageType.RGB);
             OutputStream outputStream = response.getOutputStream();
-            ImageIOUtil.writeImage(image, "jpg", outputStream, 105);
+            ImageIOUtil.writeImage(image, "jpg", outputStream, 2*72);
 
             return new ResponseEntity<>(new byte[0], HttpStatus.OK);
         } catch (Exception e) {
