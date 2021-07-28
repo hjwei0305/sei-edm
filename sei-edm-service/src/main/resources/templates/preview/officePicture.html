@@ -7,6 +7,7 @@
 
 <!--    <script src="/js/watermark.js" th:src="${baseUrl + '/js/watermark.js'}" type="text/javascript"></script>-->
 
+    <link rel="stylesheet" href="/css/viewer.min.css" th:href="${baseUrl + '/css/viewer.min.css'}">
     <style>
         body {
             background-color: #404040;
@@ -31,69 +32,31 @@
     </style>
 </head>
 <body>
-<div class="container">
+<div id="container" class="container">
     <div class="img-area" th:each="page : ${#numbers.sequence(0, pageCount)}">
         <img class="my-photo" alt="loading" data-page="-1" th:data-page="${page}" th:data-src="${baseUrl + '/pdfPage/' + docId + '/' + page}" src="images/loading.gif" th:src="${baseUrl + '/images/loading.gif'}" />
     </div>
 </div>
+<script src="/js/viewer.min.js" th:src="${baseUrl + '/js/viewer.min.js'}"></script>
 <script>
-    var pageLoaded = {};
-    window.onload = function () {
-        /*初始化水印*/
-        // initWaterMark();
-        checkImgs();
-    };
-    window.onscroll = throttle(checkImgs);
-
-    function isInSight(el) {
-        var bound = el.getBoundingClientRect();
-        var clientHeight = window.innerHeight;
-        //只考虑向下滚动加载
-        //const clientWidth=window.innerWeight;
-        return bound.top <= clientHeight + 100;
-    }
-
-    var index = 0
-    function checkImgs() {
-        var imgs = document.querySelectorAll('.my-photo');
-        for (var i = index; i < imgs.length; i++) {
-            if (isInSight(imgs[i])) {
-                loadImg(imgs[i]);
-                index = i;
-            }
+    var viewer = new Viewer(document.getElementById('container'), {
+        url(img) {
+            console.log(img.attributes['data-src'].value);
+            return img.src = img.attributes['data-src'].value;
+        },
+        navbar: false,
+        button: false,
+        backdrop: false,
+        movable: false,
+        title: false,
+        slideOnTouch: true,
+        toggleOnDblclick: true,
+        toolbar: {
+            zoomIn: true,
+            zoomOut: true,
+            reset: true,
         }
-    }
-
-    function loadImg(el) {
-        var source = el.getAttribute("data-src");
-        var page = el.getAttribute('data-page');
-        if (!pageLoaded || !pageLoaded[page]) {
-            el.src = source;
-            pageLoaded[page] = page;
-        }
-    }
-
-    function throttle(fn) {
-        var timer = null;
-        var previous = null;
-        return function () {
-            var now = new Date();
-            var context = this;
-            var args = arguments;
-            if (!previous) {
-                previous = now;
-            }
-            var remaining = now - previous;
-            setTimeout(refresh(fn, remaining, context, args, previous, now));
-        }
-    }
-
-    function refresh(fn, remaining, context, args, previous, now) {
-        if (remaining >= 500) {
-            fn.apply(context, args);
-            previous = now;
-        }
-    }
+    });
 </script>
 </body>
 </html>
