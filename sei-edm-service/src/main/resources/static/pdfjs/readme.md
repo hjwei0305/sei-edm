@@ -1,3 +1,4 @@
+http://mozilla.github.io/pdf.js/getting_started/#download
 
 PDF.js 打印模糊  web/viewer.js 中
 var PRINT_RESOLUTION = 600;//打印精度，原来默认的150，越大越清晰，但初始化打印时也越慢。
