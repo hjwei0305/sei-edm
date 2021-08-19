@@ -59,17 +59,17 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
      * 识别条码匹配前缀
      */
     @Value("${sei.edm.ocr.match-prefix:sei}")
-    private String matchStr;
+    private String matchStr = "sei,CG";
     /**
      * tess data 安装目录
      */
     @Value("${sei.edm.ocr.tessdata-path:none}")
-    private String tessDataPath;
+    private String tessDataPath = "none";
     /**
      * 是否启用云识别
      */
     @Value("${sei.edm.ocr.cloud.enable:false}")
-    private Boolean ocrCloudEnable;
+    private Boolean ocrCloudEnable = Boolean.FALSE;
 
     /**
      * 字符读取
@@ -268,6 +268,10 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        // 如果本地ocr识别长度小于5位则视为乱码,识别错误
+        if (StringUtils.isNotBlank(result) && result.length() < 5) {
+            result = StringUtils.EMPTY;
         }
         return result;
     }
