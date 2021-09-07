@@ -305,8 +305,15 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
         if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
             int height = image.getHeight();
             int width = image.getWidth();
-            // 剪切右上角
-            image1 = image.getSubimage(width / 2, 0, width / 2, height / 8);
+            if (OcrType.InvoiceQr == ocrType) {
+                // 剪切左上角
+                image1 = image.getSubimage(0, 0, width / 2, height / 2);
+            } else {
+                // 剪切右上角
+                image1 = image.getSubimage(width - (width / 3), 0, width / 3, height / 7);
+            }
+            // File outputfile = new File("/Users/chaoma/Downloads/image2.png");
+            // ImageIO.write(image1, "png", outputfile);
             // 指定识别右上角
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image1, matchPrefix);
@@ -329,9 +336,13 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             int height = image1.getHeight();
             int width = image1.getWidth();
 
-            // 剪切右上角
-            image2 = image1.getSubimage(width / 2, 0, width / 2, height / 8);
-//                        BufferedImage image2 = image.getSubimage(0, 0, width, height / 2);
+            if (OcrType.InvoiceQr == ocrType) {
+                // 剪切左上角
+                image2 = image1.getSubimage(0, 0, width / 2, height / 2);
+            } else {
+                // 剪切右上角
+                image2 = image1.getSubimage(width - (width / 3), 0, width / 3, height / 7);
+            }
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image2, matchPrefix);
 
@@ -354,9 +365,13 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             int height = image1.getHeight();
             int width = image1.getWidth();
 
-            // 剪切右上角
-            image2 = image1.getSubimage(width / 2, 0, width / 2, height / 8);
-//                        BufferedImage image2 = image.getSubimage(0, 0, width, height / 2);
+            if (OcrType.InvoiceQr == ocrType) {
+                // 剪切左上角
+                image2 = image1.getSubimage(0, 0, width / 2, height / 2);
+            } else {
+                // 剪切右上角
+                image2 = image1.getSubimage(width - (width / 3), 0, width / 3, height / 7);
+            }
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image2, matchPrefix);
 
@@ -379,9 +394,13 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             int height = image1.getHeight();
             int width = image1.getWidth();
 
-            // 剪切右上角
-            image2 = image1.getSubimage(width / 2, 0, width / 2, height / 8);
-//                        BufferedImage image2 = image.getSubimage(0, 0, width, height / 2);
+            if (OcrType.InvoiceQr == ocrType) {
+                // 剪切左上角
+                image2 = image1.getSubimage(0, 0, width / 2, height / 2);
+            } else {
+                // 剪切右上角
+                image2 = image1.getSubimage(width - (width / 3), 0, width / 3, height / 7);
+            }
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image2, matchPrefix);
 
