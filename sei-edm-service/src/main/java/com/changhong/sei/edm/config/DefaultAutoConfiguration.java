@@ -17,6 +17,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * 实现功能：
@@ -26,7 +28,19 @@ import org.springframework.data.mongodb.core.MongoTemplate;
  */
 @Configuration
 @EnableConfigurationProperties(EdmConfigProperties.class)
-public class DefaultAutoConfiguration {
+public class DefaultAutoConfiguration implements WebMvcConfigurer {
+
+    /**
+     * 添加静态资源的路径映射
+     */
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler( "/js/**", "/css/**", "/pdfjs/**",
+                        "/images/**", "/ofd/**", "/plyr/**")
+                .addResourceLocations("classpath:/static/js/", "classpath:/static/css/",
+                        "classpath:/static/pdfjs/", "classpath:/static/images/",
+                        "classpath:/static/ofd/", "classpath:/static/plyr/");
+    }
 
     private final EdmConfigProperties.StoreModel storeModel;
     private final EdmConfigProperties.MinioProperties minioProperties;
