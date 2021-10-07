@@ -270,7 +270,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             e.printStackTrace();
         }
         // 如果本地ocr识别长度小于5位则视为乱码,识别错误
-        if (StringUtils.isNotBlank(result) && result.length() < 5) {
+        if (StringUtils.isNotBlank(result) && result.length() < 8) {
             result = StringUtils.EMPTY;
         }
         return result;
