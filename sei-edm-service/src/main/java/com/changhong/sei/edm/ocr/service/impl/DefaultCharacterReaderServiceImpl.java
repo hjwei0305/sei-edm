@@ -310,7 +310,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                 image1 = image.getSubimage(0, 0, width / 2, height / 2);
             } else {
                 // 剪切右上角
-                image1 = image.getSubimage(width - (width / 3), 0, width / 3, height / 7);
+                image1 = image.getSubimage(width - (width / 3), 0, width / 3, height / 3);
             }
             // File outputfile = new File("/Users/chaoma/Downloads/image2.png");
             // ImageIO.write(image1, "png", outputfile);
@@ -341,7 +341,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                 image2 = image1.getSubimage(0, 0, width / 2, height / 2);
             } else {
                 // 剪切右上角
-                image2 = image1.getSubimage(width - (width / 3), 0, width / 3, height / 7);
+                image2 = image1.getSubimage(width - (width / 3), 0, width / 3, height / 3);
             }
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image2, matchPrefix);
@@ -370,7 +370,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                 image2 = image1.getSubimage(0, 0, width / 2, height / 2);
             } else {
                 // 剪切右上角
-                image2 = image1.getSubimage(width - (width / 3), 0, width / 3, height / 7);
+                image2 = image1.getSubimage(width - (width / 3), 0, width / 3, height / 3);
             }
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image2, matchPrefix);
@@ -399,7 +399,7 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
                 image2 = image1.getSubimage(0, 0, width / 2, height / 2);
             } else {
                 // 剪切右上角
-                image2 = image1.getSubimage(width - (width / 3), 0, width / 3, height / 7);
+                image2 = image1.getSubimage(width - (width / 3), 0, width / 3, height / 3);
             }
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image2, matchPrefix);
