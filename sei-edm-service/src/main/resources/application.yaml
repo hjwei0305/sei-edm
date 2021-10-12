@@ -75,7 +75,9 @@ logging:
 sei:
   # 核心配置
   edm:
-#    base-url: http://localhost:8080/edm-service
+    elasticsearch:
+      enable: false
+    #    base-url: http://localhost:8080/edm-service
     model: minio
     # MinIO 配置
     minio:
@@ -85,7 +87,7 @@ sei:
       bucket: ecmp-edm
 #    store-path: /Users/chaoma/work_space/0_temp/
     jod-converter:
-      enabled: true
+      enabled: false
 #      office-home: /opt/openoffice4
       office-home: /Applications/OpenOffice.app/Contents
 #      office-home: /Applications/LibreOffice.app/Contents

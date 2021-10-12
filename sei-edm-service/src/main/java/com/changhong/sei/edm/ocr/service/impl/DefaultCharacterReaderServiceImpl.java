@@ -11,6 +11,7 @@ import com.changhong.sei.edm.ocr.service.CharacterReaderService;
 import com.changhong.sei.util.AmountUtils;
 import com.changhong.sei.util.DateUtils;
 import com.changhong.sei.util.FileUtils;
+import com.changhong.sei.util.IdGenerator;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -35,10 +36,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -86,8 +84,37 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
         String[] matchPrefix = StringUtils.split(matchStr.toLowerCase(), ",");
         Set<String> resultSet = new HashSet<>();
         try (InputStream inputStream = new ByteArrayInputStream(data)) {
+            File file;
             switch (docType) {
+                case OFD:
+                    file = new File(System.getProperty("java.io.tmpdir") + IdGenerator.uuid2() + ".pdf");
+                    try {
+                        FileUtils.writeByteArrayToFile(file, data);
+                        InvoiceVO invoice = InvoiceOfdExtractor.parseOfd(file);
+                        if (invoice != null) {
+                            return ResultData.success(JsonUtils.toJson(invoice));
+                        }
+                    } catch (Exception ignored) {
+
+                    } finally {
+                        file.delete();
+                    }
+                    return ResultData.fail("不支持的类型.");
                 case Pdf:
+                    if (OcrType.InvoiceQr == ocrType) {
+                        file = new File(System.getProperty("java.io.tmpdir") + IdGenerator.uuid2() + ".pdf");
+                        try {
+                            FileUtils.writeByteArrayToFile(file, data);
+                            InvoiceVO invoice = InvoicePdfExtractor.extract(file);
+                            if (invoice != null) {
+                                return ResultData.success(JsonUtils.toJson(invoice));
+                            }
+                        } catch (Exception ignored) {
+
+                        } finally {
+                            file.delete();
+                        }
+                    }
                     // 解码PDF中的条码信息.实质是将pdf转为图片后再解码
                     try (PDDocument doc = PDDocument.load(inputStream)) {
                         result = doRecogonize(doc, 72, matchPrefix, ocrType, resultSet);
