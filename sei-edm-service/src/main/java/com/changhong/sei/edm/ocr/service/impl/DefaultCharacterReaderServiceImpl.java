@@ -57,12 +57,12 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
      * 识别条码匹配前缀
      */
     @Value("${sei.edm.ocr.match-prefix:sei}")
-    private String matchStr = "sei,CG";
+    private String matchStr = "E,sei,CG";
     /**
      * tess data 安装目录
      */
     @Value("${sei.edm.ocr.tessdata-path:none}")
-    private String tessDataPath = "none";
+    private String tessDataPath = "/usr/local/Cellar/tesseract/4.1.1/share/tessdata/";
     /**
      * 是否启用云识别
      */
@@ -345,10 +345,16 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             if (Objects.equals(OcrType.Barcode, ocrType)) {
                 result = ZxingUtils.processImageBarcode(image1, matchPrefix);
 
-                // ocr识别
+                // 识别失败,重新剪切右上角
                 if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
-                    //条码识别失败，进行ocr识别
-                    result = partImgOcr(image1, matchPrefix);
+                    // 剪切右上角
+                    image1 = image.getSubimage(width - (width / 3), 0, width / 3, height / 7);
+                    result = ZxingUtils.processImageBarcode(image1, matchPrefix);
+                    // ocr识别
+                    if (!checkBarcode(result, matchPrefix, ocrType, resultSet)) {
+                        //条码识别失败，进行ocr识别
+                        result = partImgOcr(image1, matchPrefix);
+                    }
                 }
             } else {
                 result = ZxingUtils.processImageQr(image1, matchPrefix);
