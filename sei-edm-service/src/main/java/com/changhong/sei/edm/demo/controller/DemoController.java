@@ -15,9 +15,9 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 @Api(value = "示例演示", tags = "示例演示")
 public class DemoController {
-    //引入配置
-    @Value("${sei.edm.base-url:none}")
-    private String baseUrl;
+    //网关上下文地址
+    @Value("${sei.gateway.context-path:/api-gateway}")
+    private String gatewayPath;
 
     /**
      * 演示页
@@ -25,12 +25,11 @@ public class DemoController {
     @ApiOperation("演示")
     @GetMapping(value = "/demo")
     public String uploadPage(Model model, HttpServletRequest request) {
-        StringBuffer url = request.getRequestURL();
-        String tempContextUrl = url.delete(url.length() - request.getRequestURI().length(), url.length()).append(request.getContextPath()).toString();
-        if (StringUtils.equals("none", baseUrl)) {
-            baseUrl = tempContextUrl;
+        String contextPath = request.getContextPath();
+        if (StringUtils.isNotBlank(contextPath) && !StringUtils.startsWith(contextPath, "/")) {
+            contextPath = "/" + contextPath;
         }
-        model.addAttribute("baseUrl", baseUrl);
+        model.addAttribute("baseUrl", gatewayPath.concat(contextPath));
         return "demo.html";
     }
 }

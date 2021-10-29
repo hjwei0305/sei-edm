@@ -42,20 +42,19 @@ import java.util.Objects;
 public class PreviewController {
     @Autowired
     private FileService fileService;
-    //引入配置
-    @Value("${sei.edm.base-url:none}")
-    private String baseUrl;
+    //网关上下文地址
+    @Value("${sei.gateway.context-path:/api-gateway}")
+    private String gatewayPath;
 
     @GetMapping(value = "/pdf2Img/{docId}")
     @ApiOperation("在线预览")
     public String pdf2Img(@PathVariable("docId") String docId,
                           Model model, HttpServletRequest request) {
-        StringBuffer url = request.getRequestURL();
-        String tempContextUrl = url.delete(url.length() - request.getRequestURI().length(), url.length()).append(request.getContextPath()).toString();
-        if (StringUtils.equals("none", baseUrl)) {
-            baseUrl = tempContextUrl;
+        String contextPath = request.getContextPath();
+        if (StringUtils.isNotBlank(contextPath) && !StringUtils.startsWith(contextPath, "/")) {
+            contextPath = "/" + contextPath;
         }
-        model.addAttribute("baseUrl", baseUrl);
+        model.addAttribute("baseUrl", gatewayPath.concat(contextPath));
         model.addAttribute("docId", docId);
 
         String view;
@@ -124,12 +123,11 @@ public class PreviewController {
         //判断文件类型
         response.setContentType("image/jpeg");
 
-        StringBuffer url = request.getRequestURL();
-        String tempContextUrl = url.delete(url.length() - request.getRequestURI().length(), url.length()).append(request.getContextPath()).toString();
-        if (StringUtils.equals("none", baseUrl)) {
-            baseUrl = tempContextUrl;
+        String contextPath = request.getContextPath();
+        if (StringUtils.isNotBlank(contextPath) && !StringUtils.startsWith(contextPath, "/")) {
+            contextPath = "/" + contextPath;
         }
-        model.addAttribute("baseUrl", baseUrl);
+        model.addAttribute("baseUrl", gatewayPath.concat(contextPath));
         model.addAttribute("docId", docId);
 
         PDDocument pdfDoc = null;
@@ -189,12 +187,11 @@ public class PreviewController {
                           @RequestParam(name = "previewType", required = false) String previewType,
                           @RequestParam(name = "markText", required = false) String markText,
                           Model model, HttpServletRequest request) {
-        StringBuffer url = request.getRequestURL();
-        String tempContextUrl = url.delete(url.length() - request.getRequestURI().length(), url.length()).append(request.getContextPath()).toString();
-        if (StringUtils.equals("none", baseUrl)) {
-            baseUrl = tempContextUrl;
+        String contextPath = request.getContextPath();
+        if (StringUtils.isNotBlank(contextPath) && !StringUtils.startsWith(contextPath, "/")) {
+            contextPath = "/" + contextPath;
         }
-        model.addAttribute("baseUrl", baseUrl);
+        model.addAttribute("baseUrl", gatewayPath.concat(contextPath));
 
         model.addAttribute("docId", docId);
         if (StringUtils.isNotBlank(markText)) {
