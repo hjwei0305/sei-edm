@@ -88,13 +88,13 @@ public final class InvoiceOfdExtractor {
                 Pattern typePattern = Pattern.compile(reg);
                 Matcher m0 = typePattern.matcher(allText);
                 if (m0.find()) {
-                    invoice.setCategory(m0.group());
+                    invoice.setCategory(getInvoiceType(m0.group()));
                 } else {
                     reg = "(\\S*)用发票";
                     typePattern = Pattern.compile(reg);
                     m0 = typePattern.matcher(allText);
                     if (m0.find()) {
-                        invoice.setCategory(m0.group());
+                        invoice.setCategory(getInvoiceType(m0.group()));
                     }
                 }
             }
@@ -103,6 +103,30 @@ public final class InvoiceOfdExtractor {
             invoice = null;
         }
         return invoice;
+    }
+
+    private static String getInvoiceType(String type) {
+        if (StringUtils.contains(type, "专用")) {
+            if (StringUtils.contains(type, "电")) {
+                return "增值税电子专用发票";
+            } else {
+                return "增值税专用发票";
+            }
+        } else if (StringUtils.contains(type, "普通")) {
+            if (StringUtils.contains(type, "电")) {
+                return "增值税电子普通发票";
+            } else {
+                return "增值税普通发票";
+            }
+        } else if (StringUtils.contains(type, "通用")) {
+            if (StringUtils.contains(type, "电")) {
+                return "通用机打发票(电子)";
+            } else {
+                return "通用机打发票";
+            }
+        } else {
+            return "增值税发票";
+        }
     }
 
     /**

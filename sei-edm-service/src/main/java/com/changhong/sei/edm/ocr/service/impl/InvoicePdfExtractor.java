@@ -82,19 +82,19 @@ public class InvoicePdfExtractor {
                 Pattern type00Pattern = Pattern.compile(reg);
                 Matcher m00 = type00Pattern.matcher(allText);
                 if (m00.find()) {
-                    invoice.setCategory(m00.group());
+                    invoice.setCategory(getInvoiceType(m00.group()));
                 } else {
                     reg = "(?<p>\\S*)用发票";
                     Pattern type01Pattern = Pattern.compile(reg);
                     Matcher m01 = type01Pattern.matcher(allText);
                     if (m01.find()) {
-                        invoice.setCategory(m01.group());
+                        invoice.setCategory(getInvoiceType(m01.group()));
                     } else {
                         reg = "(?<p>\\S*)通用机打发票|(\\S*)通用\\u0028电子\\u0029发票";
                         Pattern type02Pattern = Pattern.compile(reg);
                         Matcher m02 = type02Pattern.matcher(allText);
                         if (m02.find()) {
-                            invoice.setCategory(m02.group());
+                            invoice.setCategory(getInvoiceType(m02.group()));
                         }
                     }
                 }
@@ -300,5 +300,35 @@ public class InvoicePdfExtractor {
     public static String replace(String str) {
         return str.replaceAll(" ", "").replaceAll("　", "")
                 .replaceAll("：", ":").replaceAll(" ", "");
+    }
+
+    private static String getInvoiceType(String type) {
+        if (StringUtils.contains(type, "专用")) {
+            if (StringUtils.contains(type, "电")) {
+                return "增值税电子专用发票";
+            } else {
+                return "增值税专用发票";
+            }
+        } else if (StringUtils.contains(type, "普通")) {
+            if (StringUtils.contains(type, "电")) {
+                return "增值税电子普通发票";
+            } else {
+                return "增值税普通发票";
+            }
+        } else if (StringUtils.contains(type, "通用")) {
+            if (StringUtils.contains(type, "电")) {
+                return "通用机打发票(电子)";
+            } else {
+                return "通用机打发票";
+            }
+        } else {
+            return "增值税发票";
+        }
+    }
+
+    public static void main(String[] args) {
+        File file = new File("/Users/chaoma/Downloads/伊品报错发票.pdf");
+        DefaultCharacterReaderServiceImpl.InvoiceVO invoice = extract(file);
+        System.out.println(invoice);
     }
 }
