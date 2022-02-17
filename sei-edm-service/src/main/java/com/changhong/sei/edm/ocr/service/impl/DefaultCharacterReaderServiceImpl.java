@@ -161,7 +161,22 @@ public class DefaultCharacterReaderServiceImpl implements CharacterReaderService
             String[] arr;
             if (StringUtils.isNotBlank(result)) {
                 if (result.startsWith("https")) {
+                    // 区块链发票
                     result = getBlockChainInvoice(result);
+                } else if (result.startsWith("CZ-EI-")) {
+                    // 收费票据
+                    arr = result.split("[,]");
+                    if (arr.length >= 7) {
+                        InvoiceVO invoiceVO = new InvoiceVO();
+                        // 发票代码
+                        invoiceVO.setCode(arr[2]);
+                        // 发票号码
+                        invoiceVO.setNumber(arr[3]);
+                        invoiceVO.setCategory("收费票据");
+                        invoiceVO.setAmount(arr[6]);
+                        invoiceVO.setDate(arr[5]);
+                        result = JsonUtils.toJson(invoiceVO);
+                    }
                 } else {
                     arr = result.split("[,]");
                     if (arr.length >= 7) {
