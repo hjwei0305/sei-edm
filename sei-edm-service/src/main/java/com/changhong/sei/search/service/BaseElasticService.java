@@ -391,7 +391,7 @@ public class BaseElasticService implements SearchService {
         }
         try {
             SearchSourceBuilder searchSourceBuilder = this.initSearchSourceBuilder(buildBoolQueryBuilder(search),
-                    pageInfo.getPage() - 1, pageInfo.getRows(), 120);
+                    (pageInfo.getPage() - 1) * pageInfo.getRows(), pageInfo.getRows(), 120);
             // 分组聚合
             //searchSourceBuilder.aggregation(AggregationBuilders.terms("order_count").field("orderNo.keyword"));
 
