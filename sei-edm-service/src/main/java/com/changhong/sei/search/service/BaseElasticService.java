@@ -573,8 +573,14 @@ public class BaseElasticService implements SearchService {
                         break;
                     case BT:
                         Assert.notNull(matchValue, "Match value must be not null");
-                        Assert.isTrue(matchValue.getClass().isArray(), "Match value must be array");
-                        Object[] matchValues = (Object[]) matchValue;
+                        Assert.isTrue(matchValue.getClass().isArray() || matchValue instanceof List, "Match value must be array");
+                        Object[] matchValues;
+                        if (matchValue instanceof List) {
+                            matchValues = new Object[((List<?>) matchValue).size()];
+                            ((List<?>) matchValue).toArray(matchValues);
+                        } else {
+                            matchValues = (Object[]) matchValue;
+                        }
                         Assert.isTrue(matchValues.length == 2, "Match value must have two value");
                         // 对日期特殊处理：一般用于区间日期的结束时间查询,如查询2012-01-01之前,一般需要显示2010-01-01当天及以前的数据,
                         // 而数据库一般存有时分秒,因此需要特殊处理把当前日期+1天,转换为<2012-01-02进行查询
