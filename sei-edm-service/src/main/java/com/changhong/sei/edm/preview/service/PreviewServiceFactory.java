@@ -18,6 +18,8 @@ import java.util.Map;
  */
 public final class PreviewServiceFactory {
 
+    private static Map<String, PreviewService> SERVICE_MAP = null;
+
     /**
      * 文件预览转换
      *
@@ -25,31 +27,32 @@ public final class PreviewServiceFactory {
      * @return 返回预览文档
      */
     public static ResultData<DocumentResponse> getPreviewDocument(DocumentDto document) {
-        Map<String, PreviewService> map = ApplicationContextHolder
-                .getApplicationContext().getBeansOfType(PreviewService.class);
+        if (SERVICE_MAP == null) {
+            SERVICE_MAP = ApplicationContextHolder.getApplicationContext().getBeansOfType(PreviewService.class);
+        }
 
         PreviewService previewService;
         switch (document.getDocumentType()) {
             case Pdf:
             case OFD:
-                previewService = map.get(getPreviewServiceName(PdfPreviewServiceImpl.class));
+                previewService = SERVICE_MAP.get(getPreviewServiceName(PdfPreviewServiceImpl.class));
                 break;
             case Word:
             case Excel:
             case Powerpoint:
-                previewService = map.get(getPreviewServiceName(OfficePreviewServiceImpl.class));
+                previewService = SERVICE_MAP.get(getPreviewServiceName(OfficePreviewServiceImpl.class));
                 break;
             case Image:
-                previewService = map.get(getPreviewServiceName(ImagePreviewServiceImpl.class));
+                previewService = SERVICE_MAP.get(getPreviewServiceName(ImagePreviewServiceImpl.class));
                 break;
             case Media:
-                previewService = map.get(getPreviewServiceName(MediaPreviewServiceImpl.class));
+                previewService = SERVICE_MAP.get(getPreviewServiceName(MediaPreviewServiceImpl.class));
                 break;
             case Text:
-                previewService = map.get(getPreviewServiceName(TextPreviewServiceImpl.class));
+                previewService = SERVICE_MAP.get(getPreviewServiceName(TextPreviewServiceImpl.class));
                 break;
             case Compressed:
-                previewService = map.get(getPreviewServiceName(CompressedPreviewServiceImpl.class));
+                previewService = SERVICE_MAP.get(getPreviewServiceName(CompressedPreviewServiceImpl.class));
                 break;
             case Other:
             default:

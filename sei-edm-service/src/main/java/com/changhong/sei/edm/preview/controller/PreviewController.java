@@ -5,6 +5,8 @@ import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.common.FileConstants;
 import com.changhong.sei.edm.dto.DocumentResponse;
 import com.changhong.sei.edm.file.service.FileService;
+import com.changhong.sei.edm.manager.entity.Document;
+import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.edm.preview.service.PreviewServiceFactory;
 import com.changhong.sei.util.FileUtils;
 import io.swagger.annotations.Api;
@@ -34,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLConnection;
+import java.util.List;
 import java.util.Objects;
 
 @RefreshScope
@@ -42,6 +45,8 @@ import java.util.Objects;
 public class PreviewController {
     @Autowired
     private FileService fileService;
+    @Autowired
+    private DocumentService documentService;
     //网关上下文地址
     @Value("${sei.gateway.context-path:/api-gateway}")
     private String gatewayPath;
@@ -158,9 +163,9 @@ public class PreviewController {
             }
 
             PDFRenderer pdfRenderer = new PDFRenderer(pdfDoc);
-            BufferedImage image = pdfRenderer.renderImageWithDPI(page, 2*72, ImageType.RGB);
+            BufferedImage image = pdfRenderer.renderImageWithDPI(page, 2 * 72, ImageType.RGB);
             OutputStream outputStream = response.getOutputStream();
-            ImageIOUtil.writeImage(image, "jpg", outputStream, 2*72);
+            ImageIOUtil.writeImage(image, "jpg", outputStream, 2 * 72);
 
             return new ResponseEntity<>(new byte[0], HttpStatus.OK);
         } catch (Exception e) {
@@ -210,6 +215,11 @@ public class PreviewController {
             case Pdf:
             case Word:
             case Powerpoint:
+                List<Document> list = documentService.getDocumentsByEntityId(docId);
+                if (list != null && list.size() == 1) {
+                    // 带出之前的文件转换数据.避免重复转换
+                    model.addAttribute("docId", list.get(0).getDocId());
+                }
                 if (StringUtils.equalsIgnoreCase("image", previewType)) {
                     view = this.pdf2Img(docId, model, request);
                 } else {
@@ -300,6 +310,47 @@ public class PreviewController {
             response.setContentLengthLong(documentResponse.getSize());
 
             byte[] bytes = documentResponse.getData();
+            response.getOutputStream().write(bytes);
+            return new ResponseEntity<>(bytes, HttpStatus.OK);
+        } catch (IOException e) {
+            LogUtil.error("readFile error: " + e.getMessage(), e);
+        }
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+    }
+
+    /**
+     * 读取已经转换好的文件
+     *
+     * @param docId docId
+     */
+    @GetMapping(value = "/preview/readFile/{docId}.{fileExt}")
+    public ResponseEntity<byte[]> readFile1(@PathVariable(name = "docId") String docId,
+                                            @PathVariable(name = "fileExt") String fileExt,
+                                            HttpServletResponse response) {
+        response.setHeader("Content-type", "text/html;charset=UTF-8");
+        response.setCharacterEncoding("utf-8");
+
+        if (StringUtils.isBlank(docId)) {
+            LogUtil.warn("fileName is blank");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        DocumentResponse document = fileService.getDocument(docId);
+        if (Objects.isNull(document)) {
+            LogUtil.error("file is not found");
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        try {
+            //判断文件类型
+            String mimeType = URLConnection.guessContentTypeFromName(document.getFileName());
+            if (mimeType == null) {
+                mimeType = "application/octet-stream";
+            }
+            response.setContentType(mimeType);
+
+            //设置文件响应大小
+            response.setContentLengthLong(document.getSize());
+
+            byte[] bytes = document.getData();
             response.getOutputStream().write(bytes);
             return new ResponseEntity<>(bytes, HttpStatus.OK);
         } catch (IOException e) {
