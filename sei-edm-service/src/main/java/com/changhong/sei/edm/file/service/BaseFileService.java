@@ -177,6 +177,8 @@ public abstract class BaseFileService implements FileService {
         Document document = documentService.getByDocId(docId);
         if (Objects.nonNull(document)) {
             modelMapper.map(document, response);
+            // 更新docid
+            response.setDocId(document.getId());
         } else {
             LogUtil.error("docId: {} 对应的文件不存在.", docId);
         }
@@ -204,6 +206,8 @@ public abstract class BaseFileService implements FileService {
             if (Objects.nonNull(document)) {
                 response = new DocumentResponse();
                 modelMapper.map(document, response);
+                // 更新docid
+                response.setDocId(document.getId());
                 result.add(response);
             }
         }
@@ -252,6 +256,8 @@ public abstract class BaseFileService implements FileService {
         Document document = documentService.getByDocId(docId);
         if (Objects.nonNull(document)) {
             modelMapper.map(document, response);
+            // 更新docid
+            response.setDocId(document.getId());
 
             if (document.getHasChunk()) {
                 List<FileChunk> chunks = documentService.getFileChunkByOriginDocId(docId);
@@ -295,6 +301,8 @@ public abstract class BaseFileService implements FileService {
             if (DocumentType.Image.equals(document.getDocumentType())) {
                 DocumentResponse response = new DocumentResponse();
                 modelMapper.map(document, response);
+                // 更新docid
+                response.setDocId(document.getId());
 
                 //获取原图
                 try (ByteArrayOutputStream baos = getByteArray(document.getDocId()); InputStream imageStream = new ByteArrayInputStream(baos.toByteArray())) {
