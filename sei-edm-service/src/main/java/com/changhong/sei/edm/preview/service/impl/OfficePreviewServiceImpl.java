@@ -60,7 +60,7 @@ public class OfficePreviewServiceImpl implements PreviewService {
     @Value("${sei.edm.preview.changhong.url:none}")
     private String requestUrl;
     //edm服务基地址   https://tecmp.changhong.com/api-gateway/edm-service
-    @Value("${sei.edm.base-url:none}")
+    @Value("${sei.edm.preview.changhong.edm-url:none}")
     private String baseUrl;
 
     public static final String DOT = ".";
@@ -114,6 +114,9 @@ public class OfficePreviewServiceImpl implements PreviewService {
 
                                 HttpClient client = HttpUtils.createClient(pdfUrl);
                                 HttpGet httpget = new HttpGet(pdfUrl);
+                                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                                    httpget.addHeader(entry.getKey(), entry.getValue());
+                                }
                                 HttpResponse response = client.execute(httpget);
 
                                 HttpEntity entity = response.getEntity();
