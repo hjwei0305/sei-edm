@@ -483,18 +483,17 @@ public class FileController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        // 设置下载文件名
-        setDownloadFileName(document.getFileName(), request, response);
-
         if (isThumbnail) {
+            // 设置下载文件名
+            if (DocumentType.Image.equals(document.getDocumentType())) {
+                setDownloadFileName(document.getFileName(), request, response);
+            } else {
+                setDownloadFileName(document.getFileName() + "_Thumbnail.png", request, response);
+            }
+
             document = fileService.getThumbnail(document.getDocId(), width, height);
             byte[] buffer = new byte[2048];
-            InputStream is = null;
-            BufferedInputStream bis = null;
-            try {
-                byte[] bytes = document.getData();
-                is = new ByteArrayInputStream(bytes);
-                bis = new BufferedInputStream(is);
+            try (InputStream is = new ByteArrayInputStream(document.getData()); BufferedInputStream bis = new BufferedInputStream(is)) {
                 OutputStream os = response.getOutputStream();
                 int i = bis.read(buffer);
                 while (i != -1) {
@@ -505,23 +504,10 @@ public class FileController {
                 return new ResponseEntity<>(HttpStatus.OK);
             } catch (IOException e) {
                 LogUtil.error("Download error: " + e.getMessage(), e);
-            } finally {
-                if (Objects.nonNull(bis)) {
-                    try {
-                        bis.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (Objects.nonNull(is)) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
             }
         } else {
+            // 设置下载文件名
+            setDownloadFileName(document.getFileName(), request, response);
             try {
                 OutputStream os = response.getOutputStream();
                 fileService.getDocumentOutputStream(document.getDocId(), document.getHasChunk(), os);
