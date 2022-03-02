@@ -6,6 +6,7 @@ import com.changhong.sei.edm.common.util.DocumentTypeUtil;
 import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.file.service.BaseFileService;
 import com.changhong.sei.edm.file.service.FileService;
+import com.changhong.sei.edm.manager.entity.Document;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.gridfs.GridFSBucket;
@@ -44,14 +45,19 @@ public class MongoFileService extends BaseFileService implements FileService {
      */
     @Override
     public void getDocByteArray(String docId, OutputStream out) {
-        //获取原图
-        GridFSFile fsdbFile = seiGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
-        if (Objects.isNull(fsdbFile)) {
-            LogUtil.error("[{}]文件不存在.", docId);
-            return;
+        Document document = documentService.getByDocId(docId);
+        if (Objects.nonNull(document)) {
+            //获取原图
+            GridFSFile fsdbFile = seiGridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(docId)));
+            if (Objects.isNull(fsdbFile)) {
+                LogUtil.error("[{}]文件不存在.", docId);
+                return;
+            }
+            GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getMongoDatabase());
+            bucket.downloadToStream(fsdbFile.getId(), out);
+        } else {
+            LogUtil.error("获取的文件[{}]不存在.", docId);
         }
-        GridFSBucket bucket = GridFSBuckets.create(mongoDbFactory.getMongoDatabase());
-        bucket.downloadToStream(fsdbFile.getId(), out);
     }
 
     /**

@@ -4,6 +4,7 @@ import com.changhong.sei.core.dto.ResultData;
 import com.changhong.sei.core.log.LogUtil;
 import com.changhong.sei.edm.file.service.BaseFileService;
 import com.changhong.sei.edm.file.service.FileService;
+import com.changhong.sei.edm.manager.entity.Document;
 import io.minio.MinioClient;
 import io.minio.PutObjectOptions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * 实现功能：MinIO是在Apache License v2.0下发布的对象存储服务器
@@ -59,10 +61,15 @@ public class MinIOFileService extends BaseFileService implements FileService {
      */
     @Override
     public void getDocByteArray(String docId, OutputStream out) {
-        try (InputStream imageStream = minioClient.getObject(bucketName, docId)) {
-            inStream2OutStream(imageStream, out);
-        } catch (Exception e) {
-            LogUtil.error("获取缩略图异常.", e);
+        Document document = documentService.getByDocId(docId);
+        if (Objects.nonNull(document)) {
+            try (InputStream imageStream = minioClient.getObject(bucketName, document.getDocId())) {
+                inStream2OutStream(imageStream, out);
+            } catch (Exception e) {
+                LogUtil.error("获取Minio文件数据异常.", e);
+            }
+        } else {
+            LogUtil.error("获取的文件[{}]不存在.", docId);
         }
     }
 
