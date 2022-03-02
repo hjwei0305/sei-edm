@@ -8,6 +8,7 @@ import com.changhong.sei.core.util.JsonUtils;
 import com.changhong.sei.edm.common.util.MD5Utils;
 import com.changhong.sei.edm.dto.DocumentDto;
 import com.changhong.sei.edm.dto.DocumentResponse;
+import com.changhong.sei.edm.dto.DocumentType;
 import com.changhong.sei.edm.dto.UploadResponse;
 import com.changhong.sei.edm.file.service.FileConverterService;
 import com.changhong.sei.edm.file.service.FileService;
@@ -87,7 +88,7 @@ public class OfficePreviewServiceImpl implements PreviewService {
 
         String docId = document.getDocId();
         ResultData<DocumentResponse> result;
-        if (enable) {
+        if (enable && (DocumentType.Excel != document.getDocumentType())) {
             if (StringUtils.equals("none", requestUrl)) {
                 return ResultData.fail("集团文档转换服务地址未配置.");
             }
