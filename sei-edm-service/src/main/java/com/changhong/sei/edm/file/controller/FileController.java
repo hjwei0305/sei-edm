@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.*;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -451,6 +452,73 @@ public class FileController {
 
         LogUtil.error("file is not found");
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * 多文件打包压缩下载（支持自定义文件夹）
+     *
+     * @param zipDownloadRequest 文件下载参数
+     * @return 二进制数据
+     * @throws Exception
+     */
+    @ApiOperation("多文件打包压缩下载(支持自定义文件夹)")
+    @RequestMapping(value = "/zipDownload", method = RequestMethod.POST)
+    public ResponseEntity<byte[]> zipDownload(@RequestBody @Valid ZipDownloadRequest zipDownloadRequest, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        String zipFileName = zipDownloadRequest.getFileName();
+        if (StringUtils.isBlank(zipFileName)) {
+            zipFileName = IdGenerator.uuid2() + ".zip";
+        }
+        List<ZipDownloadItem> items = zipDownloadRequest.getItems();
+        //设置下载文件名
+        this.setDownloadFileName(zipFileName, request, response);
+        OutputStream outputStream = response.getOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
+            //遍历文件
+            this.addItemsToZip(zos, "", items);
+            // 完成编写ZIP输出流的内容而不关闭底层流
+            zos.finish();
+            outputStream.flush();
+        } catch (Exception e) {
+            LogUtil.error("打包文件异常", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    /**
+     * 迭代循环添加文档至压缩文件
+     *
+     * @param zos   压缩文件流
+     * @param path  工作目录
+     * @param items 文件列表
+     * @throws IOException
+     */
+    private void addItemsToZip(ZipOutputStream zos, String path, List<ZipDownloadItem> items) throws IOException {
+        if (CollectionUtils.isNotEmpty(items)) {
+            ZipEntry zipEntry;
+            for (ZipDownloadItem item : items) {
+                if (item.getDirectory()) {
+                    //路径前缀
+                    String wordPath = path + item.getFileName() + "/";
+                    //添加文件夹 迭代
+                    addItemsToZip(zos, wordPath, item.getSubFiles());
+                } else {
+                    DocumentResponse documentResponse = fileService.getDocumentInfo(item.getDocId());
+                    if (Objects.nonNull(documentResponse)) {
+                        if (StringUtils.isBlank(item.getFileName())) {
+                            zipEntry = new ZipEntry(path + documentResponse.getFileName());
+                        } else {
+                            zipEntry = new ZipEntry(path + item.getFileName());
+                        }
+                        // 开始编写新的ZIP文件条目并将流定位到条目数据的开头
+                        zos.putNextEntry(zipEntry);
+                        fileService.getDocumentOutputStream(item.getDocId(), documentResponse.getHasChunk(), zos);
+                        // 关闭当前的ZIP条目并定位写入下一个条目的流
+                        zos.closeEntry();
+                    }
+                }
+            }
+        }
     }
 
     private ResultData<UploadResponse> uploadFile(MultipartFile file, String sys, String uploadUser) throws IOException {
