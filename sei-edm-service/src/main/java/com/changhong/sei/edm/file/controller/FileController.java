@@ -471,10 +471,13 @@ public class FileController {
         List<ZipDownloadItem> items = zipDownloadRequest.getItems();
         //设置下载文件名
         this.setDownloadFileName(zipFileName, request, response);
+        //判断是否重名，同一文件夹下不允许重名，否则会出现下载到一半失败，导致内容缺少
+        //本应该在添加文件时捕获异常，但是底层抛出的异常都是统一的ZipException
+        Set<String> names = new HashSet<>();
         OutputStream outputStream = response.getOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
             //遍历文件
-            this.addItemsToZip(zos, "", items);
+            this.addItemsToZip(zos, "", items, names);
             // 完成编写ZIP输出流的内容而不关闭底层流
             zos.finish();
             outputStream.flush();
@@ -493,7 +496,7 @@ public class FileController {
      * @param items 文件列表
      * @throws IOException
      */
-    private void addItemsToZip(ZipOutputStream zos, String path, List<ZipDownloadItem> items) throws IOException {
+    private void addItemsToZip(ZipOutputStream zos, String path, List<ZipDownloadItem> items, Set<String> names) throws IOException {
         if (CollectionUtils.isNotEmpty(items)) {
             ZipEntry zipEntry;
             for (ZipDownloadItem item : items) {
@@ -501,15 +504,24 @@ public class FileController {
                     //路径前缀
                     String wordPath = path + item.getFileName() + "/";
                     //添加文件夹 迭代
-                    addItemsToZip(zos, wordPath, item.getSubFiles());
+                    addItemsToZip(zos, wordPath, item.getSubFiles(), names);
                 } else {
                     DocumentResponse documentResponse = fileService.getDocumentInfo(item.getDocId());
                     if (Objects.nonNull(documentResponse)) {
+                        String fileName = path + item.getFileName();
                         if (StringUtils.isBlank(item.getFileName())) {
                             zipEntry = new ZipEntry(path + documentResponse.getFileName());
-                        } else {
-                            zipEntry = new ZipEntry(path + item.getFileName());
                         }
+                        String fileNameWithoutExtension = FileUtils.getWithoutExtension(fileName);
+                        String extension = FileUtils.getExtension(fileName);
+                        //判断是否重名
+                        int index = 2;
+                        while (!names.add(fileName)) {
+                            //在原始的文件后面拼上序号
+                            fileName = fileNameWithoutExtension + index + extension;
+                            index++;
+                        }
+                        zipEntry = new ZipEntry(fileName);
                         // 开始编写新的ZIP文件条目并将流定位到条目数据的开头
                         zos.putNextEntry(zipEntry);
                         fileService.getDocumentOutputStream(item.getDocId(), documentResponse.getHasChunk(), zos);
