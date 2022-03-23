@@ -13,6 +13,7 @@ import com.changhong.sei.edm.manager.entity.FileChunk;
 import com.changhong.sei.edm.manager.service.DocumentService;
 import com.changhong.sei.edm.ocr.service.CharacterReaderService;
 import com.changhong.sei.util.EnumUtils;
+import com.changhong.sei.util.FileUtils;
 import com.changhong.sei.util.IdGenerator;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
