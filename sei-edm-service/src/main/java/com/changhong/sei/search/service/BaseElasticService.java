@@ -422,7 +422,7 @@ public class BaseElasticService implements SearchService {
         } catch (Exception e) {
             LOG.error("查询数据异常，idxName={}", search.getIdxName(), e);
         }
-        return ResultData.fail("查询数据.");
+        return ResultData.fail("查询数据异常.");
     }
 
     /**
@@ -492,7 +492,7 @@ public class BaseElasticService implements SearchService {
                 String[] fields = list.toArray(new String[0]);
 
 //                queryBuilder.must(QueryBuilders.multiMatchQuery(keyword, fields));
-                queryBuilder.must(QueryBuilders.multiMatchQuery(keyword, fields).type(MultiMatchQueryBuilder.Type.PHRASE_PREFIX));
+                queryBuilder.must(QueryBuilders.multiMatchQuery(keyword, fields));
             }
         }
 
