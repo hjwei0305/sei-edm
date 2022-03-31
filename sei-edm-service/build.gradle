@@ -51,8 +51,8 @@ dependencies {
     implementation (
             "com.google.zxing:core:$zxing_version",
             "com.google.zxing:javase:$zxing_version",
-            'org.apache.pdfbox:pdfbox:2.0.17',
-            'org.apache.pdfbox:fontbox:2.0.17',
+            "org.apache.pdfbox:pdfbox:$pdfbox_version",
+            "org.apache.pdfbox:fontbox:$pdfbox_version",
             'net.sourceforge.tess4j:tess4j:4.4.0',
             "net.java.dev.jna:jna:5.4.0"
     )
